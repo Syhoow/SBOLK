@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwmnj0wgaidfv"]
+
+[ext_resource type="Script" uid="uid://bsqs63vjfsfpp" path="res://Scripts/Gun.cs" id="1_oqrbh"]
+
+[node name="Node2D" type="Node2D"]
+script = ExtResource("1_oqrbh")
+
+[node name="Marker2D" type="Marker2D" parent="."]
+position = Vector2(64, 0)
+
+[node name="Line2D" type="Line2D" parent="."]
+position = Vector2(24, 0)
+scale = Vector2(1, 0.25)
+points = PackedVector2Array(16, 0, 40, 0)

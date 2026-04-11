@@ -1,0 +1,39 @@
+[gd_scene load_steps=8 format=3 uid="uid://dci3tsp12eon2"]
+
+[ext_resource type="Script" uid="uid://xsjb0smklq5x" path="res://Scripts/Player.cs" id="1_cvnsp"]
+[ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_v0iea"]
+[ext_resource type="Script" uid="uid://b8bkd4yk65xuc" path="res://Scripts/Cam.cs" id="3_6t5aa"]
+[ext_resource type="Script" uid="uid://bipoye44d5hpd" path="res://Scripts/Hitbox.cs" id="4_vgqql"]
+[ext_resource type="PackedScene" uid="uid://bwmnj0wgaidfv" path="res://Scenes/gun.tscn" id="5_fkybt"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cvnsp"]
+radius = 32.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_6t5aa"]
+radius = 40.0
+
+[node name="Player" type="CharacterBody2D"]
+platform_floor_layers = 4294967040
+script = ExtResource("1_cvnsp")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_v0iea")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_cvnsp")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+process_callback = 0
+position_smoothing_enabled = true
+position_smoothing_speed = 10.0
+script = ExtResource("3_6t5aa")
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_mask = 2
+script = ExtResource("4_vgqql")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_6t5aa")
+
+[node name="Node2D" parent="." instance=ExtResource("5_fkybt")]
