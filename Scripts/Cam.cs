@@ -19,8 +19,8 @@ public partial class Cam : Camera2D
 
         desiredOffset = (GetGlobalMousePosition() - player.GlobalPosition) * 0.5f;
 
-        desiredOffset.X = Mathf.Clamp(desiredOffset.X, minOffset, maxOffset);
-        desiredOffset.Y = Mathf.Clamp(desiredOffset.Y, minOffset / 2.0f, maxOffset / 2.0f);
+        desiredOffset.X = Mathf.Clamp(desiredOffset.X, minOffset / 4.0f, maxOffset / 4.0f);
+        desiredOffset.Y = Mathf.Clamp(desiredOffset.Y, minOffset / 4.0f, maxOffset / 4.0f);
 
         GlobalPosition = player.GlobalPosition + desiredOffset;
     }

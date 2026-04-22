@@ -17,9 +17,12 @@ config/icon="res://Assets/icon.svg"
 
 [display]
 
-window/size/viewport_width=1280
-window/size/viewport_height=960
+window/size/viewport_width=640
+window/size/viewport_height=480
 window/size/resizable=false
+window/size/window_width_override=1280
+window/size/window_height_override=960
+window/stretch/mode="viewport"
 
 [dotnet]
 
@@ -64,3 +67,10 @@ ui_down={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/stretch/mode="disabled"
+textures/size/window_height_override=0
+textures/size/window_width_override=0
+textures/size/viewport_height=960
+textures/size/viewport_width=1280
+textures/stretch/scale=1.0
+textures/stretch/scale_mode="fractional"
