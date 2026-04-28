@@ -5,8 +5,10 @@ public partial class Enemy : CharacterBody2D
 {
     private float speed = 200;
     CharacterBody2D player;
+    AnimationPlayer animation;
     public override void _Ready()
     {
+        animation = GetNode<AnimationPlayer>("AnimationPlayer");
         player =  GetNode<CharacterBody2D>("/root/Main/Player");
         var hitbox = GetNode<Hitbox>("Area2D");
         hitbox.Hit += OnHit;
@@ -21,6 +23,7 @@ public partial class Enemy : CharacterBody2D
     {
         _Movement((float)delta);
         MoveAndSlide();
+        animation.Play("Running");
     }
 
     public void _Movement(float delta)
@@ -30,4 +33,6 @@ public partial class Enemy : CharacterBody2D
         Velocity = Direction * speed;
         
     }
+
+    
 }
