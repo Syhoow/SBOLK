@@ -3,25 +3,30 @@ using System;
 
 public partial class Cam : Camera2D
 {
-    private Vector2 desiredOffset; 
-    private float minOffset = -200f; 
-    private float maxOffset = 200f;
+	private Vector2 desiredOffset; 
+	private float minOffset = -200f; 
+	private float maxOffset = 200f;
 
-    public override void _Ready()
-    {
-        Input.MouseMode = Input.MouseModeEnum.Captured;
-    }
-    public override void _Process(double delta) 
-    { 
-        Input.MouseMode = Input.MouseModeEnum.Confined;
+	public override void _Ready()
+	{
+		Input.MouseMode = Input.MouseModeEnum.Captured;
+	}
+	public override void _Process(double delta) 
+	{ 
+		Input.MouseMode = Input.MouseModeEnum.Confined;
 
-        Node2D player = GetParent().GetNode<Node2D>(".");
+		Node2D player = GetParent().GetNode<Node2D>(".");
 
-        desiredOffset = (GetGlobalMousePosition() - player.GlobalPosition) * 0.5f;
+		desiredOffset = (GetGlobalMousePosition() - player.GlobalPosition) * 0.5f;
 
+<<<<<<< Updated upstream
         desiredOffset.X = Mathf.Clamp(desiredOffset.X, minOffset / 4.0f, maxOffset / 4.0f);
         desiredOffset.Y = Mathf.Clamp(desiredOffset.Y, minOffset / 4.0f, maxOffset / 4.0f);
+=======
+		desiredOffset.X = Mathf.Clamp(desiredOffset.X, minOffset, maxOffset);
+		desiredOffset.Y = Mathf.Clamp(desiredOffset.Y, minOffset / 2.0f, maxOffset / 2.0f);
+>>>>>>> Stashed changes
 
-        GlobalPosition = player.GlobalPosition + desiredOffset;
-    }
+		GlobalPosition = player.GlobalPosition + desiredOffset;
+	}
 }
