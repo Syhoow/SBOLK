@@ -1,0 +1,69 @@
+[gd_scene load_steps=6 format=3 uid="uid://bwmnj0wgaidfv"]
+
+[ext_resource type="Script" uid="uid://cr50faqwcpg0c" path="res://Scripts/Weapons/Gun.cs" id="1_v21tj"]
+[ext_resource type="Texture2D" uid="uid://m38tj1q5yhf4" path="res://Assets/pistol.png" id="2_ui64p"]
+[ext_resource type="Texture2D" uid="uid://bor1tk2nons31" path="res://Assets/rifle.png" id="3_rifle"]
+[ext_resource type="Texture2D" uid="uid://dpa4cjmsfmn3p" path="res://Assets/sniper.png" id="4_sniper"]
+[ext_resource type="Texture2D" uid="uid://deq5nl72e1hfl" path="res://Assets/shotgun.png" id="5_shotgun"]
+
+[node name="gun" type="Node2D"]
+script = ExtResource("1_v21tj")
+
+[node name="PistolNode" type="Node2D" parent="."]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="PistolNode"]
+texture_filter = 1
+position = Vector2(21, -2)
+scale = Vector2(2.8125, 2)
+texture = ExtResource("2_ui64p")
+
+[node name="Marker2D" type="Marker2D" parent="PistolNode"]
+position = Vector2(70, -8)
+
+[node name="SmgNode" type="Node2D" parent="."]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="SmgNode"]
+texture_filter = 1
+position = Vector2(14, -1)
+scale = Vector2(0.979167, 1.13906)
+texture = ExtResource("3_rifle")
+
+[node name="Marker2D" type="Marker2D" parent="SmgNode"]
+position = Vector2(61, -8)
+
+[node name="RifleNode" type="Node2D" parent="."]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="RifleNode"]
+texture_filter = 1
+position = Vector2(3.375, 0)
+scale = Vector2(0.783854, 1.35938)
+texture = ExtResource("3_rifle")
+
+[node name="Marker2D" type="Marker2D" parent="RifleNode"]
+position = Vector2(40, -8)
+
+[node name="SniperNode" type="Node2D" parent="."]
+visible = false
+
+[node name="Sprite2D" type="Sprite2D" parent="SniperNode"]
+texture_filter = 1
+position = Vector2(3.8147e-06, 0)
+scale = Vector2(0.960938, 1.63125)
+texture = ExtResource("4_sniper")
+
+[node name="Marker2D" type="Marker2D" parent="SniperNode"]
+position = Vector2(60, -8)
+
+[node name="ShotgunNode" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="ShotgunNode"]
+texture_filter = 1
+position = Vector2(4.25, -1)
+scale = Vector2(0.890625, 1.95)
+texture = ExtResource("5_shotgun")
+
+[node name="Marker2D" type="Marker2D" parent="ShotgunNode"]
+position = Vector2(55, -3)
