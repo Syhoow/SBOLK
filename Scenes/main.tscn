@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="PackedScene" uid="uid://dgofyav0yw40s" path="res://Scenes/enemy.tscn" id="2_bo1nx"]
-[ext_resource type="Script" path="res://Scripts/UI/WeaponHud.cs" id="3_hud"]
+[ext_resource type="Script" uid="uid://ch6jer42cje0q" path="res://Scripts/UI/WeaponHud.cs" id="3_hud"]
 
 [node name="Main" type="Node2D"]
 
