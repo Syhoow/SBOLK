@@ -7,10 +7,11 @@
 [node name="Main" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_jjgbg")]
-position = Vector2(572, 517)
+position = Vector2(320, 240)
 
 [node name="Enemy" parent="." instance=ExtResource("2_bo1nx")]
 position = Vector2(1029, 753)
+Type = 2
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("3_hud")
@@ -37,3 +38,73 @@ horizontal_alignment = 2
 layout_mode = 2
 text = "Ammo: 12/72"
 horizontal_alignment = 2
+
+[node name="Enemy2" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(809, 821)
+
+[node name="Enemy3" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(983, 836)
+Type = 3
+
+[node name="Enemy4" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(912, 615)
+Type = 1
+
+[node name="Enemy5" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(1029, 634)
+Type = 2
+
+[node name="Enemy6" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(273, 220)
+Type = 1
+
+[node name="Enemy7" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(1058, 306)
+
+[node name="Enemy8" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(317, 859)
+
+[node name="Enemy9" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(512, 126)
+Type = 3
+
+[node name="Enemy10" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(625, 895)
+Type = 1
+
+[node name="Enemy11" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(119, 585)
+
+[node name="Enemy12" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(163, 436)
+
+[node name="Enemy13" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(1068, 420)
+
+[node name="Enemy14" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(213, 553)
+Type = 2
+
+[node name="Enemy15" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(259, 664)
+Type = 2
+
+[node name="Enemy16" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(149, 285)
+Type = 1
+
+[node name="Enemy17" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(721, 168)
+Type = 1
+
+[node name="Enemy18" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(398, 117)
+Type = 2
+
+[node name="Enemy19" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(458, 869)
+Type = 3
+
+[node name="Enemy20" parent="." instance=ExtResource("2_bo1nx")]
+position = Vector2(899, 197)
+Type = 1

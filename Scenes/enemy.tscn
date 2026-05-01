@@ -1,8 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://dgofyav0yw40s"]
+[gd_scene load_steps=8 format=3 uid="uid://dgofyav0yw40s"]
 
 [ext_resource type="Script" uid="uid://c6qo3g5ucgmvy" path="res://Scripts/Enemy.cs" id="1_1f0kj"]
-[ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_hghv2"]
-[ext_resource type="Script" uid="uid://bipoye44d5hpd" path="res://Scripts/Hitbox.cs" id="3_afpow"]
+[ext_resource type="Texture2D" uid="uid://boa7q5bunn5ro" path="res://Assets/enemies.png" id="2_1f0kj"]
 
 [sub_resource type="Animation" id="Animation_287tu"]
 length = 0.001
@@ -70,10 +69,11 @@ _data = {
 radius = 14.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_afpow"]
-radius = 18.0
+radius = 18.1108
 
 [node name="Enemy" type="CharacterBody2D"]
 collision_layer = 2
+collision_mask = 2
 platform_floor_layers = 4294967040
 script = ExtResource("1_1f0kj")
 
@@ -84,17 +84,19 @@ libraries = {
 autoplay = "Running"
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-modulate = Color(1, 0, 0, 1)
+texture_filter = 1
 position = Vector2(0, -10)
-scale = Vector2(0.219, 0.219)
-texture = ExtResource("1_hghv2")
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("2_1f0kj")
+hframes = 10
+frame = 9
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_1f0kj")
 
-[node name="Area2D" type="Area2D" parent="."]
-script = ExtResource("3_afpow")
+[node name="Area2D" type="Area2D" parent="." groups=["enemy"]]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
-visibility_layer = 2
 shape = SubResource("CircleShape2D_afpow")
+
+[connection signal="area_entered" from="Area2D" to="." method="_on_area_2d_area_entered"]
