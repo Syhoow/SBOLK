@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://xjopvvu87wx1"]
+
+[ext_resource type="Script" uid="uid://dr8o8r7wkrxnp" path="res://Arena.cs" id="1_lq7nq"]
+
+[node name="Arena" type="Node2D"]
+script = ExtResource("1_lq7nq")
+
+[node name="TileMapLayer" type="TileMapLayer" parent="."]

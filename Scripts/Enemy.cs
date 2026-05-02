@@ -1,16 +1,18 @@
+using System.Collections;
 using Godot;
 
 public partial class Enemy : CharacterBody2D
 {
-    public enum EnemyType { Basic, Dash, Teleport, Gun }
+    public enum EnemyType { Basic, Dash, Teleport, Gun, Bomb }
 
     [Export] public EnemyType Type = EnemyType.Basic;
 
     protected const float speed = 200;
     protected CharacterBody2D player;
     protected AnimationPlayer animation;
+    private AnimationPlayer impactframe;
     private Sprite2D sprite;
-
+    
     private Vector2 knockback = Vector2.Zero;
     private float kbtimer = 0.0f;
 
@@ -50,13 +52,17 @@ public partial class Enemy : CharacterBody2D
     private float strafeChangeCooldown = 2.0f;
     private float strafeChangeTimer = 0f;
     
+    private float health = 100;
 
-    private int random = (int)GD.RandRange(0, 9);
+    private int random = (int)GD.RandRange(0, 8);
 
     public override void _Ready()
     {
         animation = GetNode<AnimationPlayer>("AnimationPlayer");
+        impactframe = GetNode<AnimationPlayer>("Impact");
         player = GetNode<CharacterBody2D>("/root/Main/Player");
+        impactframe.Stop();
+        impactframe.Seek(0, true);
         animation.Play("Running");
         animation.Seek((float)GD.RandRange(0, animation.CurrentAnimationLength), true);
         sprite = GetNode<Sprite2D>("Sprite2D");
@@ -91,6 +97,11 @@ public partial class Enemy : CharacterBody2D
                 sprite.FlipH = false;
             }
         }
+
+        if(health <= 0)
+        {
+            QueueFree();
+        }
         
     }
 
@@ -101,7 +112,6 @@ public partial class Enemy : CharacterBody2D
             case EnemyType.Gun:
                 
                 sprite.Frame = random;
-                animation.Stop();
                 float dist = Position.DistanceTo(player.Position);
                 Vector2 toPlayer = (player.Position - Position).Normalized();
                 Vector2 perpendicular = new Vector2(-toPlayer.Y, toPlayer.X); // sideways direction
@@ -159,20 +169,28 @@ public partial class Enemy : CharacterBody2D
                     Velocity -= Velocity * enemyFriction * delta;
                 }
                 break;
-                default:
-                    if (Type == EnemyType.Basic)
-                    {
-                        sprite.Frame = random;
-                    }
+
+            case EnemyType.Bomb:
+                
+                sprite.Frame = 9;
+                var directionbomb = (player.Position - Position).Normalized();
+                Velocity = directionbomb * speed * 2;
+                break;
+
+            default:
+                if (Type == EnemyType.Basic)
+                {
+                    sprite.Frame = random;
+                }
                         
-                    if (isTeleportingWindup)
-                    {
-                        // Stop moving during windup
-                        Velocity = Velocity.MoveToward(Vector2.Zero, speed);
-                        break;
-                    }
-                    var direction = (player.Position - Position).Normalized();
-                    Velocity = direction * speed;
+                if (isTeleportingWindup)
+                {
+                    // Stop moving during windup
+                    Velocity = Velocity.MoveToward(Vector2.Zero, speed);
+                    break;
+                }
+                var direction = (player.Position - Position).Normalized();
+                Velocity = direction * speed;
                     break;
         }
     }
@@ -270,11 +288,21 @@ public partial class Enemy : CharacterBody2D
             Vector2 knockbackDirection = (area.GlobalPosition - GlobalPosition).Normalized();
             Player player = area.GetParent<Player>();
             player.ApplyKnockback(knockbackDirection, 500.0f, .15f);
+
+            if(Type == EnemyType.Bomb)
+            {
+                player.ApplyKnockback(knockbackDirection, 2000.0f, .15f);
+                QueueFree();
+            }
             
         }
         if(area.IsInGroup("bullet"))
         {
-            GD.Print("enemy got damaged");
+            health -= 20;
+            impactframe.Stop();
+            impactframe.Seek(0, true);
+            impactframe.Play("impact");
+            GD.Print("enemy got damaged"+health);
         }
     }
 }
