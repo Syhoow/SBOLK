@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_v0iea"]
 [ext_resource type="Script" uid="uid://b8bkd4yk65xuc" path="res://Scripts/Cam.cs" id="3_6t5aa"]
 [ext_resource type="Script" uid="uid://bipoye44d5hpd" path="res://Scripts/Hitbox.cs" id="4_vgqql"]
-[ext_resource type="PackedScene" uid="uid://b5p5b4v78t7px" path="res://Scenes/pistol.tscn" id="5_fkybt"]
+[ext_resource type="PackedScene" uid="uid://bwmnj0wgaidfv" path="res://Scenes/pistol.tscn" id="5_fkybt"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_cvnsp"]
 radius = 14.0357
@@ -37,3 +37,4 @@ script = ExtResource("4_vgqql")
 shape = SubResource("CircleShape2D_6t5aa")
 
 [node name="Gun" parent="." instance=ExtResource("5_fkybt")]
+position = Vector2(0, -2)

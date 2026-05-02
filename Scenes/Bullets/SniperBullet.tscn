@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://d25sw276hkui"]
+
+[ext_resource type="Script" uid="uid://cqbb1fv5nvgw2" path="res://Scripts/Weapons/Bullets/SniperBullet.cs" id="1_bullet"]
+[ext_resource type="Texture2D" uid="uid://b7d0fq4dgewc4" path="res://Assets/01.png" id="2_tex"]
+
+[node name="SniperBullet" type="Node2D"]
+script = ExtResource("1_bullet")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(2.05001, 2)
+scale = Vector2(1.33254, 1.09091)
+texture = ExtResource("2_tex")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+position = Vector2(5, 2.99999)
+scale = Vector2(8.6, 8.5)

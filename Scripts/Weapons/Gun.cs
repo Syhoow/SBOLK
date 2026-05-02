@@ -9,8 +9,6 @@ public partial class Gun : Node2D
     [Signal]
     public delegate void AmmoChangedEventHandler(int ammoInMagazine, int ammoInReserve);
 
-    private const float DefaultBulletLifeSeconds = 2.0f;
-
     [ExportGroup("Weapon Textures")]
     [Export] private Texture2D _pistolTexture;
     [Export] private Texture2D _smgTexture;
@@ -22,8 +20,8 @@ public partial class Gun : Node2D
     private readonly Dictionary<WeaponType, int> _ammoInMagazine = new();
     private readonly Dictionary<WeaponType, int> _ammoInReserve = new();
     private readonly Dictionary<WeaponType, Node2D> _weaponNodes = new();
+    private readonly Dictionary<WeaponType, PackedScene> _bulletScenes = new();
 
-    private PackedScene _bulletScene;
     private Marker2D _muzzle;
     private Sprite2D _sprite;
 
@@ -42,20 +40,22 @@ public partial class Gun : Node2D
 
     public override void _Ready()
     {
-        _bulletScene = GD.Load<PackedScene>("res://Scenes/bullet.tscn");
-
-        if (_bulletScene == null)
-        {
-            GD.PushError("Could not load res://Scenes/bullet.tscn.");
-            return;
-        }
-
         CacheWeaponNodes();
         BuildWeaponTable();
         InitializeAmmoPools();
+        LoadBulletScenes();
         LoadWeaponTexturesFromAssets();
         ApplyWeaponVisual(_currentWeapon);
         BroadcastWeaponState();
+    }
+
+    private void LoadBulletScenes()
+    {
+        _bulletScenes[WeaponType.Pistol] = GD.Load<PackedScene>("res://Scenes/Bullets/PistolBullet.tscn");
+        _bulletScenes[WeaponType.Smg] = GD.Load<PackedScene>("res://Scenes/Bullets/SmgBullet.tscn");
+        _bulletScenes[WeaponType.Rifle] = GD.Load<PackedScene>("res://Scenes/Bullets/RifleBullet.tscn");
+        _bulletScenes[WeaponType.Sniper] = GD.Load<PackedScene>("res://Scenes/Bullets/SniperBullet.tscn");
+        _bulletScenes[WeaponType.Shotgun] = GD.Load<PackedScene>("res://Scenes/Bullets/ShotgunBullet.tscn");
     }
 
     private void CacheWeaponNodes()
@@ -120,7 +120,13 @@ public partial class Gun : Node2D
             bulletSpeed: 700f,
             spreadDegrees: 1.5f,
             pelletsPerShot: 1,
-            isAutomatic: false);
+            isAutomatic: false,
+            bulletLifetime: 1.4f,
+            bulletScale: 1.0f,
+            bulletGravity: 0f,
+            bulletDrag: 0.02f,
+            bulletSpinDegreesPerSecond: 0f,
+            bulletTint: new Color(1f, 1f, 1f, 1f));
 
         _weaponTable[WeaponType.Smg] = new WeaponStats(
             type: WeaponType.Smg,
@@ -131,7 +137,13 @@ public partial class Gun : Node2D
             bulletSpeed: 620f,
             spreadDegrees: 4.5f,
             pelletsPerShot: 1,
-            isAutomatic: true);
+            isAutomatic: true,
+            bulletLifetime: 1.0f,
+            bulletScale: 0.85f,
+            bulletGravity: 0f,
+            bulletDrag: 0.05f,
+            bulletSpinDegreesPerSecond: 180f,
+            bulletTint: new Color(0.82f, 1f, 0.82f, 1f));
 
         _weaponTable[WeaponType.Rifle] = new WeaponStats(
             type: WeaponType.Rifle,
@@ -142,7 +154,13 @@ public partial class Gun : Node2D
             bulletSpeed: 900f,
             spreadDegrees: 2.0f,
             pelletsPerShot: 1,
-            isAutomatic: true);
+            isAutomatic: true,
+            bulletLifetime: 1.8f,
+            bulletScale: 1.05f,
+            bulletGravity: 0f,
+            bulletDrag: 0.01f,
+            bulletSpinDegreesPerSecond: 0f,
+            bulletTint: new Color(0.8f, 0.92f, 1f, 1f));
 
         _weaponTable[WeaponType.Sniper] = new WeaponStats(
             type: WeaponType.Sniper,
@@ -153,7 +171,13 @@ public partial class Gun : Node2D
             bulletSpeed: 1400f,
             spreadDegrees: 0.35f,
             pelletsPerShot: 1,
-            isAutomatic: false);
+            isAutomatic: false,
+            bulletLifetime: 3.0f,
+            bulletScale: 0.7f,
+            bulletGravity: 0f,
+            bulletDrag: 0f,
+            bulletSpinDegreesPerSecond: 0f,
+            bulletTint: new Color(1f, 0.95f, 0.75f, 1f));
 
         _weaponTable[WeaponType.Shotgun] = new WeaponStats(
             type: WeaponType.Shotgun,
@@ -164,7 +188,13 @@ public partial class Gun : Node2D
             bulletSpeed: 600f,
             spreadDegrees: 12.0f,
             pelletsPerShot: 8,
-            isAutomatic: false);
+            isAutomatic: false,
+            bulletLifetime: 0.8f,
+            bulletScale: 1.2f,
+            bulletGravity: 220f,
+            bulletDrag: 0.12f,
+            bulletSpinDegreesPerSecond: -90f,
+            bulletTint: new Color(1f, 0.85f, 0.85f, 1f));
     }
 
     private void InitializeAmmoPools()
@@ -183,8 +213,9 @@ public partial class Gun : Node2D
         var wrappedDegrees = Mathf.Wrap(RotationDegrees, 0f, 360f);
         RotationDegrees = wrappedDegrees;
 
+        var flip = (wrappedDegrees > 90f && wrappedDegrees < 270f) ? -1f : 1f;
         var scaled = Scale;
-        scaled.Y = (wrappedDegrees > 90f && wrappedDegrees < 270f) ? -Mathf.Abs(scaled.Y) : Mathf.Abs(scaled.Y);
+        scaled.Y = Mathf.Abs(scaled.Y) * flip;
         Scale = scaled;
     }
 
@@ -260,19 +291,25 @@ public partial class Gun : Node2D
             return;
         }
 
-        FireCurrentWeapon(stats);
+        if (!_bulletScenes.TryGetValue(_currentWeapon, out var bulletScene) || bulletScene == null)
+        {
+            GD.PushError($"No bullet scene assigned for {_currentWeapon}.");
+            return;
+        }
+
+        FireCurrentWeapon(stats, bulletScene);
     }
 
-    private void FireCurrentWeapon(WeaponStats stats)
+    private void FireCurrentWeapon(WeaponStats stats, PackedScene bulletScene)
     {
-        if (_bulletScene == null || _muzzle == null)
+        if (_muzzle == null || bulletScene == null)
         {
             return;
         }
 
         for (var pelletIndex = 0; pelletIndex < stats.PelletsPerShot; pelletIndex++)
         {
-            SpawnBullet(stats);
+            SpawnBullet(stats, bulletScene);
         }
 
         _ammoInMagazine[_currentWeapon] -= 1;
@@ -281,7 +318,7 @@ public partial class Gun : Node2D
         EmitSignal(SignalName.AmmoChanged, _ammoInMagazine[_currentWeapon], _ammoInReserve[_currentWeapon]);
     }
 
-    private void SpawnBullet(WeaponStats stats)
+    private void SpawnBullet(WeaponStats stats, PackedScene bulletScene)
     {
         var spreadOffset = stats.PelletsPerShot <= 1
             ? 0f
@@ -289,11 +326,19 @@ public partial class Gun : Node2D
 
         var direction = _muzzle.GlobalTransform.X.Rotated(spreadOffset).Normalized();
 
-        var bullet = _bulletScene.Instantiate<Bullet>();
+        var bullet = bulletScene.Instantiate<Bullet>();
         GetTree().CurrentScene.AddChild(bullet);
 
         bullet.GlobalPosition = _muzzle.GlobalPosition;
-        bullet.Initialize(stats.BulletSpeed, DefaultBulletLifeSeconds, direction);
+        bullet.Initialize(
+            speed: stats.BulletSpeed,
+            lifeSeconds: stats.BulletLifetime,
+            direction: direction,
+            scale: stats.BulletScale,
+            gravity: stats.BulletGravity,
+            drag: stats.BulletDrag,
+            spinDegreesPerSecond: stats.BulletSpinDegreesPerSecond,
+            tint: stats.BulletTint);
     }
 
     private void StartReload()

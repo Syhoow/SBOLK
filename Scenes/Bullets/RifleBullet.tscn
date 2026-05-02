@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://cmlymq23nmg3a"]
+
+[ext_resource type="Script" uid="uid://dhq5qmlx3nj1j" path="res://Scripts/Weapons/Bullets/RifleBullet.cs" id="1_bullet"]
+[ext_resource type="Texture2D" uid="uid://b7d0fq4dgewc4" path="res://Assets/01.png" id="2_tex"]
+
+[node name="RifleBullet" type="Node2D"]
+script = ExtResource("1_bullet")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(1, 0.45)
+texture = ExtResource("2_tex")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+scale = Vector2(0.35, 0.2)

@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://6oc8a0hstfka"]
+
+[ext_resource type="Script" uid="uid://bjb0ffcl6e07" path="res://Scripts/Weapons/Bullets/SmgBullet.cs" id="1_bullet"]
+[ext_resource type="Texture2D" uid="uid://b7d0fq4dgewc4" path="res://Assets/01.png" id="2_tex"]
+
+[node name="SmgBullet" type="Node2D"]
+script = ExtResource("1_bullet")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("2_tex")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+scale = Vector2(0.28, 0.28)
