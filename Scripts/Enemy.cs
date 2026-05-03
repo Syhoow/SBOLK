@@ -7,7 +7,7 @@ public partial class Enemy : CharacterBody2D
 
     [Export] public EnemyType Type = EnemyType.Basic;
 
-    protected const float speed = 200;
+    protected const float speed = 300;
     protected CharacterBody2D player;
     protected AnimationPlayer animation;
     private AnimationPlayer impactframe;
@@ -66,9 +66,15 @@ public partial class Enemy : CharacterBody2D
         animation.Play("Running");
         animation.Seek((float)GD.RandRange(0, animation.CurrentAnimationLength), true);
         sprite = GetNode<Sprite2D>("Sprite2D");
+
+        if(Type == EnemyType.Basic)
+        {
+            CollisionLayer = 3|4;
+            CollisionMask = 3|4;
+        }
     }
 
-    public override void _PhysicsProcess(double delta)
+    public override void _Process(double delta)
     {
         float dt = (float)delta;
 
@@ -86,16 +92,19 @@ public partial class Enemy : CharacterBody2D
         MoveAndSlide();
         _HandleTypeBehavior(dt);
 
-        if(Type != EnemyType.Gun)
+        if (Type == EnemyType.Gun)
+        {
+            if (player.Position.X > Position.X)
+                sprite.FlipH = true;
+            else
+                sprite.FlipH = false;
+        }
+        else
         {
             if (Velocity.X > 0)
-            {
                 sprite.FlipH = true;
-            }
             else if (Velocity.X < 0)
-            {
                 sprite.FlipH = false;
-            }
         }
 
         if(health <= 0)

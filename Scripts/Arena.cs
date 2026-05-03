@@ -77,7 +77,7 @@ public partial class Arena : TileMapLayer
             }
         }
 
-        CreateKillZone();
+        //CreateKillZone();
     }
 
     private void CreateKillZone()
