@@ -1,50 +1,52 @@
-[gd_scene load_steps=4 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=5 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="PackedScene" uid="uid://dgofyav0yw40s" path="res://Scenes/enemy.tscn" id="2_bo1nx"]
 [ext_resource type="Script" uid="uid://ch6jer42cje0q" path="res://Scripts/UI/WeaponHud.cs" id="3_hud"]
+[ext_resource type="PackedScene" uid="uid://xjopvvu87wx1" path="res://Scenes/arena.tscn" id="4_jjvhh"]
 
 [node name="Main" type="Node2D"]
 
+[node name="Arena" parent="." instance=ExtResource("4_jjvhh")]
+
 [node name="Player" parent="." instance=ExtResource("1_jjgbg")]
-position = Vector2(320, 240)
 
 [node name="Enemy" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(-376, 280)
+position = Vector2(472, 328)
 
 [node name="Enemy2" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(-280, 8)
+position = Vector2(72, 232)
 Type = 1
 
 [node name="Enemy3" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(304, -96)
+position = Vector2(408, 160)
 Type = 2
 
 [node name="Enemy4" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(-56, 616)
+position = Vector2(400, 416)
 Type = 3
 
 [node name="Enemy5" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(-256, 512)
+position = Vector2(312, 520)
 Type = 4
 
 [node name="Enemy6" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(768, 64)
+position = Vector2(560, 232)
 
 [node name="Enemy7" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(224, 640)
+position = Vector2(120, 312)
 Type = 1
 
 [node name="Enemy8" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(776, 240)
+position = Vector2(648, 304)
 Type = 2
 
 [node name="Enemy9" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(560, 600)
+position = Vector2(528, 448)
 Type = 3
 
 [node name="Enemy10" parent="." instance=ExtResource("2_bo1nx")]
-position = Vector2(696, 392)
+position = Vector2(624, 392)
 Type = 4
 
 [node name="HUD" type="CanvasLayer" parent="."]

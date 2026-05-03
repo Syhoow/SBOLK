@@ -68,7 +68,7 @@ public partial class Enemy : CharacterBody2D
         sprite = GetNode<Sprite2D>("Sprite2D");
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         float dt = (float)delta;
 
