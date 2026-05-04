@@ -54,4 +54,5 @@ texture_filter = 1
 scale = Vector2(1.5, 1.5)
 tile_set = SubResource("TileSet_1v1nj")
 script = ExtResource("2_3gm2d")
-ArenaHeight = 20
+ArenaWidth = 100
+ArenaHeight = 15

@@ -54,6 +54,10 @@ public partial class Enemy : CharacterBody2D
     
     private float health = 100;
 
+    private float spawnTimer = 0f;
+    private float spawnDuration = 1f;
+    private bool isspawning = true;
+
     private int random = (int)GD.RandRange(0, 8);
 
     public override void _Ready()
@@ -66,6 +70,18 @@ public partial class Enemy : CharacterBody2D
         animation.Play("Running");
         animation.Seek((float)GD.RandRange(0, animation.CurrentAnimationLength), true);
         sprite = GetNode<Sprite2D>("Sprite2D");
+
+        switch (Type)
+        {
+            case EnemyType.Bomb:
+                sprite.Frame = 9;
+                CollisionLayer = 3|4;
+                CollisionMask = 3|4;
+                break;
+            default:
+                sprite.Frame = random;
+                break;
+        }
 
         if(Type == EnemyType.Basic)
         {
@@ -86,7 +102,16 @@ public partial class Enemy : CharacterBody2D
         }
         else
         {
-            _Movement(dt);
+            spawnTimer += (float)delta;
+            if(spawnTimer >= spawnDuration)
+            {
+                _Movement(dt);
+            }
+            else
+            {
+                Velocity -= Velocity * enemyFriction * dt;
+            }
+            
         }
 
         MoveAndSlide();
@@ -120,7 +145,6 @@ public partial class Enemy : CharacterBody2D
         {
             case EnemyType.Gun:
                 
-                sprite.Frame = random;
                 float dist = Position.DistanceTo(player.Position);
                 Vector2 toPlayer = (player.Position - Position).Normalized();
                 Vector2 perpendicular = new Vector2(-toPlayer.Y, toPlayer.X); // sideways direction
@@ -157,13 +181,11 @@ public partial class Enemy : CharacterBody2D
 
             case EnemyType.Dash:
 
-                sprite.Frame = random;
-
                 Vector2 chaseDirection = (player.Position - Position).Normalized();
 
                 if (isDashing)
                 {
-                    Velocity += dashDirection * enemyAcceleration * delta * 6f;
+                    Velocity += dashDirection * enemyAcceleration * delta * 5f;
                     Velocity = Velocity.LimitLength(dashSpeed);
                 }
                 else if (isPaused || isWindingUp)
@@ -180,17 +202,12 @@ public partial class Enemy : CharacterBody2D
                 break;
 
             case EnemyType.Bomb:
-                
-                sprite.Frame = 9;
+
                 var directionbomb = (player.Position - Position).Normalized();
-                Velocity = directionbomb * speed * 2;
+                Velocity = directionbomb * speed * 1.2f;
                 break;
 
             default:
-                if (Type == EnemyType.Basic)
-                {
-                    sprite.Frame = random;
-                }
                         
                 if (isTeleportingWindup)
                 {
@@ -257,8 +274,6 @@ public partial class Enemy : CharacterBody2D
 
             case EnemyType.Teleport:
 
-                sprite.Frame = random;
-
                 if (isTeleportingWindup)
                 {
                     teleportWindupTimer -= delta;
@@ -300,14 +315,14 @@ public partial class Enemy : CharacterBody2D
 
             if(Type == EnemyType.Bomb)
             {
-                player.ApplyKnockback(knockbackDirection, 2000.0f, .15f);
+                player.ApplyKnockback(knockbackDirection, 1000.0f, .15f);
                 QueueFree();
             }
             
         }
         if(area.IsInGroup("bullet"))
         {
-            health -= 20;
+            health -= 50;
             impactframe.Stop();
             impactframe.Seek(0, true);
             impactframe.Play("impact");

@@ -1,16 +1,21 @@
-[gd_scene load_steps=6 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=7 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
-[ext_resource type="Script" uid="uid://blg4238v2bya1" path="res://Scenes/GameControl.cs" id="1_kry3j"]
+[ext_resource type="Script" uid="uid://b07jumtx2yqpp" path="res://Scripts/GameControl.cs" id="1_jjvhh"]
 [ext_resource type="PackedScene" uid="uid://dgofyav0yw40s" path="res://Scenes/enemy.tscn" id="2_bo1nx"]
+[ext_resource type="PackedScene" uid="uid://dbg3enmep1tif" path="res://Scenes/marker.tscn" id="3_21xkr"]
 [ext_resource type="Script" uid="uid://ch6jer42cje0q" path="res://Scripts/UI/WeaponHud.cs" id="3_hud"]
 [ext_resource type="PackedScene" uid="uid://bbpe25af124d7" path="res://Scenes/arena.tscn" id="4_jjvhh"]
 
 [node name="Main" type="Node2D"]
-script = ExtResource("1_kry3j")
+script = ExtResource("1_jjvhh")
 EnemyScene = ExtResource("2_bo1nx")
+Marker = ExtResource("3_21xkr")
+MaxEnemies = 5
 
 [node name="Arena" parent="." instance=ExtResource("4_jjvhh")]
+ArenaWidth = 20
+ArenaHeight = 20
 
 [node name="Player" parent="." instance=ExtResource("1_jjgbg")]
 

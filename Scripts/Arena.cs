@@ -4,7 +4,9 @@ public partial class Arena : TileMapLayer
 {
     [Export] public int ArenaWidth = 20;
     [Export] public int ArenaHeight = 12;
-    
+    public float isoutsideDuration = 3f;
+    public float isoutsideTimer = 0f;
+    public bool isOutside = false;
 
     private const int SourceId = 1;
     private Vector2I FloorTile = new Vector2I(1, 1);
@@ -14,6 +16,25 @@ public partial class Arena : TileMapLayer
     {
         Instance = this;
         GenerateArena();
+    }
+
+    public override void _Process(double delta)
+    {
+        if(isOutside)
+        {
+            Modulate = new Color(1f, 0f, 0f);
+            isoutsideTimer -= (float)delta;
+            GD.Print(isoutsideTimer);
+            
+            if(isoutsideTimer <= 0f)
+            {
+                isOutside = false;
+                isoutsideTimer = 0f;
+                GD.Print("player out!");
+            }
+            
+
+        }
     }
 
     private void GenerateArena()
@@ -77,7 +98,7 @@ public partial class Arena : TileMapLayer
             }
         }
 
-        //CreateKillZone();
+        CreateKillZone();
     }
 
     private void CreateKillZone()
@@ -96,13 +117,27 @@ public partial class Arena : TileMapLayer
         AddChild(killZone);
 
         killZone.BodyExited += OnBodyExitedArena;
+        killZone.BodyEntered += OnBodyEnteredArena;
     }
 
     private void OnBodyExitedArena(Node2D body)
     {
-        if (body is Player player)
+        if (body is Player)
         {
-            player.GlobalPosition = new Vector2(ArenaWidth * 25f / 2, ArenaHeight * 25f / 2);
+            isOutside = true;
+            isoutsideTimer = isoutsideDuration;
+        }
+    }
+
+    private void OnBodyEnteredArena(Node2D body)
+    {
+        if (body is Player)
+        {
+            isOutside = false;
+            isoutsideTimer = 0f;
+            Modulate = new Color(1f, 1f, 1f);
         }
     }
 }
+        
+    

@@ -10,7 +10,7 @@ public partial class Bullet : Node2D
     {
     }
 
-    public override void _Process(double delta)
+    public override void _PhysicsProcess(double delta)
     {
         var dt = (float)delta;
 

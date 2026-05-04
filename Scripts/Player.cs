@@ -3,31 +3,35 @@ using System;
 
 public partial class Player : CharacterBody2D
 {
-
 	private const float speed = 500;
 	private const float dashspeed = 1000;
 	private const float acceleration = 5000;
 	private const float friction = acceleration/speed;
 	private bool isDashing = false;
+	public bool isInvisible = false;
+	private float dashDisabledDuration = 0.5f;
+	private float dashDisabledTimer = 0f;
 	private float dashDuration = 0.2f;
 	private float dashTimer = 0f;
-	private float dashCooldown = 5f;
+	private float dashCooldown = 0.5f;
 	private float dashCooldownTimer = 0f;
 	private Vector2 dashDirection;
 	private Vector2 knockback = Vector2.Zero;
-    private float kbtimer = 0.0f;
-	
+	private float kbtimer = 0.0f;
+	private CollisionShape2D hitbox;
+	public CollisionShape2D wallcollision;
+	private float health = 100f;
 
 	public override void _Ready()
 	{
-
+		hitbox = GetNode<CollisionShape2D>("Area2D/CollisionShape2D");
+		wallcollision = GetNode<CollisionShape2D>("CollisionShape2D");
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
 		float dt = (float)delta;
 
-		// tick cooldown
 		if (dashCooldownTimer > 0f) dashCooldownTimer -= dt;
 
 		if (kbtimer > 0.0f)
@@ -44,7 +48,6 @@ public partial class Player : CharacterBody2D
 		if (!isDashing)
 			_Friction(dt);
 
-		// tick dash duration
 		if (isDashing)
 		{
 			dashTimer -= dt;
@@ -52,59 +55,71 @@ public partial class Player : CharacterBody2D
 			if (dashTimer <= 0f) isDashing = false;
 		}
 
+		if (isInvisible)
+		{
+			dashDisabledTimer -= dt;
+			hitbox.Disabled = true;
+			if (dashDisabledTimer <= 0f)
+			{
+				isInvisible = false;
+				hitbox.Disabled = false;
+				CollisionMask |= (1u << 2); // re-enable layer 3
+			}
+		}
+
 		MoveAndSlide();
 	}
 
 	public void _Movements(float delta)
 	{
-		var velocity = Velocity;
-		Velocity = velocity;
+		bool outsideArena = Arena.Instance != null && Arena.Instance.isOutside;
 
 		var Direction = new Vector2();
-		Direction = Direction.Normalized();
 
-		if(Input.IsActionPressed("ui_up"))
+		if (!outsideArena)
 		{
-			Direction.Y -= 1;
-		}
-		if(Input.IsActionPressed("ui_down"))
-		{
-			Direction.Y += 1;
-		}
-		if(Input.IsActionPressed("ui_left"))
-		{
-			Direction.X -= 1;
-		}
-		if(Input.IsActionPressed("ui_right"))
-		{
-			Direction.X += 1;
-		}
-		if (Input.IsActionJustPressed("ui_accept") && dashCooldownTimer <= 0f && !isDashing)
-		{
-			isDashing = true;
-			dashTimer = dashDuration;
-			dashCooldownTimer = dashCooldown;
-			dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
+			if(Input.IsActionPressed("ui_up")) Direction.Y -= 1;
+			if(Input.IsActionPressed("ui_down")) Direction.Y += 1;
+			if(Input.IsActionPressed("ui_left")) Direction.X -= 1;
+			if(Input.IsActionPressed("ui_right")) Direction.X += 1;
+
+			if (Input.IsActionJustPressed("ui_accept") && dashCooldownTimer <= 0f && !isDashing)
+			{
+				isDashing = true;
+				isInvisible = true;
+				dashTimer = dashDuration;
+				dashDisabledTimer = dashDisabledDuration;
+				dashCooldownTimer = dashCooldown;
+				dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
+				CollisionMask &= ~(1u << 2); // disable only layer 3
+			}
 		}
 
-    	if (!isDashing)
-		{
+		if (!isDashing)
 			Velocity += Direction * acceleration * delta;
-		}
-        
-
-		
-
 	}
 
 	public void ApplyKnockback(Vector2 direction, float force, float duration)
-    {
-        knockback = direction * force;
-        kbtimer = duration;
-    }
+	{
+		knockback = direction * force;
+		kbtimer = duration;
+	}
 
 	public void _Friction(float delta)
 	{
 		Velocity -= Velocity * friction * delta;
+	}
+
+	private void _on_area_2d_area_entered(Area2D area)
+	{
+		if(area.IsInGroup("enemy"))
+		{
+			health -= 10f;
+			if (health <= 0f)
+			{
+				QueueFree();
+				GD.Print("Player has died!");
+			}
+		}
 	}
 }
