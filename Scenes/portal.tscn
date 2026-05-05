@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://c4h4bhx5ca67g"]
+
+[ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_j20fm"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_344ge"]
+radius = 40.0
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.75, 0.75)
+texture = ExtResource("1_j20fm")
+
+[node name="Area2D" type="Area2D" parent="." groups=["portal"]]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_344ge")

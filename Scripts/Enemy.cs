@@ -7,7 +7,7 @@ public partial class Enemy : CharacterBody2D
 
     [Export] public EnemyType Type = EnemyType.Basic;
 
-    protected const float speed = 300;
+    protected const float speed = 250;
     protected CharacterBody2D player;
     protected AnimationPlayer animation;
     private AnimationPlayer impactframe;
@@ -44,7 +44,7 @@ public partial class Enemy : CharacterBody2D
     private bool isTeleportingWindup = false;
 
     // Gun
-    private float preferredDistance = 300f;
+    private float preferredDistance = 200f;
     private float pushDistance = 150f;
     private float strafeTimer = 0f;
     private float strafeDuration = 1.5f;
@@ -64,7 +64,7 @@ public partial class Enemy : CharacterBody2D
     {
         animation = GetNode<AnimationPlayer>("AnimationPlayer");
         impactframe = GetNode<AnimationPlayer>("Impact");
-        player = GetNode<CharacterBody2D>("/root/Main/Player");
+        player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
         impactframe.Stop();
         impactframe.Seek(0, true);
         animation.Play("Running");

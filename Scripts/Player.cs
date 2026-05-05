@@ -21,11 +21,16 @@ public partial class Player : CharacterBody2D
 	private CollisionShape2D hitbox;
 	public CollisionShape2D wallcollision;
 	private float health = 100f;
+	private ProgressBar healthBar;
+	private Arena arena;
 
 	public override void _Ready()
 	{
 		hitbox = GetNode<CollisionShape2D>("Area2D/CollisionShape2D");
 		wallcollision = GetNode<CollisionShape2D>("CollisionShape2D");
+		healthBar = GetNode<ProgressBar>("/root/Main/HUD/Health");
+		arena = GetNode<Arena>("/root/Main/ArenaLayer/Arena");
+		healthBar.Value = health;
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -46,7 +51,13 @@ public partial class Player : CharacterBody2D
 		}
 
 		if (!isDashing)
-			_Friction(dt);
+		{
+			bool outsideArena = Arena.Instance != null && Arena.Instance.isOutside;
+			if (outsideArena)
+				Velocity = Velocity.LimitLength(200f); // slow but no friction
+			else
+				_Friction(dt);
+		}
 
 		if (isDashing)
 		{
@@ -82,8 +93,7 @@ public partial class Player : CharacterBody2D
 			if(Input.IsActionPressed("ui_down")) Direction.Y += 1;
 			if(Input.IsActionPressed("ui_left")) Direction.X -= 1;
 			if(Input.IsActionPressed("ui_right")) Direction.X += 1;
-
-			if (Input.IsActionJustPressed("ui_accept") && dashCooldownTimer <= 0f && !isDashing)
+			if (Input.IsActionJustPressed("dash") && dashCooldownTimer <= 0f && !isDashing)
 			{
 				isDashing = true;
 				isInvisible = true;
@@ -114,12 +124,17 @@ public partial class Player : CharacterBody2D
 	{
 		if(area.IsInGroup("enemy"))
 		{
-			health -= 10f;
+			health -= 5f;
+			healthBar.Value = health;
 			if (health <= 0f)
 			{
 				QueueFree();
 				GD.Print("Player has died!");
 			}
+		}
+		if(area.IsInGroup("portal"))
+		{
+			GD.Print("Entered Portal");
 		}
 	}
 }

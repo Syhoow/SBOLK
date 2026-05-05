@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=9 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="Script" uid="uid://b07jumtx2yqpp" path="res://Scripts/GameControl.cs" id="1_jjvhh"]
@@ -6,24 +6,35 @@
 [ext_resource type="PackedScene" uid="uid://dbg3enmep1tif" path="res://Scenes/marker.tscn" id="3_21xkr"]
 [ext_resource type="Script" uid="uid://ch6jer42cje0q" path="res://Scripts/UI/WeaponHud.cs" id="3_hud"]
 [ext_resource type="PackedScene" uid="uid://bbpe25af124d7" path="res://Scenes/arena.tscn" id="4_jjvhh"]
+[ext_resource type="PackedScene" uid="uid://c3vlqf5llactm" path="res://Scenes/background.tscn" id="5_344ge"]
+[ext_resource type="PackedScene" uid="uid://c4h4bhx5ca67g" path="res://Scenes/portal.tscn" id="7_6bp64"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_jjvhh")
 EnemyScene = ExtResource("2_bo1nx")
 Marker = ExtResource("3_21xkr")
-MaxEnemies = 5
+Portal = ExtResource("7_6bp64")
+MaxEnemies = 100
 
-[node name="Arena" parent="." instance=ExtResource("4_jjvhh")]
-ArenaWidth = 20
-ArenaHeight = 20
+[node name="BackgroundLayer" type="CanvasLayer" parent="."]
 
-[node name="Player" parent="." instance=ExtResource("1_jjgbg")]
+[node name="Control" parent="BackgroundLayer" instance=ExtResource("5_344ge")]
 
-[node name="EnemySpawn" type="CanvasLayer" parent="."]
+[node name="ArenaLayer" type="CanvasLayer" parent="."]
+follow_viewport_enabled = true
+
+[node name="Arena" parent="ArenaLayer" instance=ExtResource("4_jjvhh")]
+ArenaHeight = 100
+
+[node name="Player" parent="ArenaLayer" instance=ExtResource("1_jjgbg")]
+position = Vector2(480, 272)
+
+[node name="EnemyLayer" type="CanvasLayer" parent="."]
 follow_viewport_enabled = true
 
 [node name="HUD" type="CanvasLayer" parent="."]
 script = ExtResource("3_hud")
+GunPath = NodePath("../ArenaLayer/Player/Gun")
 
 [node name="MarginContainer" type="MarginContainer" parent="HUD"]
 anchors_preset = 1
@@ -47,3 +58,16 @@ horizontal_alignment = 2
 layout_mode = 2
 text = "Ammo: 12/72"
 horizontal_alignment = 2
+
+[node name="Goal" type="ProgressBar" parent="HUD"]
+offset_left = 192.0
+offset_top = 16.0
+offset_right = 768.0
+offset_bottom = 43.0
+max_value = 300.0
+
+[node name="Health" type="ProgressBar" parent="HUD"]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 112.0
+offset_bottom = 43.0

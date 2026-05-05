@@ -290,7 +290,8 @@ public partial class Gun : Node2D
         var direction = _muzzle.GlobalTransform.X.Rotated(spreadOffset).Normalized();
 
         var bullet = _bulletScene.Instantiate<Bullet>();
-        GetTree().CurrentScene.AddChild(bullet);
+        var canvasLayer = GetTree().Root.GetNode<CanvasLayer>("Main/ArenaLayer");
+        canvasLayer.AddChild(bullet);
 
         bullet.GlobalPosition = _muzzle.GlobalPosition;
         bullet.Initialize(stats.BulletSpeed, DefaultBulletLifeSeconds, direction);
