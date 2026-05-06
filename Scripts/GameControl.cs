@@ -2,6 +2,7 @@ using Godot;
 
 public partial class GameControl : Node2D
 {
+    public static GameControl Instance;
     [Export] public PackedScene EnemyScene;
     [Export] public PackedScene Marker;
     [Export] public PackedScene Portal;
@@ -12,7 +13,7 @@ public partial class GameControl : Node2D
     public float currentGoal = 0;
     private CharacterBody2D player;
     private Arena arena;
-    private ProgressBar goalBar;
+    public ProgressBar goalBar;
     private CanvasLayer enemyLayer;
     private CanvasLayer arenaLayer;
 
@@ -20,6 +21,7 @@ public partial class GameControl : Node2D
 
     public override void _Ready()
     {
+        Instance = this;
         player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
         arena = GetNode<Arena>("/root/Main/ArenaLayer/Arena");
         goalBar = GetNode<ProgressBar>("HUD/Goal");
@@ -102,7 +104,13 @@ public partial class GameControl : Node2D
 
     private void OnEnemyKilled(Enemy enemy)
     {
-        currentGoal += 5f; // Increase goal when enemy is killed
+        //currentGoal += 5f; // Increase goal when enemy is killed
+        goalBar.Value = currentGoal;
+    }
+
+    public void OnDropCollected()
+    {
+        currentGoal += 5f;
         goalBar.Value = currentGoal;
     }
 

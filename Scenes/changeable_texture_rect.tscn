@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://b4qy7wv51234"]
+
+[ext_resource type="Script" path="res://Scripts/ChangeableTextureRect.cs" id="1_script"]
+
+[node name="ChangeableTextureRect" type="TextureRect"]
+script = ExtResource("1_script")
+expand_mode = 1
+stretch_mode = 0

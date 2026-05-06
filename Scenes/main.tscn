@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=10 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="Script" uid="uid://b07jumtx2yqpp" path="res://Scripts/GameControl.cs" id="1_jjvhh"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://bbpe25af124d7" path="res://Scenes/arena.tscn" id="4_jjvhh"]
 [ext_resource type="PackedScene" uid="uid://c3vlqf5llactm" path="res://Scenes/background.tscn" id="5_344ge"]
 [ext_resource type="PackedScene" uid="uid://c4h4bhx5ca67g" path="res://Scenes/portal.tscn" id="7_6bp64"]
+[ext_resource type="PackedScene" uid="uid://bh16i0d06jwpa" path="res://Scenes/endrun.tscn" id="9_ynf5e"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_jjvhh")
@@ -71,3 +72,6 @@ offset_left = 16.0
 offset_top = 16.0
 offset_right = 112.0
 offset_bottom = 43.0
+
+[node name="Control" parent="HUD" instance=ExtResource("9_ynf5e")]
+visible = false

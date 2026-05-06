@@ -4,8 +4,9 @@ using Godot;
 public partial class Enemy : CharacterBody2D
 {
     public enum EnemyType { Basic, Dash, Teleport, Gun, Bomb }
-
+    public static Enemy Instance;
     [Export] public EnemyType Type = EnemyType.Basic;
+    [Export] public PackedScene DropScene;
 
     protected const float speed = 250;
     protected CharacterBody2D player;
@@ -62,6 +63,7 @@ public partial class Enemy : CharacterBody2D
 
     public override void _Ready()
     {
+        Instance = this;
         animation = GetNode<AnimationPlayer>("AnimationPlayer");
         impactframe = GetNode<AnimationPlayer>("Impact");
         player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
@@ -135,6 +137,12 @@ public partial class Enemy : CharacterBody2D
         if(health <= 0)
         {
             QueueFree();
+            if (DropScene != null)
+            {
+                var drop = DropScene.Instantiate<Drop>();
+                drop.GlobalPosition = GlobalPosition;
+                GetParent().AddChild(drop);
+            }
         }
         
     }

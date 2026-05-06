@@ -1,0 +1,59 @@
+[gd_scene load_steps=2 format=3 uid="uid://bh16i0d06jwpa"]
+
+[ext_resource type="Script" uid="uid://upmvqk2wescn" path="res://Scripts/Endrun.cs" id="1_ar4qx"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ar4qx")
+
+[node name="Control" type="Control" parent="."]
+anchors_preset = 0
+offset_left = 24.0
+offset_top = -40.0
+offset_right = 984.0
+offset_bottom = 408.0
+
+[node name="Label" type="Label" parent="Control"]
+layout_mode = 0
+offset_left = 728.0
+offset_top = 64.0
+offset_right = 772.0
+offset_bottom = 87.0
+text = "SHOP"
+
+[node name="Button" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 648.0
+offset_top = 104.0
+offset_right = 840.0
+offset_bottom = 232.0
+pivot_offset = Vector2(96, 64)
+
+[node name="Button2" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 648.0
+offset_top = 240.0
+offset_right = 840.0
+offset_bottom = 368.0
+pivot_offset = Vector2(96, 64)
+
+[node name="Button3" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 648.0
+offset_top = 376.0
+offset_right = 840.0
+offset_bottom = 504.0
+pivot_offset = Vector2(96, 64)
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 56.0
+offset_right = 142.0
+offset_bottom = 79.0
+text = "RUN INFO"

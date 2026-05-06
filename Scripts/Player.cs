@@ -3,6 +3,8 @@ using System;
 
 public partial class Player : CharacterBody2D
 {
+	[Export] public PackedScene EndRunScene;
+	public static Player Instance;
 	private const float speed = 500;
 	private const float dashspeed = 1000;
 	private const float acceleration = 5000;
@@ -22,14 +24,16 @@ public partial class Player : CharacterBody2D
 	public CollisionShape2D wallcollision;
 	private float health = 100f;
 	private ProgressBar healthBar;
-	private Arena arena;
+	private Control endrunUI;
+	
 
 	public override void _Ready()
 	{
+		Instance = this;
 		hitbox = GetNode<CollisionShape2D>("Area2D/CollisionShape2D");
 		wallcollision = GetNode<CollisionShape2D>("CollisionShape2D");
 		healthBar = GetNode<ProgressBar>("/root/Main/HUD/Health");
-		arena = GetNode<Arena>("/root/Main/ArenaLayer/Arena");
+		endrunUI = GetNode<Control>("/root/Main/HUD/Control");
 		healthBar.Value = health;
 	}
 
@@ -93,16 +97,23 @@ public partial class Player : CharacterBody2D
 			if(Input.IsActionPressed("ui_down")) Direction.Y += 1;
 			if(Input.IsActionPressed("ui_left")) Direction.X -= 1;
 			if(Input.IsActionPressed("ui_right")) Direction.X += 1;
-			if (Input.IsActionJustPressed("dash") && dashCooldownTimer <= 0f && !isDashing)
+			if(GameControl.Instance?.currentGoal > 20)
 			{
-				isDashing = true;
-				isInvisible = true;
-				dashTimer = dashDuration;
-				dashDisabledTimer = dashDisabledDuration;
-				dashCooldownTimer = dashCooldown;
-				dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
-				CollisionMask &= ~(1u << 2); // disable only layer 3
+				if (Input.IsActionJustPressed("dash") && dashCooldownTimer <= 0f && !isDashing)
+				{
+					isDashing = true;
+					isInvisible = true;
+					dashTimer = dashDuration;
+					dashDisabledTimer = dashDisabledDuration;
+					dashCooldownTimer = dashCooldown;
+					dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
+					CollisionMask &= ~(1u << 2); // disable only layer 3
+					if (GameControl.Instance != null)
+    				GameControl.Instance.currentGoal -= 20f;
+					GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
+				}
 			}
+			
 		}
 
 		if (!isDashing)
@@ -135,6 +146,12 @@ public partial class Player : CharacterBody2D
 		if(area.IsInGroup("portal"))
 		{
 			GD.Print("Entered Portal");
+			foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
+			{
+				enemy.QueueFree();
+				
+			}
+			endrunUI.Visible = true;
 		}
 	}
 }
