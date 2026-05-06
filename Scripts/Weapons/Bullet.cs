@@ -9,6 +9,7 @@ public partial class Bullet : Node2D
     protected float _drag;
     protected float _spinDegreesPerSecond;
     protected Vector2 _velocity = Vector2.Right * 300f;
+    protected Vector2 _baseVelocity; // Cached base velocity for optimization
 
     protected Sprite2D _sprite;
     protected AnimatedSprite2D _animatedSprite;
@@ -40,11 +41,18 @@ public partial class Bullet : Node2D
             return;
         }
 
+        // Apply gravity
         _velocity += Vector2.Down * _gravity * dt;
-        _velocity = _velocity.Lerp(_direction * _speed, Mathf.Clamp(_drag * dt, 0f, 1f));
+        
+        // Apply drag as velocity reduction (simpler and more direct)
+        if (_drag > 0f)
+        {
+            _velocity *= Mathf.Max(0f, 1f - _drag * dt);
+        }
+        
         _velocity = ModifyVelocity(_velocity, dt);
 
-        Position += _velocity * dt;
+        GlobalPosition += _velocity * dt;
 
         if (_velocity.LengthSquared() > 0.001f)
         {
@@ -60,6 +68,7 @@ public partial class Bullet : Node2D
     public override void _Ready()
     {
         CacheVisualNodes();
+        Visible = true;
     }
 
     public void Initialize(
@@ -73,6 +82,7 @@ public partial class Bullet : Node2D
         Color tint)
     {
         CacheVisualNodes();
+        Visible = true;
 
         _speed = speed;
         _lifeSeconds = lifeSeconds;
@@ -82,7 +92,8 @@ public partial class Bullet : Node2D
         _spinDegreesPerSecond = spinDegreesPerSecond;
         ApplyTypeModifiers();
 
-        _velocity = _direction * _speed;
+        _baseVelocity = _direction * _speed;
+        _velocity = _baseVelocity;
         Rotation = _direction.Angle();
 
         Scale = Vector2.One * scale;
@@ -91,6 +102,7 @@ public partial class Bullet : Node2D
         {
             _sprite.Modulate = tint;
             _sprite.Visible = true;
+            _sprite.ZIndex = 0;
         }
 
         if (_animatedSprite != null)

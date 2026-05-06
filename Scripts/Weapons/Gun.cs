@@ -327,12 +327,14 @@ public partial class Gun : Node2D
         var direction = _muzzle.GlobalTransform.X.Rotated(spreadOffset).Normalized();
 
         var bullet = bulletScene.Instantiate<Bullet>();
-        // Add the bullet to the same parent as the muzzle so its local position matches the weapon/player transform.
-        var spawnParent = _muzzle.GetParent();
-        spawnParent.AddChild(bullet);
+        
+        // Add to ArenaLayer (same container as enemies) for proper rendering
+        var arenaLayer = GetTree().CurrentScene.GetNode<Node>("ArenaLayer");
+        arenaLayer.AddChild(bullet);
 
-        // Position bullet relative to the muzzle's local coordinates.
-        bullet.Position = _muzzle.Position;
+        // Spawn at muzzle's global position
+        bullet.GlobalPosition = _muzzle.GlobalPosition;
+        
         bullet.Initialize(
             speed: stats.BulletSpeed,
             lifeSeconds: stats.BulletLifetime,
