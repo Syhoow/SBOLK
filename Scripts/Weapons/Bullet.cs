@@ -28,9 +28,6 @@ public partial class Bullet : Node2D
         return velocity;
     }
 
-    public override void _Ready()
-    {
-    }
 
     public override void _PhysicsProcess(double delta)
     {
