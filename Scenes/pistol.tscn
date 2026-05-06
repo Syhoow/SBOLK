@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://dpa4cjmsfmn3p" path="res://Assets/sniper.png" id="4_sniper"]
 [ext_resource type="Texture2D" uid="uid://deq5nl72e1hfl" path="res://Assets/shotgun.png" id="5_shotgun"]
 
-[node name="gun" type="Node2D"]
+[node name="gun2" type="Node2D"]
 script = ExtResource("1_v21tj")
 
 [node name="PistolNode" type="Node2D" parent="."]

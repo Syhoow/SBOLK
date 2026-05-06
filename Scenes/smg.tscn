@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://da52re6o30do1"]
+[gd_scene load_steps=6 format=3 uid="uid://yy3eqbqrfux5"]
 
 [ext_resource type="Script" uid="uid://cr50faqwcpg0c" path="res://Scripts/Weapons/Gun.cs" id="1_v21tj"]
 [ext_resource type="Texture2D" uid="uid://m38tj1q5yhf4" path="res://Assets/pistol.png" id="2_ui64p"]
@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://dpa4cjmsfmn3p" path="res://Assets/sniper.png" id="4_sniper"]
 [ext_resource type="Texture2D" uid="uid://deq5nl72e1hfl" path="res://Assets/shotgun.png" id="5_shotgun"]
 
-[node name="gun" type="Node2D"]
+[node name="gun2" type="Node2D"]
 script = ExtResource("1_v21tj")
 
 [node name="PistolNode" type="Node2D" parent="."]
