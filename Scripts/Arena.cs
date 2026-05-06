@@ -11,6 +11,7 @@ public partial class Arena : TileMapLayer
     public bool isEliminated = false;
 
     private const int SourceId = 1;
+    private const float TileSize = 37.5f; // <-- change this to match your TileSet tile size
     private Vector2I FloorTile = new Vector2I(1, 1);
     public static Arena Instance;
 
@@ -22,11 +23,19 @@ public partial class Arena : TileMapLayer
 
     public override void _Process(double delta)
     {
+        // Manual mouse bounds check
+        Vector2 mouse = GetGlobalMousePosition();
+        Vector2 arenaPixelSize = new Vector2(ArenaWidth * TileSize, (ArenaHeight - 1) * TileSize);
+        ismouseInside = mouse.X >= GlobalPosition.X &&
+                        mouse.Y >= GlobalPosition.Y &&
+                        mouse.X <= GlobalPosition.X + arenaPixelSize.X &&
+                        mouse.Y <= GlobalPosition.Y + arenaPixelSize.Y;
+
         if (isOutside)
         {
             isoutsideTimer -= (float)delta;
             Modulate = new Color(1f, 0f, 0f);
-            if(ismouseInside && Input.IsActionJustPressed("dash"))
+            if (ismouseInside && Input.IsActionJustPressed("dash"))
             {
                 var player = GetTree().Root.GetNode<Player>("/root/Main/ArenaLayer/Player");
                 player.GlobalPosition = GetGlobalMousePosition();
@@ -41,7 +50,6 @@ public partial class Arena : TileMapLayer
         {
             Modulate = new Color(1f, 1f, 1f);
         }
-
     }
 
     public void GenerateArena()
@@ -90,24 +98,23 @@ public partial class Arena : TileMapLayer
         var collision = new CollisionShape2D();
         var shape = new RectangleShape2D();
 
-        Vector2 arenaPixelSize = new Vector2(ArenaWidth * 25f, (ArenaHeight - 1) * 25f);
+        Vector2 arenaPixelSize = new Vector2(ArenaWidth * TileSize, (ArenaHeight - 1) * TileSize);
         shape.Size = arenaPixelSize;
 
         collision.Shape = shape;
         collision.Position = arenaPixelSize / 2;
-        killZone.Position = Vector2.Zero;
 
+        killZone.GlobalPosition = GlobalPosition;
         killZone.Monitoring = true;
         killZone.Monitorable = true;
-        killZone.InputPickable = true;
+        killZone.InputPickable = false; // no longer needed for mouse tracking
 
         killZone.AddChild(collision);
-        AddChild(killZone);
+        killZone.Ready += () => killZone.GlobalPosition = GlobalPosition;
+        GetParent().CallDeferred("add_child", killZone);
 
         killZone.BodyExited += OnBodyExitedArena;
         killZone.BodyEntered += OnBodyEnteredArena;
-        killZone.MouseEntered += OnMouseEnteredArena;
-        killZone.MouseExited += OnMouseExitedArena;
     }
 
     private void OnBodyExitedArena(Node2D body)
@@ -126,17 +133,5 @@ public partial class Arena : TileMapLayer
             isOutside = false;
             isoutsideTimer = 0f;
         }
-    }
-
-    private void OnMouseEnteredArena()
-    {
-        ismouseInside = true;
-        GD.Print("mouseinside");
-    }
-
-    private void OnMouseExitedArena()
-    {
-        ismouseInside = false;
-        GD.Print("mouseoutside");
     }
 }
