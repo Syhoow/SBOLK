@@ -2,6 +2,10 @@ using Godot;
 
 public partial class Bullet : Node2D
 {
+    public virtual float Damage => 50f;
+    public virtual float KnockbackForce => 200f;
+    public virtual float KnockbackDuration => 0.15f;
+
     protected float _speed = 300f;
     protected float _lifeSeconds = 2f;
     protected Vector2 _direction = Vector2.Right;
@@ -125,7 +129,7 @@ public partial class Bullet : Node2D
         {
             Vector2 knockbackDirection = (bullet.GlobalPosition - GlobalPosition).Normalized();
             Enemy enemy = bullet.GetParent<Enemy>();
-            enemy.ApplyKnockback(knockbackDirection, 200.0f, .15f);
+            enemy.ApplyKnockback(knockbackDirection, KnockbackForce, KnockbackDuration);
             QueueFree();
         }
     }

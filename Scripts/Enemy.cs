@@ -322,11 +322,23 @@ public partial class Enemy : CharacterBody2D
         }
         if(area.IsInGroup("bullet"))
         {
-            health -= 50;
+            var bulletNode = area.GetParent() as Bullet;
+            health -= bulletNode?.Damage ?? 50f;
             impactframe.Stop();
             impactframe.Seek(0, true);
             impactframe.Play("impact");
             GD.Print("enemy got damaged"+health);
+        }
+        if (area.IsInGroup("melee_hit"))
+        {
+            var swing = area.GetParent() as MeleeSwing;
+            Vector2 knockbackDirection = (area.GlobalPosition - GlobalPosition).Normalized();
+            ApplyKnockback(knockbackDirection, swing?.KnockbackForce ?? 420f, swing?.KnockbackDuration ?? 0.22f);
+            health -= swing?.Damage ?? 90f;
+            impactframe.Stop();
+            impactframe.Seek(0, true);
+            impactframe.Play("impact");
+            GD.Print("enemy got melee damaged" + health);
         }
     }
 }

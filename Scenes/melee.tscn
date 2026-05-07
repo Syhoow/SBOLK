@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://cwl268n3f44i7"]
+
+[ext_resource type="Texture2D" uid="uid://dbwbpai6ppkwm" path="res://Assets/Sword12.png" id="1_sword"]
+
+[node name="MeleeNode" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(0, -9.53674e-07)
+scale = Vector2(4.5, 2.21786)
+texture = ExtResource("1_sword")
+
+[node name="Marker2D" type="Marker2D" parent="."]
+position = Vector2(18, 0)

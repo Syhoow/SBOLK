@@ -4,5 +4,6 @@ public enum WeaponType
     Smg,
     Rifle,
     Sniper,
-    Shotgun
+    Shotgun,
+    Melee
 }

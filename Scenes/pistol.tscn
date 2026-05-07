@@ -1,12 +1,14 @@
-[gd_scene load_steps=6 format=3 uid="uid://bwmnj0wgaidfv"]
+[gd_scene load_steps=8 format=3 uid="uid://bwmnj0wgaidfv"]
 
 [ext_resource type="Script" uid="uid://cr50faqwcpg0c" path="res://Scripts/Weapons/Gun.cs" id="1_v21tj"]
-[ext_resource type="Texture2D" uid="uid://m38tj1q5yhf4" path="res://Assets/pistol.png" id="2_ui64p"]
-[ext_resource type="Texture2D" uid="uid://bor1tk2nons31" path="res://Assets/rifle.png" id="3_rifle"]
-[ext_resource type="Texture2D" uid="uid://dpa4cjmsfmn3p" path="res://Assets/sniper.png" id="4_sniper"]
-[ext_resource type="Texture2D" uid="uid://deq5nl72e1hfl" path="res://Assets/shotgun.png" id="5_shotgun"]
+[ext_resource type="Texture2D" uid="uid://npbtdssg0m8w" path="res://Assets/Pistolpixel.png" id="2_5ir1u"]
+[ext_resource type="Texture2D" uid="uid://cq30vpdh1i1df" path="res://Assets/smgpixel.png" id="3_bijyr"]
+[ext_resource type="Texture2D" uid="uid://dyjv7k73pdeoi" path="res://Assets/riflepixel.png" id="4_33w5k"]
+[ext_resource type="Texture2D" uid="uid://cbtf6e31c0vvg" path="res://Assets/shotgunpixel.png" id="4_sniper"]
+[ext_resource type="Texture2D" uid="uid://bmkf8d8xgohi6" path="res://Assets/sniperpixel.png" id="5_gm4vp"]
+[ext_resource type="Texture2D" uid="uid://dbwbpai6ppkwm" path="res://Assets/Sword12.png" id="6_7itqb"]
 
-[node name="gun2" type="Node2D"]
+[node name="Gun" type="Node2D"]
 script = ExtResource("1_v21tj")
 
 [node name="PistolNode" type="Node2D" parent="."]
@@ -15,8 +17,8 @@ visible = false
 [node name="Sprite2D" type="Sprite2D" parent="PistolNode"]
 texture_filter = 1
 position = Vector2(2, 9.53674e-07)
-scale = Vector2(0.9375, 0.875)
-texture = ExtResource("2_ui64p")
+scale = Vector2(1.587, 1.656)
+texture = ExtResource("2_5ir1u")
 
 [node name="Marker2D" type="Marker2D" parent="PistolNode"]
 position = Vector2(18, -2)
@@ -26,11 +28,12 @@ visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="SmgNode"]
 texture_filter = 1
-position = Vector2(1, 0)
-scale = Vector2(0.302083, 0.91328)
-texture = ExtResource("3_rifle")
+position = Vector2(0.5, 0)
+scale = Vector2(1.587, 1.656)
+texture = ExtResource("3_bijyr")
 
 [node name="Marker2D" type="Marker2D" parent="SmgNode"]
+visible = false
 position = Vector2(18, -6)
 
 [node name="RifleNode" type="Node2D" parent="."]
@@ -39,8 +42,8 @@ visible = false
 [node name="Sprite2D" type="Sprite2D" parent="RifleNode"]
 texture_filter = 1
 position = Vector2(1, 1)
-scale = Vector2(0.302083, 0.83594)
-texture = ExtResource("3_rifle")
+scale = Vector2(1.587, 1.656)
+texture = ExtResource("4_33w5k")
 
 [node name="Marker2D" type="Marker2D" parent="RifleNode"]
 position = Vector2(17, -4)
@@ -50,20 +53,33 @@ visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="SniperNode"]
 texture_filter = 1
-position = Vector2(2.38419e-07, 1)
-scale = Vector2(0.3125, 1.40938)
-texture = ExtResource("4_sniper")
+position = Vector2(-0.500005, 1)
+scale = Vector2(1.587, 1.656)
+texture = ExtResource("5_gm4vp")
 
 [node name="Marker2D" type="Marker2D" parent="SniperNode"]
 position = Vector2(24, -5)
 
 [node name="ShotgunNode" type="Node2D" parent="."]
+visible = false
+texture_filter = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="ShotgunNode"]
 texture_filter = 1
-position = Vector2(0, 0.499999)
-scale = Vector2(0.302083, 1.65625)
-texture = ExtResource("5_shotgun")
+position = Vector2(5.96046e-08, 0)
+scale = Vector2(1.58696, 1.65625)
+texture = ExtResource("4_sniper")
 
 [node name="Marker2D" type="Marker2D" parent="ShotgunNode"]
 position = Vector2(17, -1)
+
+[node name="MeleeNode" type="Node2D" parent="."]
+
+[node name="Sprite2D" type="Sprite2D" parent="MeleeNode"]
+texture_filter = 1
+position = Vector2(-1.19209e-07, -2.98023e-08)
+scale = Vector2(1.587, 1.656)
+texture = ExtResource("6_7itqb")
+
+[node name="Marker2D" type="Marker2D" parent="MeleeNode"]
+position = Vector2(22, -2)
