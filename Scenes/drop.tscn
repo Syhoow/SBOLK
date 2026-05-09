@@ -1,10 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://bvow4ms1cbehy"]
+[gd_scene load_steps=6 format=3 uid="uid://c7p18gg53f7lu"]
 
 [ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_lbfjw"]
 [ext_resource type="Script" uid="uid://d1e73etamkv88" path="res://Scripts/Drop.cs" id="1_pcs5o"]
+[ext_resource type="Script" uid="uid://byuq8ay01php6" path="res://addons/trail_2d/trail_2d.gd" id="3_r0ybf"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_pcs5o"]
 radius = 8.0
+
+[sub_resource type="Curve" id="Curve_r0ybf"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
 
 [node name="Area2D" type="Area2D"]
 script = ExtResource("1_pcs5o")
@@ -16,3 +21,10 @@ texture = ExtResource("1_lbfjw")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_pcs5o")
+
+[node name="Trail2D" type="Line2D" parent="."]
+width = 5.0
+width_curve = SubResource("Curve_r0ybf")
+default_color = Color(1, 1, 0, 1)
+script = ExtResource("3_r0ybf")
+length = 5

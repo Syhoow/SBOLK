@@ -149,9 +149,16 @@ public partial class Player : CharacterBody2D
 			foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
 			{
 				enemy.QueueFree();
-				
+				GameControl.Instance.currentGoal = 0; // reset goal for next round
 			}
 			endrunUI.Visible = true;
 		}
+		
+	}
+
+	public void Heal(float amount)
+	{
+		health = Mathf.Min(health + amount, 100f);
+		healthBar.Value = health;
 	}
 }

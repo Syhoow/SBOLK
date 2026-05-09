@@ -1,11 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://dci3tsp12eon2"]
+[gd_scene load_steps=10 format=3 uid="uid://dci3tsp12eon2"]
 
 [ext_resource type="Script" uid="uid://xsjb0smklq5x" path="res://Scripts/Player.cs" id="1_cvnsp"]
 [ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_v0iea"]
 [ext_resource type="Texture2D" uid="uid://8cwq5vy5q6bl" path="res://Assets/shadow.png" id="2_fkybt"]
-[ext_resource type="PackedScene" uid="uid://bh16i0d06jwpa" path="res://Scenes/endrun.tscn" id="2_x3wgy"]
 [ext_resource type="Script" uid="uid://b8bkd4yk65xuc" path="res://Scripts/Cam.cs" id="3_6t5aa"]
 [ext_resource type="PackedScene" uid="uid://b5p5b4v78t7px" path="res://Scenes/pistol.tscn" id="5_fkybt"]
+[ext_resource type="Script" uid="uid://byuq8ay01php6" path="res://addons/trail_2d/trail_2d.gd" id="6_x3wgy"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_cvnsp"]
 radius = 14.0357
@@ -13,12 +13,15 @@ radius = 14.0357
 [sub_resource type="CircleShape2D" id="CircleShape2D_6t5aa"]
 radius = 18.0278
 
+[sub_resource type="Curve" id="Curve_3smsa"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 5
 collision_mask = 5
 platform_floor_layers = 4294967040
 script = ExtResource("1_cvnsp")
-EndRunScene = ExtResource("2_x3wgy")
 
 [node name="Shadow" type="Sprite2D" parent="."]
 texture_filter = 1
@@ -44,5 +47,10 @@ script = ExtResource("3_6t5aa")
 shape = SubResource("CircleShape2D_6t5aa")
 
 [node name="Gun" parent="." instance=ExtResource("5_fkybt")]
+
+[node name="Trail2D" type="Line2D" parent="."]
+visible = false
+width_curve = SubResource("Curve_3smsa")
+script = ExtResource("6_x3wgy")
 
 [connection signal="area_entered" from="Area2D" to="." method="_on_area_2d_area_entered"]

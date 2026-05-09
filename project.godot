@@ -29,6 +29,10 @@ window/stretch/mode="viewport"
 
 project/assembly_name="Romeo Project"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/trail_2d/plugin.cfg")
+
 [input]
 
 ui_left={

@@ -6,6 +6,10 @@ public partial class GameControl : Node2D
     [Export] public PackedScene EnemyScene;
     [Export] public PackedScene Marker;
     [Export] public PackedScene Portal;
+    [Export] public PackedScene HealingPotScene;
+    [Export] public float HealingPotInterval = 15f;
+    [Export] private float healingPotTimer = 0f;
+    [Export] public int MaxHealingPots = 2;
     [Export] public float SpawnInterval = 0.5f;
     [Export] public float MarkerWarningTime = 1.5f; // how long marker shows before enemy spawns
     [Export] public int MaxEnemies = 10;
@@ -54,7 +58,14 @@ public partial class GameControl : Node2D
                 (float)GD.RandRange(min.Y, max.Y)
             );
             SpawnPortal(spawnPos);
-            currentGoal = 0; // reset goal for next round
+             // reset goal for next round
+        }
+
+        healingPotTimer += (float)delta;
+        if (healingPotTimer >= HealingPotInterval)
+        {
+            healingPotTimer = 0f;
+            SpawnHealingPot();
         }
 
     }
@@ -79,7 +90,7 @@ public partial class GameControl : Node2D
         // Spawn marker first
         var marker = Marker.Instantiate();
         ((Node2D)marker).GlobalPosition = spawnPos;
-        AddChild(marker);
+        enemyLayer.AddChild(marker);
         marker.AddToGroup("marker");
 
         // Wait before spawning enemy
@@ -100,6 +111,28 @@ public partial class GameControl : Node2D
         // Remove marker after enemy spawns
         if (IsInstanceValid(marker))
             ((Node2D)marker).QueueFree();
+    }
+
+    private void SpawnHealingPot()
+    {
+        if (HealingPotScene == null || Arena.Instance == null) return;
+        if (GetTree().GetNodesInGroup("healing_pot").Count >= MaxHealingPots) return; // ← limit check
+        int side = (int)GD.RandRange(0, 4);
+        Vector2 arenaPos = Arena.Instance.GlobalPosition;
+        float w = Arena.Instance.ArenaWidth * 35f;
+        float h = Arena.Instance.ArenaHeight * 35f;
+        float offset = (float)GD.RandRange(100f, 200f);
+        Vector2 spawnPos = side switch
+        {
+            0 => new Vector2((float)GD.RandRange(arenaPos.X, arenaPos.X + w), arenaPos.Y - offset),
+            1 => new Vector2((float)GD.RandRange(arenaPos.X, arenaPos.X + w), arenaPos.Y + h + offset),
+            2 => new Vector2(arenaPos.X - offset, (float)GD.RandRange(arenaPos.Y, arenaPos.Y + h)),
+            _ => new Vector2(arenaPos.X + w + offset, (float)GD.RandRange(arenaPos.Y, arenaPos.Y + h)),
+        };
+        var pot = HealingPotScene.Instantiate<Node2D>();
+        pot.GlobalPosition = spawnPos;
+        pot.AddToGroup("healing_pot"); // ← tag it
+        arenaLayer.AddChild(pot);
     }
 
     private void OnEnemyKilled(Enemy enemy)
@@ -127,8 +160,12 @@ public partial class GameControl : Node2D
             GD.PrintErr("Failed to instantiate portal!");
             return;
         }
-        portal.GlobalPosition = position;
-        arenaLayer.AddChild(portal);
-        GD.Print("Portal spawned at: " + position);
+        if(currentGoal >= goal)
+        {
+            portal.GlobalPosition = position;
+            arenaLayer.AddChild(portal);
+            GD.Print("Portal spawned at: " + position);
+        }
+        
     }
 }
