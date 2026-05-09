@@ -60,5 +60,5 @@ public partial class Drop : Area2D
             GD.Print("coin collected!");
             QueueFree();
         }
-    } 
-} 
+    }
+}

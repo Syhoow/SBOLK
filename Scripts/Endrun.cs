@@ -9,11 +9,8 @@ public partial class Endrun : Control
         Instance = this;
     }
 
-    public override void _Process(double delta)
+    public void ShowEndScreen()
     {
-        if (Input.IsActionJustPressed("ui_accept"))
-        {
-            GetTree().ReloadCurrentScene();
-        }
+        Visible = true;
     }
 }
