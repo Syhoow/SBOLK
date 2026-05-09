@@ -25,6 +25,7 @@ public partial class Gun : Node2D
 
     private Marker2D _muzzle;
     private Sprite2D _sprite;
+    private AnimationPlayer _animationPlayer;
 
     private WeaponType _currentWeapon = WeaponType.Pistol;
     private WeaponType _previousWeapon = WeaponType.Pistol;
@@ -44,6 +45,7 @@ public partial class Gun : Node2D
     public override void _Ready()
     {
         CacheWeaponNodes();
+        _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
         BuildWeaponTable();
         InitializeAmmoPools();
         LoadAttackScenes();
@@ -191,7 +193,7 @@ public partial class Gun : Node2D
             magazineSize: 8,
             reserveAmmo: 40,
             reloadTime: 2.0f,
-            bulletSpeed: 600f,
+            bulletSpeed: 900f,
             spreadDegrees: 12.0f,
             pelletsPerShot: 8,
             isAutomatic: false,
@@ -212,7 +214,7 @@ public partial class Gun : Node2D
                 spreadDegrees: 0f,
                 pelletsPerShot: 1,
                 isAutomatic: false,
-                bulletLifetime: 0.08f,
+                bulletLifetime: 0.25f,
                 bulletScale: 1.0f,
                 bulletGravity: 0f,
                 bulletDrag: 0f,
@@ -437,6 +439,12 @@ public partial class Gun : Node2D
         swing.GlobalPosition = _muzzle.GlobalPosition;
         var direction = _muzzle.GlobalTransform.X.Normalized();
         swing.Initialize(direction, stats.BulletSpeed, stats.BulletLifetime);
+
+        // Play melee swing animation on held weapon
+        if (_animationPlayer != null)
+        {
+            _animationPlayer.Play("MeleeSwing");
+        }
 
         _shotCooldown = stats.FireInterval;
         EmitSignal(SignalName.AmmoChanged, _ammoInMagazine[_currentWeapon], _ammoInReserve[_currentWeapon]);

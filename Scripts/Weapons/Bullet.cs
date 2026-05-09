@@ -2,18 +2,22 @@ using Godot;
 
 public partial class Bullet : Node2D
 {
-    public virtual float Damage => 50f;
+    public virtual float Damage => _damage;
     public virtual float KnockbackForce => 200f;
     public virtual float KnockbackDuration => 0.15f;
+    public virtual int Penetration => 0;
 
     protected float _speed = 300f;
     protected float _lifeSeconds = 2f;
     protected Vector2 _direction = Vector2.Right;
+    protected float _damage = 50f;
     protected float _gravity;
     protected float _drag;
     protected float _spinDegreesPerSecond;
     protected Vector2 _velocity = Vector2.Right * 300f;
     protected Vector2 _baseVelocity; // Cached base velocity for optimization
+    protected int _remainingHits;
+    protected bool _hostile;
 
     protected Sprite2D _sprite;
     protected AnimatedSprite2D _animatedSprite;
@@ -83,7 +87,8 @@ public partial class Bullet : Node2D
         float gravity,
         float drag,
         float spinDegreesPerSecond,
-        Color tint)
+        Color tint,
+        float damage = 50f)
     {
         CacheVisualNodes();
         Visible = true;
@@ -91,6 +96,7 @@ public partial class Bullet : Node2D
         _speed = speed;
         _lifeSeconds = lifeSeconds;
         _direction = direction.Normalized();
+        _damage = damage;
         _gravity = gravity;
         _drag = drag;
         _spinDegreesPerSecond = spinDegreesPerSecond;
@@ -98,6 +104,7 @@ public partial class Bullet : Node2D
 
         _baseVelocity = _direction * _speed;
         _velocity = _baseVelocity;
+        _remainingHits = 1 + (Penetration < 0 ? 0 : Penetration);
         Rotation = _direction.Angle();
 
         Scale = Vector2.One * scale;
@@ -125,12 +132,42 @@ public partial class Bullet : Node2D
 
     public void _on_area_2d_area_entered(Area2D bullet)
     {
+        if (bullet.IsInGroup("player") && _hostile)
+        {
+            var player = bullet.GetParent<Player>();
+            player?.ApplyDamage(Damage);
+            QueueFree();
+            return;
+        }
+
         if (bullet.IsInGroup("enemy"))
         {
+            if (_hostile)
+            {
+                return;
+            }
+
             Vector2 knockbackDirection = (bullet.GlobalPosition - GlobalPosition).Normalized();
             Enemy enemy = bullet.GetParent<Enemy>();
             enemy.ApplyKnockback(knockbackDirection, KnockbackForce, KnockbackDuration);
-            QueueFree();
         }
+    }
+
+    public void SetHostile(bool hostile = true)
+    {
+        _hostile = hostile;
+    }
+
+    public bool IsHostile => _hostile;
+
+    public bool ConsumePenetration()
+    {
+        if (_remainingHits <= 0)
+        {
+            return false;
+        }
+
+        _remainingHits--;
+        return _remainingHits > 0;
     }
 }

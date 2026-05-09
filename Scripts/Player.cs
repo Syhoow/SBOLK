@@ -22,6 +22,8 @@ public partial class Player : CharacterBody2D
 	public CollisionShape2D wallcollision;
 	private float health = 100f;
 	private ProgressBar healthBar;
+	private WeaponHud hud;
+	private Cam cam;
 	private Arena arena;
 
 	public override void _Ready()
@@ -29,6 +31,8 @@ public partial class Player : CharacterBody2D
 		hitbox = GetNode<CollisionShape2D>("Area2D/CollisionShape2D");
 		wallcollision = GetNode<CollisionShape2D>("CollisionShape2D");
 		healthBar = GetNode<ProgressBar>("/root/Main/HUD/Health");
+		hud = GetNodeOrNull<WeaponHud>("/root/Main/HUD");
+		cam = GetNodeOrNull<Cam>("Camera2D");
 		arena = GetNode<Arena>("/root/Main/ArenaLayer/Arena");
 		healthBar.Value = health;
 	}
@@ -124,17 +128,29 @@ public partial class Player : CharacterBody2D
 	{
 		if(area.IsInGroup("enemy"))
 		{
-			health -= 5f;
-			healthBar.Value = health;
-			if (health <= 0f)
-			{
-				QueueFree();
-				GD.Print("Player has died!");
-			}
+			ApplyDamage(5f);
 		}
 		if(area.IsInGroup("portal"))
 		{
 			GD.Print("Entered Portal");
+		}
+	}
+
+	public void ApplyDamage(float damage)
+	{
+		if (health <= 0f)
+		{
+			return;
+		}
+
+		health -= damage;
+		healthBar.Value = health;
+		hud?.ShowDamageTaken(damage);
+		cam?.TriggerShake();
+		if (health <= 0f)
+		{
+			QueueFree();
+			GD.Print("Player has died!");
 		}
 	}
 }

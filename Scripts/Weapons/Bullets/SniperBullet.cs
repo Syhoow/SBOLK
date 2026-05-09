@@ -2,6 +2,9 @@ using Godot;
 
 public partial class SniperBullet : Bullet
 {
+    public override float Damage => 120f;
+    public override int Penetration => 9;
+
     protected override void ApplyTypeModifiers()
     {
         _speed *= 1.18f;

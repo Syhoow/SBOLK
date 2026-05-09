@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bwmnj0wgaidfv"]
+[gd_scene load_steps=10 format=3 uid="uid://bwmnj0wgaidfv"]
 
 [ext_resource type="Script" uid="uid://cr50faqwcpg0c" path="res://Scripts/Weapons/Gun.cs" id="1_v21tj"]
 [ext_resource type="Texture2D" uid="uid://npbtdssg0m8w" path="res://Assets/Pistolpixel.png" id="2_5ir1u"]
@@ -8,11 +8,30 @@
 [ext_resource type="Texture2D" uid="uid://bmkf8d8xgohi6" path="res://Assets/sniperpixel.png" id="5_gm4vp"]
 [ext_resource type="Texture2D" uid="uid://dbwbpai6ppkwm" path="res://Assets/Sword12.png" id="6_7itqb"]
 
+[sub_resource type="Animation" id="Animation_melee_swing"]
+length = 0.4
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("MeleeNode:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 0,
+"values": [0.0, -0.785398, -1.5708, -0.785398, 0.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_5ir1u"]
+_data = {
+&"MeleeSwing": SubResource("Animation_melee_swing")
+}
+
 [node name="Gun" type="Node2D"]
 script = ExtResource("1_v21tj")
 
 [node name="PistolNode" type="Node2D" parent="."]
-visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="PistolNode"]
 texture_filter = 1
@@ -21,10 +40,10 @@ scale = Vector2(1.587, 1.656)
 texture = ExtResource("2_5ir1u")
 
 [node name="Marker2D" type="Marker2D" parent="PistolNode"]
-position = Vector2(18, -2)
+visible = false
+position = Vector2(25, -2)
 
 [node name="SmgNode" type="Node2D" parent="."]
-visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="SmgNode"]
 texture_filter = 1
@@ -34,10 +53,9 @@ texture = ExtResource("3_bijyr")
 
 [node name="Marker2D" type="Marker2D" parent="SmgNode"]
 visible = false
-position = Vector2(18, -6)
+position = Vector2(25, -4)
 
 [node name="RifleNode" type="Node2D" parent="."]
-visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="RifleNode"]
 texture_filter = 1
@@ -46,10 +64,10 @@ scale = Vector2(1.587, 1.656)
 texture = ExtResource("4_33w5k")
 
 [node name="Marker2D" type="Marker2D" parent="RifleNode"]
-position = Vector2(17, -4)
+visible = false
+position = Vector2(56, -3)
 
 [node name="SniperNode" type="Node2D" parent="."]
-visible = false
 
 [node name="Sprite2D" type="Sprite2D" parent="SniperNode"]
 texture_filter = 1
@@ -58,10 +76,10 @@ scale = Vector2(1.587, 1.656)
 texture = ExtResource("5_gm4vp")
 
 [node name="Marker2D" type="Marker2D" parent="SniperNode"]
-position = Vector2(24, -5)
+visible = false
+position = Vector2(65, -4)
 
 [node name="ShotgunNode" type="Node2D" parent="."]
-visible = false
 texture_filter = 1
 
 [node name="Sprite2D" type="Sprite2D" parent="ShotgunNode"]
@@ -71,7 +89,8 @@ scale = Vector2(1.58696, 1.65625)
 texture = ExtResource("4_sniper")
 
 [node name="Marker2D" type="Marker2D" parent="ShotgunNode"]
-position = Vector2(17, -1)
+visible = false
+position = Vector2(38, -4)
 
 [node name="MeleeNode" type="Node2D" parent="."]
 
@@ -82,4 +101,10 @@ scale = Vector2(1.587, 1.656)
 texture = ExtResource("6_7itqb")
 
 [node name="Marker2D" type="Marker2D" parent="MeleeNode"]
+visible = false
 position = Vector2(22, -2)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_5ir1u")
+}
