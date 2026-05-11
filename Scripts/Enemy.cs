@@ -53,7 +53,7 @@ public partial class Enemy : CharacterBody2D
     private float strafeChangeCooldown = 2.0f;
     private float strafeChangeTimer = 0f;
     
-    private float health = 100;
+    public float health = 100;
 
     private float spawnTimer = 0f;
     private float spawnDuration = 1f;
@@ -116,7 +116,7 @@ public partial class Enemy : CharacterBody2D
             
         }
 
-        MoveAndSlide();
+        //MoveAndSlide();
         _HandleTypeBehavior(dt);
 
         if (Type == EnemyType.Gun)
@@ -330,7 +330,7 @@ public partial class Enemy : CharacterBody2D
         }
         if(area.IsInGroup("bullet"))
         {
-            health -= 50;
+            health -= Bullet.Damage;
             impactframe.Stop();
             impactframe.Seek(0, true);
             impactframe.Play("impact");

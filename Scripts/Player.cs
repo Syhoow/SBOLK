@@ -22,6 +22,7 @@ public partial class Player : CharacterBody2D
 	private float kbtimer = 0.0f;
 	private CollisionShape2D hitbox;
 	public CollisionShape2D wallcollision;
+	private float maxHealth = 100f;
 	private float health = 100f;
 	private ProgressBar healthBar;
 	private Control endrunUI;
@@ -109,7 +110,7 @@ public partial class Player : CharacterBody2D
 					dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
 					CollisionMask &= ~(1u << 2); // disable only layer 3
 					if (GameControl.Instance != null)
-    				GameControl.Instance.currentGoal -= 20f;
+    				GameControl.Instance.currentGoal -= 20;
 					GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
 				}
 			}
@@ -147,10 +148,10 @@ public partial class Player : CharacterBody2D
 		{
 			GD.Print("Entered Portal");
 			foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
-			{
 				enemy.QueueFree();
-				GameControl.Instance.currentGoal = 0; // reset goal for next round
-			}
+			
+			GameControl.Instance.isPlaying = false;
+			GameControl.Instance.CallDeferred(nameof(GameControl.FreezeLayers));
 			endrunUI.Visible = true;
 		}
 		
@@ -159,6 +160,14 @@ public partial class Player : CharacterBody2D
 	public void Heal(float amount)
 	{
 		health = Mathf.Min(health + amount, 100f);
+		healthBar.Value = health;
+	}
+
+	public void IncreaseMaxHealth(float amount)
+	{
+		maxHealth += amount;
+		health = Mathf.Min(health + amount, maxHealth); // also heals a bit
+		healthBar.MaxValue = maxHealth;
 		healthBar.Value = health;
 	}
 }

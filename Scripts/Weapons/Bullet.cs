@@ -4,6 +4,7 @@ public partial class Bullet : Node2D
 {
     private float _speed = 300f;
     private float _lifeSeconds = 2f;
+    public static float Damage = 50f;
     private Vector2 _direction = Vector2.Right;
 
     public override void _Ready()
@@ -47,4 +48,6 @@ public partial class Bullet : Node2D
             QueueFree();
         }
     }
+
+    
 }

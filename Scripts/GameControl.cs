@@ -18,11 +18,16 @@ public partial class GameControl : Node2D
     private CharacterBody2D player;
     private Arena arena;
     public ProgressBar goalBar;
-    private CanvasLayer enemyLayer;
-    private CanvasLayer arenaLayer;
-
+    public CanvasLayer enemyLayer;
+    public CanvasLayer arenaLayer;
+    public bool isPlaying = true;
     private float spawnTimer = 0f;
-
+    public float DifficultyMultiplier = 1f;
+    public float GetWaveEnemyHP(int wave) => 100f * Mathf.Pow(1.5f, wave) * DifficultyMultiplier;
+    public float GetWaveGoal(int wave) => 300f * Mathf.Pow(1.5f, wave) * DifficultyMultiplier;
+    public int GetWaveEnemyCount(int wave) => (int)((10 + wave * 2) * DifficultyMultiplier);
+    public int currentWave = 0;
+    private int _activeEnemies = 0;
     public override void _Ready()
     {
         Instance = this;
@@ -38,12 +43,14 @@ public partial class GameControl : Node2D
     public override void _Process(double delta)
     {
         spawnTimer += (float)delta;
-        if (spawnTimer >= SpawnInterval)
+
+        if(isPlaying)
+        if(spawnTimer >= SpawnInterval)
         {
             spawnTimer = 0f;
             SpawnWithWarning();
         }
-        if(currentGoal >= goal)
+        if(currentGoal == goal)
         {
             GD.Print("Goal reached! You win!");
             // Random position
@@ -58,8 +65,15 @@ public partial class GameControl : Node2D
                 (float)GD.RandRange(min.Y, max.Y)
             );
             SpawnPortal(spawnPos);
-             // reset goal for next round
+            currentGoal = 0;// reset goal for next round
         }
+
+        goal = GetWaveGoal(currentWave);
+        goalBar.MaxValue = goal;
+        GD.Print(currentWave);
+        GD.Print(_activeEnemies);
+        MaxEnemies = GetWaveEnemyCount(currentWave);
+        
 
         healingPotTimer += (float)delta;
         if (healingPotTimer >= HealingPotInterval)
@@ -72,11 +86,17 @@ public partial class GameControl : Node2D
 
     private async void SpawnWithWarning()
     {
-        if (GetTree().GetNodesInGroup("enemy").Count >= MaxEnemies) return;
-        if (Arena.Instance == null) return;
+        // Reserve a slot atomically before anything async happens
+        if (_activeEnemies >= MaxEnemies) return;
+        _activeEnemies++;
 
-        // Random position
-        Vector2 min = Arena.Instance.GlobalPosition + new Vector2(35f, 35f); // avoid spawning on walls
+        if (Arena.Instance == null) 
+        {
+            _activeEnemies--;
+            return;
+        }
+
+        Vector2 min = Arena.Instance.GlobalPosition + new Vector2(35f, 35f);
         Vector2 max = Arena.Instance.GlobalPosition + new Vector2(
             Arena.Instance.ArenaWidth * 35f,
             (Arena.Instance.ArenaHeight - 1) * 35f
@@ -87,28 +107,35 @@ public partial class GameControl : Node2D
             (float)GD.RandRange(min.Y, max.Y)
         );
 
-        // Spawn marker first
         var marker = Marker.Instantiate();
         ((Node2D)marker).GlobalPosition = spawnPos;
         enemyLayer.AddChild(marker);
         marker.AddToGroup("marker");
 
-        // Wait before spawning enemy
         await ToSignal(GetTree().CreateTimer(MarkerWarningTime), "timeout");
 
-        if (!IsInstanceValid(this)) return;
+        if (!IsInstanceValid(this) || !isPlaying)
+        {
+            _activeEnemies--;
+            if (IsInstanceValid(marker)) ((Node2D)marker).QueueFree();
+            return;
+        }
 
         var enemy = EnemyScene.Instantiate<Enemy>();
         var types = (Enemy.EnemyType[])System.Enum.GetValues(typeof(Enemy.EnemyType));
         enemy.Type = types[(int)GD.RandRange(0,types.Length - 1)];
         enemy.GlobalPosition = spawnPos;
+        enemy.health = GetWaveEnemyHP(currentWave);
 
         enemyLayer.AddChild(enemy);
         enemy.AddToGroup("enemy");
 
-        enemy.TreeExited += () => OnEnemyKilled(enemy);
+        enemy.TreeExited += () =>
+        {
+            _activeEnemies--;
+            OnEnemyKilled(enemy);
+        };
 
-        // Remove marker after enemy spawns
         if (IsInstanceValid(marker))
             ((Node2D)marker).QueueFree();
     }
@@ -121,7 +148,7 @@ public partial class GameControl : Node2D
         Vector2 arenaPos = Arena.Instance.GlobalPosition;
         float w = Arena.Instance.ArenaWidth * 35f;
         float h = Arena.Instance.ArenaHeight * 35f;
-        float offset = (float)GD.RandRange(100f, 200f);
+        float offset = (float)GD.RandRange(250f, 300f);
         Vector2 spawnPos = side switch
         {
             0 => new Vector2((float)GD.RandRange(arenaPos.X, arenaPos.X + w), arenaPos.Y - offset),
@@ -147,25 +174,41 @@ public partial class GameControl : Node2D
         goalBar.Value = currentGoal;
     }
 
-    private void SpawnPortal(Vector2 position)
+    public void SpawnPortal(Vector2 position)
     {
-        if (Portal == null)
-        {
-            GD.PrintErr("Portal scene not assigned!");
-            return;
-        }
+        if (Portal == null) return;
         var portal = Portal.Instantiate<Node2D>();
-        if (portal == null)
-        {
-            GD.PrintErr("Failed to instantiate portal!");
-            return;
-        }
-        if(currentGoal >= goal)
-        {
-            portal.GlobalPosition = position;
-            arenaLayer.AddChild(portal);
-            GD.Print("Portal spawned at: " + position);
-        }
+        if (portal == null) return;
+        portal.GlobalPosition = position;
+        portal.AddToGroup("portal");   // ← tag the ROOT node, not just the Area2D
+        arenaLayer.AddChild(portal);
+        GD.Print("Portal spawned at: " + position);
         
+    }
+
+    public void QueueFreePortal()
+    {
+        var portals = GetTree().GetNodesInGroup("portal");
+        GD.Print("Portals found: " + portals.Count);   // ← should print 1
+        if (portals.Count == 0) return;
+        var portal = (Node2D)portals[0];
+        portal.Visible = false;
+        portal.QueueFree();
+        GD.Print("Portal removed");
+        
+    }
+
+    public void FreezeLayers()
+    {
+        enemyLayer.ProcessMode = ProcessModeEnum.Disabled;
+        arenaLayer.ProcessMode = ProcessModeEnum.Disabled;
+    }
+
+    public void UnfreezeLayers()
+    {
+        _activeEnemies = 0;
+        isPlaying = true;
+        enemyLayer.ProcessMode = ProcessModeEnum.Inherit;
+        arenaLayer.ProcessMode = ProcessModeEnum.Inherit;
     }
 }

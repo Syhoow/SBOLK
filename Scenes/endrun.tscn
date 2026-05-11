@@ -33,6 +33,7 @@ offset_top = 104.0
 offset_right = 840.0
 offset_bottom = 232.0
 pivot_offset = Vector2(96, 64)
+text = "1"
 
 [node name="Button2" type="Button" parent="Control"]
 layout_mode = 0
@@ -41,6 +42,7 @@ offset_top = 240.0
 offset_right = 840.0
 offset_bottom = 368.0
 pivot_offset = Vector2(96, 64)
+text = "2"
 
 [node name="Button3" type="Button" parent="Control"]
 layout_mode = 0
@@ -48,6 +50,24 @@ offset_left = 648.0
 offset_top = 376.0
 offset_right = 840.0
 offset_bottom = 504.0
+pivot_offset = Vector2(96, 64)
+text = "3"
+
+[node name="Reroll" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 848.0
+offset_top = 456.0
+offset_right = 896.0
+offset_bottom = 504.0
+pivot_offset = Vector2(96, 64)
+text = "4"
+
+[node name="Button4" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 328.0
+offset_top = 496.0
+offset_right = 520.0
+offset_bottom = 544.0
 pivot_offset = Vector2(96, 64)
 
 [node name="Label" type="Label" parent="."]

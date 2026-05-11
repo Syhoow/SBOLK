@@ -18,7 +18,6 @@ Marker = ExtResource("3_21xkr")
 Portal = ExtResource("7_6bp64")
 HealingPotScene = ExtResource("5_hptm8")
 HealingPotInterval = 2.0
-MaxEnemies = 100
 
 [node name="BackgroundLayer" type="CanvasLayer" parent="."]
 
@@ -28,7 +27,8 @@ MaxEnemies = 100
 follow_viewport_enabled = true
 
 [node name="Arena" parent="ArenaLayer" instance=ExtResource("4_jjvhh")]
-ArenaHeight = 100
+ArenaWidth = 20
+ArenaHeight = 20
 
 [node name="Player" parent="ArenaLayer" instance=ExtResource("1_jjgbg")]
 position = Vector2(480, 272)
