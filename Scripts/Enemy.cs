@@ -116,7 +116,7 @@ public partial class Enemy : CharacterBody2D
             
         }
 
-        //MoveAndSlide();
+        MoveAndSlide();
         _HandleTypeBehavior(dt);
 
         if (Type == EnemyType.Gun)

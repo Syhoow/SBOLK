@@ -14,11 +14,13 @@ public partial class Arena : TileMapLayer
     private const float TileSize = 37.5f; // <-- change this to match your TileSet tile size
     private Vector2I FloorTile = new Vector2I(1, 1);
     public static Arena Instance;
+    private CollisionShape2D killZoneCollision;
 
     public override void _Ready()
     {
         Instance = this;
         GenerateArena();
+        CreateKillZone();
     }
 
     public override void _Process(double delta)
@@ -95,27 +97,26 @@ public partial class Arena : TileMapLayer
             }
         }
 
-        CreateKillZone();
     }
 
     private void CreateKillZone()
     {
         var killZone = new Area2D();
-        var collision = new CollisionShape2D();
+        killZoneCollision = new CollisionShape2D();
         var shape = new RectangleShape2D();
 
         Vector2 arenaPixelSize = new Vector2(ArenaWidth * TileSize, (ArenaHeight - 1) * TileSize);
         shape.Size = arenaPixelSize;
 
-        collision.Shape = shape;
-        collision.Position = arenaPixelSize / 2;
+        killZoneCollision.Shape = shape;
+        killZoneCollision.Position = arenaPixelSize / 2;
 
         killZone.GlobalPosition = GlobalPosition;
         killZone.Monitoring = true;
         killZone.Monitorable = true;
-        killZone.InputPickable = false; // no longer needed for mouse tracking
+        killZone.InputPickable = false;
 
-        killZone.AddChild(collision);
+        killZone.AddChild(killZoneCollision);
         killZone.Ready += () => killZone.GlobalPosition = GlobalPosition;
         GetParent().CallDeferred("add_child", killZone);
 
@@ -139,5 +140,17 @@ public partial class Arena : TileMapLayer
             isOutside = false;
             isoutsideTimer = 0f;
         }
+    }
+
+    public void Rebuild()
+    {
+        Clear(); // clears all tiles
+        GenerateArena();
+
+        Vector2 arenaPixelSize = new Vector2(ArenaWidth * TileSize, (ArenaHeight - 1) * TileSize);
+        var shape = new RectangleShape2D();
+        shape.Size = arenaPixelSize;
+        killZoneCollision.Shape = shape;
+        killZoneCollision.Position = arenaPixelSize / 2;
     }
 }

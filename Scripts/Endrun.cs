@@ -1,90 +1,200 @@
 using Godot;
 using System.Collections.Generic;
+
 public partial class Endrun : Control
 {
-    public enum UpgradeType { MaxHealth, Heal, BulletDamage, Arena, FloatingItemCount }
-    private Button button1;
-    private Button button2;
-    private Button button3;
-    private Button rerollButton;
-    private Button button4;
-    private UpgradeType[] currentOffers = new UpgradeType[3];
+    public enum UpgradeType { MaxHealth, Heal, BulletDamage, ArenaX, ArenaY, FloatingItemCount }
+
+    private struct ShopOffer
+    {
+        public UpgradeType Type;
+        public float Amount;
+        public int Price;
+        public string Label;
+    }
+    private Label MoneyLabel;
+    private Button button1, button2, button3, button4, rerollButton;
+    private int rerollCost = 5;
+    private bool[] sold = new bool[3];
+    private ShopOffer[] currentOffers = new ShopOffer[3];
+
     private static readonly UpgradeType[] AllUpgrades = {
         UpgradeType.MaxHealth,
         UpgradeType.Heal,
         UpgradeType.BulletDamage,
-        UpgradeType.Arena,
+        UpgradeType.ArenaX,
+        UpgradeType.ArenaY,
         UpgradeType.FloatingItemCount
     };
+
     public override void _Ready()
     {
-        // Adjust these paths to match your scene tree
+        MoneyLabel = GetNode<Label>("Control/Money");
         button1 = GetNode<Button>("Control/Button");
         button2 = GetNode<Button>("Control/Button2");
         button3 = GetNode<Button>("Control/Button3");
         button4 = GetNode<Button>("Control/Button4");
-        GD.Print("button1: " + button1);
-        GD.Print("button2: " + button2);
-        GD.Print("button3: " + button3);
-        GD.Print("button4: " + button4);
-        rerollButton = GetNode<Button>("Control/Reroll"); // add a Reroll button in your scene
+        rerollButton = GetNode<Button>("Control/Reroll");
+
         button1.Pressed += () => ApplyUpgrade(0);
         button2.Pressed += () => ApplyUpgrade(1);
         button3.Pressed += () => ApplyUpgrade(2);
         button4.Pressed += () => Continue();
         rerollButton.Pressed += Reroll;
+
         Reroll();
-        GD.Print("button1 text after reroll: " + button1?.Text);
     }
+
+    public override void _Process(double delta)
+    {
+        MoneyLabel.Text = $"Money: {GameControl.Instance?.money}g";
+    }
+
+    private ShopOffer GenerateOffer(UpgradeType type)
+    {
+        ShopOffer offer = new ShopOffer { Type = type };
+
+        switch (type)
+        {
+            case UpgradeType.MaxHealth:
+            {
+                // +10, +25, or +50
+                float[] amounts = { 10f, 25f, 50f };
+                int[] prices    = {  30,  60, 120 };
+                int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                offer.Amount = amounts[idx];
+                offer.Price  = prices[idx];
+                offer.Label  = $"MAX HEALTH +{offer.Amount}  [{offer.Price}g]";
+                break;
+            }
+            case UpgradeType.Heal:
+            {
+                float[] amounts = { 20f, 50f, 100f };
+                int[] prices    = {  20,  45,   90 };
+                int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                offer.Amount = amounts[idx];
+                offer.Price  = prices[idx];
+                offer.Label  = $"HEAL +{offer.Amount} HP  [{offer.Price}g]";
+                break;
+            }
+            case UpgradeType.BulletDamage:
+            {
+                float[] amounts = { 10f, 20f, 50f };
+                int[] prices    = { 25,  50, 110 };
+                int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                offer.Amount = amounts[idx];
+                offer.Price  = prices[idx];
+                offer.Label  = $"BULLET DMG +{offer.Amount}  [{offer.Price}g]";
+                break;
+            }
+            case UpgradeType.ArenaX:
+            {
+                float[] amounts = { 5f, 10f, 25f };
+                int[] prices    = { 20, 40, 75 };
+                int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                offer.Amount = amounts[idx];
+                offer.Price  = prices[idx];
+                offer.Label  = $"ARENA WIDTH +{offer.Amount}  [{offer.Price}g]";
+                break;
+            }
+            case UpgradeType.ArenaY:
+            {
+                float[] amounts = { 5f, 10f, 25f };
+                int[] prices    = { 20, 40, 75 };
+                int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                offer.Amount = amounts[idx];
+                offer.Price  = prices[idx];
+                offer.Label  = $"ARENA HEIGHT +{offer.Amount}  [{offer.Price}g]";
+                break;
+            }
+            case UpgradeType.FloatingItemCount:
+            {
+                offer.Amount = 1f;
+                offer.Price  = (int)GD.RandRange(20, 100);
+                offer.Label  = $"FLOATING ITEM +1  [{offer.Price}g]";
+                break;
+            }
+        }
+
+        return offer;
+    }
+
     private void Reroll()
     {
+        if (GameControl.Instance == null) return;
+        if (GameControl.Instance.money < rerollCost) return;
+        GameControl.Instance.money -= rerollCost;
+        rerollCost += 2;
+        rerollButton.Text = $"REROLL [{rerollCost}g]";
+
+        sold = new bool[3]; // reset sold on reroll
+
         var pool = new List<UpgradeType>(AllUpgrades);
         for (int i = 0; i < 3; i++)
         {
             int idx = (int)GD.RandRange(0, pool.Count - 1);
-            currentOffers[i] = pool[idx];
+            currentOffers[i] = GenerateOffer(pool[idx]);
             pool.RemoveAt(idx);
         }
-        button1.Text = GetUpgradeLabel(currentOffers[0]);
-        button2.Text = GetUpgradeLabel(currentOffers[1]);
-        button3.Text = GetUpgradeLabel(currentOffers[2]);
+        UpdateButtons();
     }
+
+    private void UpdateButtons()
+    {
+        Button[] buttons = { button1, button2, button3 };
+        for (int i = 0; i < 3; i++)
+        {
+            if (sold[i])
+            {
+                buttons[i].Text = "SOLD";
+                buttons[i].Disabled = true;
+            }
+            else
+            {
+                buttons[i].Text = currentOffers[i].Label;
+                buttons[i].Disabled = false;
+            }
+        }
+    }
+
     private void ApplyUpgrade(int index)
     {
-        switch (currentOffers[index])
+        ShopOffer offer = currentOffers[index];
+
+        if (GameControl.Instance == null) return;
+        if (GameControl.Instance.money < offer.Price) return;
+        GameControl.Instance.money -= offer.Price;
+
+        switch (offer.Type)
         {
             case UpgradeType.MaxHealth:
-                Player.Instance?.IncreaseMaxHealth(25f);
+                Player.Instance?.IncreaseMaxHealth(offer.Amount);
                 break;
             case UpgradeType.Heal:
-                Player.Instance?.Heal(50f);
+                Player.Instance?.Heal(offer.Amount);
                 break;
             case UpgradeType.BulletDamage:
-                Bullet.Damage += 10;
+                Bullet.Damage += (int)offer.Amount;
                 break;
-            case UpgradeType.Arena:
+            case UpgradeType.ArenaX:
                 if (Arena.Instance != null)
-                {
-                    Arena.Instance.ArenaWidth += 2;
-                    Arena.Instance.ArenaHeight += 2;
-                }
+                    Arena.Instance.ArenaWidth += (int)offer.Amount;
+                    Arena.Instance.Rebuild();
+                break;
+            case UpgradeType.ArenaY:
+                if (Arena.Instance != null)
+                    Arena.Instance.ArenaHeight += (int)offer.Amount;
+                    Arena.Instance.Rebuild();
                 break;
             case UpgradeType.FloatingItemCount:
                 if (GameControl.Instance != null)
                     GameControl.Instance.MaxHealingPots += 1;
                 break;
         }
-        Visible = false;
+
+        sold[index] = true;
+        UpdateButtons();
     }
-    private string GetUpgradeLabel(UpgradeType type) => type switch
-    {
-        UpgradeType.MaxHealth      => "MAX HEALTH +25",
-        UpgradeType.Heal           => "HEAL +50 HP",
-        UpgradeType.BulletDamage   => "BULLET DAMAGE +10",
-        UpgradeType.Arena          => "ARENA SIZE UP",
-        UpgradeType.FloatingItemCount => "FLOATING ITEM +1",
-        _ => "???"
-    };
 
     private void Continue()
     {
@@ -95,8 +205,18 @@ public partial class Endrun : Control
             enemy.QueueFree();
 
         Visible = false;
+        Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2));
         GameControl.Instance.isPlaying = true;
         GameControl.Instance?.CallDeferred(nameof(GameControl.UnfreezeLayers));
         GameControl.Instance?.CallDeferred(nameof(GameControl.QueueFreePortal));
+    }
+
+    public void OpenShop()
+    {
+        sold = new bool[3];
+        rerollCost = 5;
+        rerollButton.Text = $"REROLL [{rerollCost}g]";
+        Reroll();
+        Visible = true;
     }
 }

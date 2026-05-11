@@ -70,6 +70,14 @@ offset_right = 520.0
 offset_bottom = 544.0
 pivot_offset = Vector2(96, 64)
 
+[node name="Money" type="Label" parent="Control"]
+layout_mode = 0
+offset_left = 576.0
+offset_top = 480.0
+offset_right = 616.0
+offset_bottom = 503.0
+text = "money"
+
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
 offset_left = 64.0

@@ -152,14 +152,14 @@ public partial class Player : CharacterBody2D
 			
 			GameControl.Instance.isPlaying = false;
 			GameControl.Instance.CallDeferred(nameof(GameControl.FreezeLayers));
-			endrunUI.Visible = true;
+			endrunUI.GetNode<Endrun>(".").OpenShop(); // call OpenShop instead
 		}
 		
 	}
 
 	public void Heal(float amount)
 	{
-		health = Mathf.Min(health + amount, 100f);
+		health = Mathf.Min(health + amount, maxHealth);
 		healthBar.Value = health;
 	}
 

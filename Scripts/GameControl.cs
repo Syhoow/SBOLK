@@ -12,7 +12,7 @@ public partial class GameControl : Node2D
     [Export] public int MaxHealingPots = 2;
     [Export] public float SpawnInterval = 0.5f;
     [Export] public float MarkerWarningTime = 1.5f; // how long marker shows before enemy spawns
-    [Export] public int MaxEnemies = 10;
+    [Export] public int MaxEnemies = 5;
     public float goal = 300;
     public float currentGoal = 0;
     private CharacterBody2D player;
@@ -23,11 +23,12 @@ public partial class GameControl : Node2D
     public bool isPlaying = true;
     private float spawnTimer = 0f;
     public float DifficultyMultiplier = 1f;
-    public float GetWaveEnemyHP(int wave) => 100f * Mathf.Pow(1.5f, wave) * DifficultyMultiplier;
-    public float GetWaveGoal(int wave) => 300f * Mathf.Pow(1.5f, wave) * DifficultyMultiplier;
-    public int GetWaveEnemyCount(int wave) => (int)((10 + wave * 2) * DifficultyMultiplier);
+    public int WaveEnemyCount => (int)(5 * DifficultyMultiplier);
+    public float WaveEnemyHP => 100f * DifficultyMultiplier;
+    public float WaveGoal => 300f * DifficultyMultiplier;
     public int currentWave = 0;
     private int _activeEnemies = 0;
+    public int money = 0;
     public override void _Ready()
     {
         Instance = this;
@@ -43,7 +44,7 @@ public partial class GameControl : Node2D
     public override void _Process(double delta)
     {
         spawnTimer += (float)delta;
-
+        GD.Print(money);
         if(isPlaying)
         if(spawnTimer >= SpawnInterval)
         {
@@ -68,11 +69,8 @@ public partial class GameControl : Node2D
             currentGoal = 0;// reset goal for next round
         }
 
-        goal = GetWaveGoal(currentWave);
+        goal = WaveGoal;
         goalBar.MaxValue = goal;
-        GD.Print(currentWave);
-        GD.Print(_activeEnemies);
-        MaxEnemies = GetWaveEnemyCount(currentWave);
         
 
         healingPotTimer += (float)delta;
@@ -87,7 +85,7 @@ public partial class GameControl : Node2D
     private async void SpawnWithWarning()
     {
         // Reserve a slot atomically before anything async happens
-        if (_activeEnemies >= MaxEnemies) return;
+        if (_activeEnemies >= WaveEnemyCount) return;
         _activeEnemies++;
 
         if (Arena.Instance == null) 
@@ -125,7 +123,7 @@ public partial class GameControl : Node2D
         var types = (Enemy.EnemyType[])System.Enum.GetValues(typeof(Enemy.EnemyType));
         enemy.Type = types[(int)GD.RandRange(0,types.Length - 1)];
         enemy.GlobalPosition = spawnPos;
-        enemy.health = GetWaveEnemyHP(currentWave);
+        enemy.health = WaveEnemyHP;
 
         enemyLayer.AddChild(enemy);
         enemy.AddToGroup("enemy");
@@ -171,6 +169,7 @@ public partial class GameControl : Node2D
     public void OnDropCollected()
     {
         currentGoal += 5f;
+        money += 2; // Increment money on collection
         goalBar.Value = currentGoal;
     }
 
