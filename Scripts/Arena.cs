@@ -37,22 +37,17 @@ public partial class Arena : TileMapLayer
         {
             isoutsideTimer -= (float)delta;
             Modulate = new Color(1f, 0f, 0f);
-            if(GameControl.Instance?.currentGoal > 20)
-			{
-                if (ismouseInside && Input.IsActionJustPressed("dash"))
-                {
-                    var player = GetTree().Root.GetNode<Player>("/root/Main/ArenaLayer/Player");
-                    player.GlobalPosition = GetGlobalMousePosition();
-                    if (GameControl.Instance != null)
-    				GameControl.Instance.currentGoal -= 20f;
-					GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
-                }
-                if (isoutsideTimer <= 0f)
-                {
-                    isEliminated = true;
-                    GD.Print("player out!");
-                }
+            if (ismouseInside && Input.IsActionJustPressed("dash"))
+            {
+                var player = GetTree().Root.GetNode<Player>("/root/Main/ArenaLayer/Player");
+                player.GlobalPosition = GetGlobalMousePosition();
             }
+            if (isoutsideTimer <= 0f)
+            {
+                isEliminated = true;
+                GD.Print("player out!");
+            }
+            
         }
         else
         {

@@ -52,18 +52,21 @@ public partial class Endrun : Control
 
     private ShopOffer GenerateOffer(UpgradeType type)
     {
+        var counts = GameControl.Instance?.purchaseCounts;
+
         ShopOffer offer = new ShopOffer { Type = type };
 
         switch (type)
         {
             case UpgradeType.MaxHealth:
             {
-                // +10, +25, or +50
                 float[] amounts = { 10f, 25f, 50f };
                 int[] prices    = {  30,  60, 120 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                string key = $"{type}_{amounts[idx]}";
+                int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = prices[idx];
+                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
                 offer.Label  = $"MAX HEALTH +{offer.Amount}  [{offer.Price}g]";
                 break;
             }
@@ -72,45 +75,55 @@ public partial class Endrun : Control
                 float[] amounts = { 20f, 50f, 100f };
                 int[] prices    = {  20,  45,   90 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                string key = $"{type}_{amounts[idx]}";
+                int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = prices[idx];
+                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
                 offer.Label  = $"HEAL +{offer.Amount} HP  [{offer.Price}g]";
                 break;
             }
             case UpgradeType.BulletDamage:
             {
                 float[] amounts = { 10f, 20f, 50f };
-                int[] prices    = { 25,  50, 110 };
+                int[] prices    = {  25,  50, 110 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                string key = $"{type}_{amounts[idx]}";
+                int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = prices[idx];
+                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
                 offer.Label  = $"BULLET DMG +{offer.Amount}  [{offer.Price}g]";
                 break;
             }
             case UpgradeType.ArenaX:
             {
                 float[] amounts = { 5f, 10f, 25f };
-                int[] prices    = { 20, 40, 75 };
+                int[] prices    = { 20,  40,  75 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                string key = $"{type}_{amounts[idx]}";
+                int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = prices[idx];
+                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
                 offer.Label  = $"ARENA WIDTH +{offer.Amount}  [{offer.Price}g]";
                 break;
             }
             case UpgradeType.ArenaY:
             {
                 float[] amounts = { 5f, 10f, 25f };
-                int[] prices    = { 20, 40, 75 };
+                int[] prices    = { 20,  40,  75 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
+                string key = $"{type}_{amounts[idx]}";
+                int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = prices[idx];
+                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
                 offer.Label  = $"ARENA HEIGHT +{offer.Amount}  [{offer.Price}g]";
                 break;
             }
             case UpgradeType.FloatingItemCount:
             {
+                string key = $"{type}_1";
+                int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = 1f;
-                offer.Price  = (int)GD.RandRange(20, 100);
+                offer.Price  = (int)(GD.RandRange(20, 100) * (1f + timesBought * 0.5f));
                 offer.Label  = $"FLOATING ITEM +1  [{offer.Price}g]";
                 break;
             }
@@ -124,7 +137,7 @@ public partial class Endrun : Control
         if (GameControl.Instance == null) return;
         if (GameControl.Instance.money < rerollCost) return;
         GameControl.Instance.money -= rerollCost;
-        rerollCost += 2;
+        rerollCost += 5;
         rerollButton.Text = $"REROLL [{rerollCost}g]";
 
         sold = new bool[3]; // reset sold on reroll
@@ -165,6 +178,12 @@ public partial class Endrun : Control
         if (GameControl.Instance.money < offer.Price) return;
         GameControl.Instance.money -= offer.Price;
 
+        // track purchase by type+amount
+        string key = $"{offer.Type}_{offer.Amount}";
+        if (!GameControl.Instance.purchaseCounts.ContainsKey(key))
+            GameControl.Instance.purchaseCounts[key] = 0;
+        GameControl.Instance.purchaseCounts[key]++;
+
         switch (offer.Type)
         {
             case UpgradeType.MaxHealth:
@@ -200,10 +219,15 @@ public partial class Endrun : Control
     {
         if (GameControl.Instance != null)
             GameControl.Instance.DifficultyMultiplier *= 1.5f;
-
+            GameControl.Instance.EnemyMultiplier *= 1.25f;
+            GameControl.Instance.goal = GameControl.Instance.WaveGoal;
+            GameControl.Instance.goalBar.MaxValue = GameControl.Instance.goal;
+            GameControl.Instance.currentGoal = 0;// reset goal for next round
+            GameControl.Instance.money = (int)(GameControl.Instance.money * 0.5f);
         foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
             enemy.QueueFree();
-
+        rerollCost *= (int)1.25f;
+        Enemy.Instance.health *= 1.25f;
         Visible = false;
         Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2));
         GameControl.Instance.isPlaying = true;

@@ -1,5 +1,5 @@
 using Godot;
-
+using System.Collections.Generic;
 public partial class GameControl : Node2D
 {
     public static GameControl Instance;
@@ -23,12 +23,15 @@ public partial class GameControl : Node2D
     public bool isPlaying = true;
     private float spawnTimer = 0f;
     public float DifficultyMultiplier = 1f;
-    public int WaveEnemyCount => (int)(5 * DifficultyMultiplier);
-    public float WaveEnemyHP => 100f * DifficultyMultiplier;
-    public float WaveGoal => 300f * DifficultyMultiplier;
+    public float EnemyMultiplier = 1f;
+    public int WaveEnemyCount => (int)(5 * EnemyMultiplier);
+    public float WaveEnemyHP => 100f * EnemyMultiplier;
+    public float WaveGoal => 100f * DifficultyMultiplier;
     public int currentWave = 0;
     private int _activeEnemies = 0;
     public int money = 0;
+    public Dictionary<string, int> purchaseCounts = new Dictionary<string, int>();
+    
     public override void _Ready()
     {
         Instance = this;
@@ -51,7 +54,7 @@ public partial class GameControl : Node2D
             spawnTimer = 0f;
             SpawnWithWarning();
         }
-        if(currentGoal == goal)
+        if(currentGoal >= goal)
         {
             GD.Print("Goal reached! You win!");
             // Random position
@@ -68,10 +71,6 @@ public partial class GameControl : Node2D
             SpawnPortal(spawnPos);
             currentGoal = 0;// reset goal for next round
         }
-
-        goal = WaveGoal;
-        goalBar.MaxValue = goal;
-        
 
         healingPotTimer += (float)delta;
         if (healingPotTimer >= HealingPotInterval)
@@ -146,7 +145,7 @@ public partial class GameControl : Node2D
         Vector2 arenaPos = Arena.Instance.GlobalPosition;
         float w = Arena.Instance.ArenaWidth * 35f;
         float h = Arena.Instance.ArenaHeight * 35f;
-        float offset = (float)GD.RandRange(250f, 300f);
+        float offset = (float)GD.RandRange(100f, 200f);
         Vector2 spawnPos = side switch
         {
             0 => new Vector2((float)GD.RandRange(arenaPos.X, arenaPos.X + w), arenaPos.Y - offset),
@@ -167,11 +166,12 @@ public partial class GameControl : Node2D
     }
 
     public void OnDropCollected()
-    {
-        currentGoal += 5f;
-        money += 2; // Increment money on collection
-        goalBar.Value = currentGoal;
-    }
+{
+    currentGoal += 5f;
+    int goldEarned = (int)GD.RandRange(1, 5); // flat small amount
+    money += goldEarned;
+    goalBar.Value = currentGoal;
+}
 
     public void SpawnPortal(Vector2 position)
     {

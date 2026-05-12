@@ -90,6 +90,11 @@ public partial class Enemy : CharacterBody2D
             CollisionLayer = 3|4;
             CollisionMask = 3|4;
         }
+
+        if(Arena.Instance.ArenaWidth >= 100 && Arena.Instance.ArenaHeight >= 100)
+        {
+            
+        }
     }
 
     public override void _Process(double delta)
@@ -156,7 +161,8 @@ public partial class Enemy : CharacterBody2D
                 float dist = Position.DistanceTo(player.Position);
                 Vector2 toPlayer = (player.Position - Position).Normalized();
                 Vector2 perpendicular = new Vector2(-toPlayer.Y, toPlayer.X); // sideways direction
-
+                CollisionLayer = 3|4;
+                CollisionMask = 3|4;
                 // Change strafe direction every few seconds
                 strafeChangeTimer += delta;
                 if (strafeChangeTimer >= strafeChangeCooldown)
@@ -171,26 +177,18 @@ public partial class Enemy : CharacterBody2D
                 }
 
                 if (dist < pushDistance)
-                {
-                    // Too close - back away AND strafe
-                    Velocity = (-toPlayer + strafeDirection).Normalized() * speed;
-                }
+                    Velocity = (-toPlayer + strafeDirection).Normalized() * GetSpeed();
                 else if (dist > preferredDistance)
-                {
-                    // Too far - move closer AND strafe
-                    Velocity = (toPlayer + strafeDirection).Normalized() * speed;
-                }
+                    Velocity = (toPlayer + strafeDirection).Normalized() * GetSpeed();
                 else
-                {
-                    // In range - just strafe sideways
-                    Velocity = strafeDirection * speed;
-                }
+                    Velocity = strafeDirection * GetSpeed();
                 break;
 
             case EnemyType.Dash:
 
                 Vector2 chaseDirection = (player.Position - Position).Normalized();
-
+                CollisionLayer = 3|4;
+                CollisionMask = 3|4;
                 if (isDashing)
                 {
                     Velocity += dashDirection * enemyAcceleration * delta * 5f;
@@ -203,8 +201,8 @@ public partial class Enemy : CharacterBody2D
                 }
                 else
                 {
-                    Velocity += chaseDirection * enemyAcceleration * delta;
-                    Velocity = Velocity.LimitLength(speed);
+                    Velocity += chaseDirection * GetSpeed() * delta;
+                    Velocity = Velocity.LimitLength(GetSpeed());
                     Velocity -= Velocity * enemyFriction * delta;
                 }
                 break;
@@ -212,7 +210,7 @@ public partial class Enemy : CharacterBody2D
             case EnemyType.Bomb:
 
                 var directionbomb = (player.Position - Position).Normalized();
-                Velocity = directionbomb * speed * 1.2f;
+                Velocity = directionbomb * GetSpeed() * 1.2f;
                 break;
 
             default:
@@ -224,8 +222,8 @@ public partial class Enemy : CharacterBody2D
                     break;
                 }
                 var direction = (player.Position - Position).Normalized();
-                Velocity = direction * speed;
-                    break;
+                Velocity = direction * GetSpeed();
+                break;
         }
     }
 
@@ -311,6 +309,18 @@ public partial class Enemy : CharacterBody2D
     {
         knockback = direction * force;
         kbtimer = duration;
+    }
+
+    private float GetSpeed()
+    {
+        if (Arena.Instance == null) return speed;
+        float arenaSize = Arena.Instance.ArenaWidth + Arena.Instance.ArenaHeight;
+        if (arenaSize >= 50f)
+        {
+            float bonus = (arenaSize - 50f) * 0.5f; // 0.5 speed per tile over 50
+            return speed + bonus;
+        }
+        return speed;
     }
 
     private void _on_area_2d_area_entered(Area2D area)

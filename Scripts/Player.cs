@@ -55,11 +55,14 @@ public partial class Player : CharacterBody2D
 			_Movements(dt);
 		}
 
+		// dash input always checked, even during knockback
+		_CheckDash(dt);
+
 		if (!isDashing)
 		{
 			bool outsideArena = Arena.Instance != null && Arena.Instance.isOutside;
 			if (outsideArena)
-				Velocity = Velocity.LimitLength(200f); // slow but no friction
+				Velocity = Velocity.LimitLength(200f);
 			else
 				_Friction(dt);
 		}
@@ -79,11 +82,44 @@ public partial class Player : CharacterBody2D
 			{
 				isInvisible = false;
 				hitbox.Disabled = false;
-				CollisionMask |= (1u << 2); // re-enable layer 3
+				CollisionMask |= (1u << 2);
 			}
 		}
 
 		MoveAndSlide();
+	}
+
+	private void _CheckDash(float dt)
+	{
+		bool outsideArena = Arena.Instance != null && Arena.Instance.isOutside;
+		if (outsideArena) return;
+		if (GameControl.Instance?.currentGoal <= 20) return;
+		if (dashCooldownTimer > 0f || isDashing) return;
+
+		if (Input.IsActionJustPressed("dash"))
+		{
+			// use last movement direction or default right
+			var Direction = new Vector2();
+			if (Input.IsActionPressed("ui_up")) Direction.Y -= 1;
+			if (Input.IsActionPressed("ui_down")) Direction.Y += 1;
+			if (Input.IsActionPressed("ui_left")) Direction.X -= 1;
+			if (Input.IsActionPressed("ui_right")) Direction.X += 1;
+
+			isDashing = true;
+			isInvisible = true;
+			dashTimer = dashDuration;
+			dashDisabledTimer = dashDisabledDuration;
+			dashCooldownTimer = dashCooldown;
+			dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
+			CollisionMask &= ~(1u << 2);
+			if (GameControl.Instance != null)
+				GameControl.Instance.currentGoal -= 20;
+			GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
+
+			// cancel knockback when dashing
+			kbtimer = 0f;
+			knockback = Vector2.Zero;
+		}
 	}
 
 	public void _Movements(float delta)
@@ -110,7 +146,7 @@ public partial class Player : CharacterBody2D
 					dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
 					CollisionMask &= ~(1u << 2); // disable only layer 3
 					if (GameControl.Instance != null)
-    				GameControl.Instance.currentGoal -= 20;
+    				GameControl.Instance.currentGoal -= 10;
 					GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
 				}
 			}
