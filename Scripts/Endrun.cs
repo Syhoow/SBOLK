@@ -14,7 +14,8 @@ public partial class Endrun : Control
     }
     private Label MoneyLabel;
     private Button button1, button2, button3, button4, rerollButton;
-    private int rerollCost = 5;
+    private int rerollCost = 4;
+    private int rerollCostWave = 4;
     private bool[] sold = new bool[3];
     private ShopOffer[] currentOffers = new ShopOffer[3];
 
@@ -96,7 +97,7 @@ public partial class Endrun : Control
             }
             case UpgradeType.ArenaX:
             {
-                float[] amounts = { 5f, 10f, 25f };
+                float[] amounts = { 1f, 2f, 5f };
                 int[] prices    = { 20,  40,  75 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
                 string key = $"{type}_{amounts[idx]}";
@@ -108,7 +109,7 @@ public partial class Endrun : Control
             }
             case UpgradeType.ArenaY:
             {
-                float[] amounts = { 5f, 10f, 25f };
+                float[] amounts = { 1f, 2f, 5f };
                 int[] prices    = { 20,  40,  75 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
                 string key = $"{type}_{amounts[idx]}";
@@ -226,8 +227,9 @@ public partial class Endrun : Control
             GameControl.Instance.money = (int)(GameControl.Instance.money * 0.5f);
         foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
             enemy.QueueFree();
-        rerollCost *= (int)1.25f;
+        
         Enemy.Instance.health *= 1.25f;
+        Enemy.Instance.damage *= 1.25f;
         Visible = false;
         Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2));
         GameControl.Instance.isPlaying = true;
@@ -237,8 +239,9 @@ public partial class Endrun : Control
 
     public void OpenShop()
     {
+        rerollCostWave = (int)(rerollCostWave * 1.5f);
         sold = new bool[3];
-        rerollCost = 5;
+        rerollCost = rerollCostWave;
         rerollButton.Text = $"REROLL [{rerollCost}g]";
         Reroll();
         Visible = true;

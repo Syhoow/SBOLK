@@ -11,12 +11,15 @@ public partial class Player : CharacterBody2D
 	private const float friction = acceleration/speed;
 	private bool isDashing = false;
 	public bool isInvisible = false;
-	private float dashDisabledDuration = 0.5f;
+	private float dashDisabledDuration = 0.2f;
 	private float dashDisabledTimer = 0f;
 	private float dashDuration = 0.2f;
 	private float dashTimer = 0f;
 	private float dashCooldown = 0.5f;
 	private float dashCooldownTimer = 0f;
+	private float invincibilityDuration = 0.5f;
+	private float invincibilityTimer = 0f;
+	private bool isInvincible = false;
 	private Vector2 dashDirection;
 	private Vector2 knockback = Vector2.Zero;
 	private float kbtimer = 0.0f;
@@ -74,6 +77,22 @@ public partial class Player : CharacterBody2D
 			if (dashTimer <= 0f) isDashing = false;
 		}
 
+		if (isInvincible)
+		{
+			// Remove the SetDeferred and CallDeferred lines — they don't belong here
+			invincibilityTimer -= dt;
+			Modulate = (int)(invincibilityTimer * 10) % 2 == 0 
+				? new Color(1, 1, 1, 0.3f) 
+				: new Color(1, 1, 1, 1f);
+			if (invincibilityTimer <= 0f)
+			{
+				isInvincible = false;
+				hitbox.Disabled = false;
+				Modulate = new Color(1, 1, 1, 1f);
+				CollisionMask |= (1u << 2);
+			}
+		}
+
 		if (isInvisible)
 		{
 			dashDisabledTimer -= dt;
@@ -83,6 +102,7 @@ public partial class Player : CharacterBody2D
 				isInvisible = false;
 				hitbox.Disabled = false;
 				CollisionMask |= (1u << 2);
+				CollisionMask |= (1u << 0);
 			}
 		}
 
@@ -112,6 +132,7 @@ public partial class Player : CharacterBody2D
 			dashCooldownTimer = dashCooldown;
 			dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
 			CollisionMask &= ~(1u << 2);
+			CollisionMask &= ~(1u << 0);
 			if (GameControl.Instance != null)
 				GameControl.Instance.currentGoal -= 20;
 			GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
@@ -145,6 +166,7 @@ public partial class Player : CharacterBody2D
 					dashCooldownTimer = dashCooldown;
 					dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
 					CollisionMask &= ~(1u << 2); // disable only layer 3
+					CollisionMask &= ~(1u << 0);
 					if (GameControl.Instance != null)
     				GameControl.Instance.currentGoal -= 10;
 					GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
@@ -170,10 +192,18 @@ public partial class Player : CharacterBody2D
 
 	private void _on_area_2d_area_entered(Area2D area)
 	{
-		if(area.IsInGroup("enemy"))
+		if (area.IsInGroup("enemy"))
 		{
-			health -= 5f;
+			if (isInvincible) return;
+
+			health -= Enemy.Instance.damage;
 			healthBar.Value = health;
+
+			isInvincible = true;
+			hitbox.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+			CallDeferred(nameof(DisableEnemyLayer)); // ← this was missing
+			invincibilityTimer = invincibilityDuration;
+
 			if (health <= 0f)
 			{
 				QueueFree();
@@ -187,10 +217,18 @@ public partial class Player : CharacterBody2D
 				enemy.QueueFree();
 			
 			GameControl.Instance.isPlaying = false;
+			GameControl.Instance.currentGoal = 0;
+			GameControl.Instance.goalBar.Value = 0;
+			GameControl.Instance.goalReached = false;
 			GameControl.Instance.CallDeferred(nameof(GameControl.FreezeLayers));
 			endrunUI.GetNode<Endrun>(".").OpenShop(); // call OpenShop instead
 		}
 		
+	}
+
+	private void DisableEnemyLayer()
+	{
+		CollisionMask &= ~(1u << 2);
 	}
 
 	public void Heal(float amount)

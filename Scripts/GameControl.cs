@@ -21,6 +21,7 @@ public partial class GameControl : Node2D
     public CanvasLayer enemyLayer;
     public CanvasLayer arenaLayer;
     public bool isPlaying = true;
+    public bool goalReached = false;
     private float spawnTimer = 0f;
     public float DifficultyMultiplier = 1f;
     public float EnemyMultiplier = 1f;
@@ -54,7 +55,8 @@ public partial class GameControl : Node2D
             spawnTimer = 0f;
             SpawnWithWarning();
         }
-        if(currentGoal >= goal)
+
+        if(currentGoal >= goal && !goalReached)
         {
             GD.Print("Goal reached! You win!");
             // Random position
@@ -69,7 +71,7 @@ public partial class GameControl : Node2D
                 (float)GD.RandRange(min.Y, max.Y)
             );
             SpawnPortal(spawnPos);
-            currentGoal = 0;// reset goal for next round
+            goalReached = true;
         }
 
         healingPotTimer += (float)delta;

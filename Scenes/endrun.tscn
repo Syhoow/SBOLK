@@ -55,10 +55,10 @@ text = "3"
 
 [node name="Reroll" type="Button" parent="Control"]
 layout_mode = 0
-offset_left = 848.0
-offset_top = 456.0
-offset_right = 896.0
-offset_bottom = 504.0
+offset_left = 488.0
+offset_top = 408.0
+offset_right = 536.0
+offset_bottom = 456.0
 pivot_offset = Vector2(96, 64)
 text = "4"
 
