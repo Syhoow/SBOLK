@@ -76,7 +76,7 @@ offset_left = 576.0
 offset_top = 480.0
 offset_right = 616.0
 offset_bottom = 503.0
-text = "money"
+text = "[shake]money[/shake]"
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
