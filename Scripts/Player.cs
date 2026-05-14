@@ -11,7 +11,7 @@ public partial class Player : CharacterBody2D
 	private const float friction = acceleration/speed;
 	private bool isDashing = false;
 	public bool isInvisible = false;
-	private float dashDisabledDuration = 1f;
+	private float dashDisabledDuration = 0.5f;
 	private float dashDisabledTimer = 0f;
 	private float dashDuration = 0.2f;
 	private float dashTimer = 0f;
@@ -193,6 +193,25 @@ public partial class Player : CharacterBody2D
 	private void _on_area_2d_area_entered(Area2D area)
 	{
 		if (area.IsInGroup("enemy"))
+		{
+			if (isInvincible) return;
+
+			health -= Enemy.Instance.damage;
+			healthBar.Value = health;
+
+			isInvincible = true;
+			hitbox.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+			CallDeferred(nameof(DisableEnemyLayer)); // ← this was missing
+			invincibilityTimer = invincibilityDuration;
+
+			if (health <= 0f)
+			{
+				QueueFree();
+				GD.Print("Player has died!");
+			}
+		}
+
+		if(area.IsInGroup("enemy_bullet"))
 		{
 			if (isInvincible) return;
 

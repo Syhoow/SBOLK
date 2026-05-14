@@ -229,7 +229,7 @@ public partial class Endrun : Control
             enemy.QueueFree();
         
         Enemy.Instance.health *= 1.25f;
-        Enemy.Instance.damage *= 1.25f;
+        Enemy.Instance.damage *= 1.5f;
         Visible = false;
         Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2));
         GameControl.Instance.isPlaying = true;

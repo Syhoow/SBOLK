@@ -2,7 +2,7 @@ using Godot;
 
 public partial class WeaponHud : CanvasLayer
 {
-    [Export]
+   /* [Export]
     public NodePath GunPath { get; set; } = new NodePath("../Player/Gun");
 
     private Label _weaponLabel;
@@ -90,5 +90,5 @@ public partial class WeaponHud : CanvasLayer
         _damageLabel.Scale = Vector2.One * 1.15f;
         _damageLabel.Visible = true;
         _damageMessageTimer = 1.0f;
-    }
+    }*/
 }

@@ -8,6 +8,10 @@ public partial class Enemy : CharacterBody2D
     [Export] public EnemyType Type = EnemyType.Basic;
     [Export] public PackedScene DropScene;
 
+    [Export] public PackedScene EnemyBulletScene;
+    private float shootCooldown = 5f;
+    private float shootInterval = 5f;
+
     protected const float speed = 250;
     protected CharacterBody2D player;
     protected AnimationPlayer animation;
@@ -59,6 +63,8 @@ public partial class Enemy : CharacterBody2D
     private float spawnDuration = 1f;
     private bool isspawning = true;
 
+    public CanvasLayer arenaLayer;
+
     private int random = (int)GD.RandRange(0, 8);
 
     public override void _Ready()
@@ -72,6 +78,7 @@ public partial class Enemy : CharacterBody2D
         animation.Play("Running");
         animation.Seek((float)GD.RandRange(0, animation.CurrentAnimationLength), true);
         sprite = GetNode<Sprite2D>("Sprite2D");
+        arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
 
         switch (Type)
         {
@@ -278,6 +285,15 @@ public partial class Enemy : CharacterBody2D
                 }
                 break;
 
+            case EnemyType.Gun:
+                shootCooldown -= delta;
+                if (shootCooldown <= 0f && player != null)
+                {
+                    shootCooldown = shootInterval;
+                    ShootAtPlayer();
+                }
+                break;
+
             case EnemyType.Teleport:
 
                 if (isTeleportingWindup)
@@ -323,6 +339,17 @@ public partial class Enemy : CharacterBody2D
         return speed;
     }
 
+    private void ShootAtPlayer()
+    {
+        if (EnemyBulletScene == null) return;
+
+        var bullet = EnemyBulletScene.Instantiate<EnemyBullet>();
+        var direction = (player.GlobalPosition - GlobalPosition).Normalized();
+        bullet.GlobalPosition = GlobalPosition;
+        bullet.Initialize(400f, 3f, direction); // slower than player bullets
+        arenaLayer.AddChild(bullet);
+    }
+
     private void _on_area_2d_area_entered(Area2D area)
     {
         if (area.IsInGroup("player"))
@@ -342,13 +369,12 @@ public partial class Enemy : CharacterBody2D
             }
             
         }
-        if(area.IsInGroup("bullet"))
+        if(area.IsInGroup("bullet") && !area.IsInGroup("enemy_bullet"))
         {
             health -= Bullet.Damage;
             impactframe.Stop();
             impactframe.Seek(0, true);
             impactframe.Play("impact");
-            GD.Print("enemy got damaged"+health);
         }
     }
 }

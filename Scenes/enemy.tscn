@@ -1,10 +1,11 @@
-[gd_scene load_steps=15 format=3 uid="uid://dgofyav0yw40s"]
+[gd_scene load_steps=16 format=3 uid="uid://dgofyav0yw40s"]
 
 [ext_resource type="Script" uid="uid://c6qo3g5ucgmvy" path="res://Scripts/Enemy.cs" id="1_1f0kj"]
 [ext_resource type="Texture2D" uid="uid://boa7q5bunn5ro" path="res://Assets/enemies.png" id="2_1f0kj"]
 [ext_resource type="Texture2D" uid="uid://8cwq5vy5q6bl" path="res://Assets/shadow.png" id="2_287tu"]
 [ext_resource type="PackedScene" uid="uid://c7p18gg53f7lu" path="res://Scenes/drop.tscn" id="2_0830c"]
 [ext_resource type="Shader" uid="uid://c42mmatsl5exq" path="res://Assets/Shader/impactframe.tres" id="2_afpow"]
+[ext_resource type="PackedScene" uid="uid://cboog2r0pnu1h" path="res://Scenes/enemybullet.tscn" id="3_ghaa6"]
 
 [sub_resource type="Animation" id="Animation_287tu"]
 length = 0.001
@@ -109,6 +110,7 @@ _data = {
 platform_floor_layers = 4294967040
 script = ExtResource("1_1f0kj")
 DropScene = ExtResource("2_0830c")
+EnemyBulletScene = ExtResource("3_ghaa6")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {
