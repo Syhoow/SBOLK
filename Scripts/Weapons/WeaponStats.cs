@@ -11,6 +11,12 @@ public sealed class WeaponStats
     public float SpreadDegrees { get; init; }
     public int PelletsPerShot { get; init; }
     public bool IsAutomatic { get; init; }
+    public float BulletLifetime { get; init; }
+    public float BulletScale { get; init; }
+    public float BulletGravity { get; init; }
+    public float BulletDrag { get; init; }
+    public float BulletSpinDegreesPerSecond { get; init; }
+    public Color BulletTint { get; init; }
 
     public WeaponStats(
         WeaponType type,
@@ -21,7 +27,13 @@ public sealed class WeaponStats
         float bulletSpeed,
         float spreadDegrees,
         int pelletsPerShot,
-        bool isAutomatic)
+        bool isAutomatic,
+        float bulletLifetime,
+        float bulletScale,
+        float bulletGravity,
+        float bulletDrag,
+        float bulletSpinDegreesPerSecond,
+        Color bulletTint)
     {
         Type = type;
         FireInterval = fireInterval;
@@ -32,6 +44,12 @@ public sealed class WeaponStats
         SpreadDegrees = spreadDegrees;
         PelletsPerShot = pelletsPerShot;
         IsAutomatic = isAutomatic;
+        BulletLifetime = bulletLifetime;
+        BulletScale = bulletScale;
+        BulletGravity = bulletGravity;
+        BulletDrag = bulletDrag;
+        BulletSpinDegreesPerSecond = bulletSpinDegreesPerSecond;
+        BulletTint = bulletTint;
     }
 
     public float SpreadRadians => Mathf.DegToRad(SpreadDegrees);

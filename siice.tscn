@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://gw1cq0xgaoub"]
+
+[ext_resource type="PackedScene" uid="uid://ocp108hacego" path="res://Scenes/Attacks/slice2d.tscn" id="1_c78g0"]
+
+[node name="siice" type="Node2D"]
+position = Vector2(-16, 219)
+
+[node name="slice" parent="." instance=ExtResource("1_c78g0")]
+position = Vector2(0, -18)

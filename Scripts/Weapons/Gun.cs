@@ -9,27 +9,29 @@ public partial class Gun : Node2D
     [Signal]
     public delegate void AmmoChangedEventHandler(int ammoInMagazine, int ammoInReserve);
 
-    private const float DefaultBulletLifeSeconds = 2.0f;
-
     [ExportGroup("Weapon Textures")]
     [Export] private Texture2D _pistolTexture;
     [Export] private Texture2D _smgTexture;
     [Export] private Texture2D _rifleTexture;
     [Export] private Texture2D _sniperTexture;
     [Export] private Texture2D _shotgunTexture;
+    [Export] private Texture2D _meleeTexture;
 
     private readonly Dictionary<WeaponType, WeaponStats> _weaponTable = new();
     private readonly Dictionary<WeaponType, int> _ammoInMagazine = new();
     private readonly Dictionary<WeaponType, int> _ammoInReserve = new();
     private readonly Dictionary<WeaponType, Node2D> _weaponNodes = new();
+    private readonly Dictionary<WeaponType, PackedScene> _attackScenes = new();
 
-    private PackedScene _bulletScene;
     private Marker2D _muzzle;
     private Sprite2D _sprite;
+    private AnimationPlayer _animationPlayer;
 
     private WeaponType _currentWeapon = WeaponType.Pistol;
+    private WeaponType _previousWeapon = WeaponType.Pistol;
     private float _shotCooldown;
     private float _reloadTimer;
+    private float _meleeReturnTimer;
     private bool _isReloading;
 
     public string CurrentWeaponName => _currentWeapon.ToString();
@@ -42,20 +44,24 @@ public partial class Gun : Node2D
 
     public override void _Ready()
     {
-        _bulletScene = GD.Load<PackedScene>("res://Scenes/bullet.tscn");
-
-        if (_bulletScene == null)
-        {
-            GD.PushError("Could not load res://Scenes/bullet.tscn.");
-            return;
-        }
-
         CacheWeaponNodes();
+        _animationPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
         BuildWeaponTable();
         InitializeAmmoPools();
+        LoadAttackScenes();
         LoadWeaponTexturesFromAssets();
         ApplyWeaponVisual(_currentWeapon);
         BroadcastWeaponState();
+    }
+
+    private void LoadAttackScenes()
+    {
+        _attackScenes[WeaponType.Pistol] = GD.Load<PackedScene>("res://Scenes/Bullets/PistolBullet.tscn");
+        _attackScenes[WeaponType.Smg] = GD.Load<PackedScene>("res://Scenes/Bullets/SmgBullet.tscn");
+        _attackScenes[WeaponType.Rifle] = GD.Load<PackedScene>("res://Scenes/Bullets/RifleBullet.tscn");
+        _attackScenes[WeaponType.Sniper] = GD.Load<PackedScene>("res://Scenes/Bullets/SniperBullet.tscn");
+        _attackScenes[WeaponType.Shotgun] = GD.Load<PackedScene>("res://Scenes/Bullets/ShotgunBullet.tscn");
+        _attackScenes[WeaponType.Melee] = GD.Load<PackedScene>("res://Scenes/Attacks/MeleeSwing.tscn");
     }
 
     private void CacheWeaponNodes()
@@ -65,23 +71,25 @@ public partial class Gun : Node2D
         _weaponNodes[WeaponType.Rifle] = GetNode<Node2D>("RifleNode");
         _weaponNodes[WeaponType.Sniper] = GetNode<Node2D>("SniperNode");
         _weaponNodes[WeaponType.Shotgun] = GetNode<Node2D>("ShotgunNode");
+        _weaponNodes[WeaponType.Melee] = GetNode<Node2D>("MeleeNode");
     }
 
     private void LoadWeaponTexturesFromAssets()
     {
-        _pistolTexture ??= GD.Load<Texture2D>("res://Assets/pistol.png");
-        _rifleTexture ??= GD.Load<Texture2D>("res://Assets/rifle.png");
-        _sniperTexture ??= GD.Load<Texture2D>("res://Assets/sniper.png");
-        _shotgunTexture ??= GD.Load<Texture2D>("res://Assets/shotgun.png");
-
-        // Temporary fallback until a dedicated SMG texture exists.
-        _smgTexture ??= _rifleTexture;
+        // Prefer pixel art variants if present
+        _pistolTexture ??= GD.Load<Texture2D>("res://Assets/Pistolpixel.png") ?? GD.Load<Texture2D>("res://Assets/Pistolpixel.png");
+        _smgTexture ??= GD.Load<Texture2D>("res://Assets/smgpixel.png") ?? GD.Load<Texture2D>("res://Assets/smgpixel.png");
+        _rifleTexture ??= GD.Load<Texture2D>("res://Assets/riflepixel.png") ?? GD.Load<Texture2D>("res://Assets/rifle.png");
+        _sniperTexture ??= GD.Load<Texture2D>("res://Assets/sniperpixel.png") ?? GD.Load<Texture2D>("res://Assets/sniper.png");
+        _shotgunTexture ??= GD.Load<Texture2D>("res://Assets/shotgunpixel.png") ?? GD.Load<Texture2D>("res://Assets/shotgun.png");
+        _meleeTexture ??= GD.Load<Texture2D>("res://Assets/Sword12.png");
 
         AssignTextureIfPresent(WeaponType.Pistol, _pistolTexture);
         AssignTextureIfPresent(WeaponType.Smg, _smgTexture ?? _rifleTexture ?? _pistolTexture);
         AssignTextureIfPresent(WeaponType.Rifle, _rifleTexture ?? _pistolTexture);
         AssignTextureIfPresent(WeaponType.Sniper, _sniperTexture ?? _pistolTexture);
         AssignTextureIfPresent(WeaponType.Shotgun, _shotgunTexture ?? _pistolTexture);
+        AssignTextureIfPresent(WeaponType.Melee, _meleeTexture ?? _shotgunTexture ?? _pistolTexture);
     }
 
     private void AssignTextureIfPresent(WeaponType type, Texture2D texture)
@@ -120,7 +128,13 @@ public partial class Gun : Node2D
             bulletSpeed: 700f,
             spreadDegrees: 1.5f,
             pelletsPerShot: 1,
-            isAutomatic: false);
+            isAutomatic: false,
+            bulletLifetime: 1.4f,
+            bulletScale: 1.0f,
+            bulletGravity: 0f,
+            bulletDrag: 0.02f,
+            bulletSpinDegreesPerSecond: 0f,
+            bulletTint: new Color(1f, 1f, 1f, 1f));
 
         _weaponTable[WeaponType.Smg] = new WeaponStats(
             type: WeaponType.Smg,
@@ -131,7 +145,13 @@ public partial class Gun : Node2D
             bulletSpeed: 620f,
             spreadDegrees: 4.5f,
             pelletsPerShot: 1,
-            isAutomatic: true);
+            isAutomatic: true,
+            bulletLifetime: 1.0f,
+            bulletScale: 0.85f,
+            bulletGravity: 0f,
+            bulletDrag: 0.05f,
+            bulletSpinDegreesPerSecond: 180f,
+            bulletTint: new Color(0.82f, 1f, 0.82f, 1f));
 
         _weaponTable[WeaponType.Rifle] = new WeaponStats(
             type: WeaponType.Rifle,
@@ -142,7 +162,13 @@ public partial class Gun : Node2D
             bulletSpeed: 900f,
             spreadDegrees: 2.0f,
             pelletsPerShot: 1,
-            isAutomatic: true);
+            isAutomatic: true,
+            bulletLifetime: 1.8f,
+            bulletScale: 1.05f,
+            bulletGravity: 0f,
+            bulletDrag: 0.01f,
+            bulletSpinDegreesPerSecond: 0f,
+            bulletTint: new Color(0.8f, 0.92f, 1f, 1f));
 
         _weaponTable[WeaponType.Sniper] = new WeaponStats(
             type: WeaponType.Sniper,
@@ -153,7 +179,13 @@ public partial class Gun : Node2D
             bulletSpeed: 1400f,
             spreadDegrees: 0.35f,
             pelletsPerShot: 1,
-            isAutomatic: false);
+            isAutomatic: false,
+            bulletLifetime: 3.0f,
+            bulletScale: 0.7f,
+            bulletGravity: 0f,
+            bulletDrag: 0f,
+            bulletSpinDegreesPerSecond: 0f,
+            bulletTint: new Color(1f, 0.95f, 0.75f, 1f));
 
         _weaponTable[WeaponType.Shotgun] = new WeaponStats(
             type: WeaponType.Shotgun,
@@ -161,10 +193,33 @@ public partial class Gun : Node2D
             magazineSize: 8,
             reserveAmmo: 10000,
             reloadTime: 2.0f,
-            bulletSpeed: 600f,
+            bulletSpeed: 900f,
             spreadDegrees: 12.0f,
             pelletsPerShot: 8,
-            isAutomatic: false);
+            isAutomatic: false,
+            bulletLifetime: 0.8f,
+            bulletScale: 1.2f,
+            bulletGravity: 220f,
+            bulletDrag: 0.12f,
+            bulletSpinDegreesPerSecond: -90f,
+            bulletTint: new Color(1f, 0.85f, 0.85f, 1f));
+
+            _weaponTable[WeaponType.Melee] = new WeaponStats(
+                type: WeaponType.Melee,
+                fireInterval: 0.42f,
+                magazineSize: 1,
+                reserveAmmo: 0,
+                reloadTime: 0f,
+                bulletSpeed: 120f,
+                spreadDegrees: 0f,
+                pelletsPerShot: 1,
+                isAutomatic: false,
+                bulletLifetime: 0.25f,
+                bulletScale: 1.0f,
+                bulletGravity: 0f,
+                bulletDrag: 0f,
+                bulletSpinDegreesPerSecond: 0f,
+                bulletTint: new Color(1f, 0.7f, 0.55f, 1f));
     }
 
     private void InitializeAmmoPools()
@@ -183,8 +238,9 @@ public partial class Gun : Node2D
         var wrappedDegrees = Mathf.Wrap(RotationDegrees, 0f, 360f);
         RotationDegrees = wrappedDegrees;
 
+        var flip = (wrappedDegrees > 90f && wrappedDegrees < 270f) ? -1f : 1f;
         var scaled = Scale;
-        scaled.Y = (wrappedDegrees > 90f && wrappedDegrees < 270f) ? -Mathf.Abs(scaled.Y) : Mathf.Abs(scaled.Y);
+        scaled.Y = Mathf.Abs(scaled.Y) * flip;
         Scale = scaled;
     }
 
@@ -193,6 +249,15 @@ public partial class Gun : Node2D
         if (_shotCooldown > 0f)
         {
             _shotCooldown -= delta;
+        }
+
+        if (_meleeReturnTimer > 0f)
+        {
+            _meleeReturnTimer -= delta;
+            if (_meleeReturnTimer <= 0f)
+            {
+                SwitchWeapon(_previousWeapon);
+            }
         }
 
         if (!_isReloading)
@@ -209,26 +274,64 @@ public partial class Gun : Node2D
 
     private void HandleWeaponSelectionInput()
     {
-        if (Input.IsKeyPressed(Key.Key1))
+        // Weapon selection is now handled via mouse scroll wheel in _Input.
+    }
+
+    public override void _Input(InputEvent @event)
+    {
+        if (@event is InputEventMouseButton mb && mb.Pressed)
         {
-            SwitchWeapon(WeaponType.Pistol);
+            if (mb.ButtonIndex == MouseButton.WheelUp)
+            {
+                SwitchToPreviousWeapon();
+            }
+            else if (mb.ButtonIndex == MouseButton.WheelDown)
+            {
+                SwitchToNextWeapon();
+            }
         }
-        else if (Input.IsKeyPressed(Key.Key2))
+        else if (@event is InputEventKey kb && kb.Pressed && !kb.Echo && kb.Keycode == Key.Space)
         {
-            SwitchWeapon(WeaponType.Smg);
+            if (_isReloading || _shotCooldown > 0f)
+            {
+                return;
+            }
+
+            // Store the current weapon as previous if not already in a melee attack
+            if (_currentWeapon != WeaponType.Melee && _meleeReturnTimer <= 0f)
+            {
+                _previousWeapon = _currentWeapon;
+            }
+
+            if (_currentWeapon != WeaponType.Melee)
+            {
+                SwitchWeapon(WeaponType.Melee);
+            }
+
+            var stats = _weaponTable[_currentWeapon];
+            if (_attackScenes.TryGetValue(_currentWeapon, out var attackScene) && attackScene != null)
+            {
+                PerformMeleeAttack(stats, attackScene);
+                // Set timer to return to previous weapon after melee cooldown
+                _meleeReturnTimer = stats.FireInterval;
+            }
         }
-        else if (Input.IsKeyPressed(Key.Key3))
-        {
-            SwitchWeapon(WeaponType.Rifle);
-        }
-        else if (Input.IsKeyPressed(Key.Key4))
-        {
-            SwitchWeapon(WeaponType.Sniper);
-        }
-        else if (Input.IsKeyPressed(Key.Key5))
-        {
-            SwitchWeapon(WeaponType.Shotgun);
-        }
+    }
+
+    private void SwitchToNextWeapon()
+    {
+        var values = (WeaponType[])System.Enum.GetValues(typeof(WeaponType));
+        var idx = System.Array.IndexOf(values, _currentWeapon);
+        idx = (idx + 1) % values.Length;
+        SwitchWeapon(values[idx]);
+    }
+
+    private void SwitchToPreviousWeapon()
+    {
+        var values = (WeaponType[])System.Enum.GetValues(typeof(WeaponType));
+        var idx = System.Array.IndexOf(values, _currentWeapon);
+        idx = (idx - 1 + values.Length) % values.Length;
+        SwitchWeapon(values[idx]);
     }
 
     private void HandleReloadInput()
@@ -260,19 +363,31 @@ public partial class Gun : Node2D
             return;
         }
 
-        FireCurrentWeapon(stats);
+        if (!_attackScenes.TryGetValue(_currentWeapon, out var attackScene) || attackScene == null)
+        {
+            GD.PushError($"No attack scene assigned for {_currentWeapon}.");
+            return;
+        }
+
+        if (_currentWeapon == WeaponType.Melee)
+        {
+            PerformMeleeAttack(stats, attackScene);
+            return;
+        }
+
+        FireCurrentWeapon(stats, attackScene);
     }
 
-    private void FireCurrentWeapon(WeaponStats stats)
+    private void FireCurrentWeapon(WeaponStats stats, PackedScene bulletScene)
     {
-        if (_bulletScene == null || _muzzle == null)
+        if (_muzzle == null || bulletScene == null)
         {
             return;
         }
 
         for (var pelletIndex = 0; pelletIndex < stats.PelletsPerShot; pelletIndex++)
         {
-            SpawnBullet(stats);
+            SpawnBullet(stats, bulletScene);
         }
 
         _ammoInMagazine[_currentWeapon] -= 1;
@@ -281,7 +396,7 @@ public partial class Gun : Node2D
         EmitSignal(SignalName.AmmoChanged, _ammoInMagazine[_currentWeapon], _ammoInReserve[_currentWeapon]);
     }
 
-    private void SpawnBullet(WeaponStats stats)
+    private void SpawnBullet(WeaponStats stats, PackedScene bulletScene)
     {
         var spreadOffset = stats.PelletsPerShot <= 1
             ? 0f
@@ -289,12 +404,50 @@ public partial class Gun : Node2D
 
         var direction = _muzzle.GlobalTransform.X.Rotated(spreadOffset).Normalized();
 
-        var bullet = _bulletScene.Instantiate<Bullet>();
-        var canvasLayer = GetTree().Root.GetNode<CanvasLayer>("Main/ArenaLayer");
-        canvasLayer.AddChild(bullet);
+        var bullet = bulletScene.Instantiate<Bullet>();
+        
+        // Add to ArenaLayer (same container as enemies) for proper rendering
+        var arenaLayer = GetTree().CurrentScene.GetNode<Node>("ArenaLayer");
+        arenaLayer.AddChild(bullet);
 
+        // Spawn at muzzle's global position
         bullet.GlobalPosition = _muzzle.GlobalPosition;
-        bullet.Initialize(stats.BulletSpeed, DefaultBulletLifeSeconds, direction);
+        
+        bullet.Initialize(
+            speed: stats.BulletSpeed,
+            lifeSeconds: stats.BulletLifetime,
+            direction: direction,
+            scale: stats.BulletScale,
+            gravity: stats.BulletGravity,
+            drag: stats.BulletDrag,
+            spinDegreesPerSecond: stats.BulletSpinDegreesPerSecond,
+            tint: stats.BulletTint);
+    }
+
+    private void PerformMeleeAttack(WeaponStats stats, PackedScene attackScene)
+    {
+        if (_muzzle == null || attackScene == null)
+        {
+            return;
+        }
+
+        var swing = attackScene.Instantiate<MeleeSwing>();
+
+        var arenaLayer = GetTree().CurrentScene.GetNode<Node>("ArenaLayer");
+        arenaLayer.AddChild(swing);
+
+        swing.GlobalPosition = _muzzle.GlobalPosition;
+        var direction = _muzzle.GlobalTransform.X.Normalized();
+        swing.Initialize(direction, stats.BulletSpeed, stats.BulletLifetime);
+
+        // Play melee swing animation on held weapon
+        if (_animationPlayer != null)
+        {
+            _animationPlayer.Play("MeleeSwing");
+        }
+
+        _shotCooldown = stats.FireInterval;
+        EmitSignal(SignalName.AmmoChanged, _ammoInMagazine[_currentWeapon], _ammoInReserve[_currentWeapon]);
     }
 
     private void StartReload()

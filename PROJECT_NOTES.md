@@ -4,6 +4,7 @@
 - Weapon system and gun visuals
 - HUD for weapon and ammo
 - Weapon-specific node setup in gun scene
+- Gun root node scale controls the visible size; Sprite2D scale is for art-only tuning
 
 ## Controls
 - Move: WASD or Arrow Keys
@@ -22,9 +23,11 @@
 - Main scene: Scenes/main.tscn
   - Contains Player, Enemy, and HUD
 - Gun scene: Scenes/pistol.tscn
-  - Root node has gun script
-  - Contains per-weapon child nodes for independent orientation tuning
-- Bullet scene: Scenes/bullet.tscn
+   - Root node has gun script
+   - Adjust overall gun size on the root node
+   - Contains per-weapon child nodes for independent hold/orientation tuning
+- Bullet scenes: Scenes/Bullets/
+   - Separate scenes for Pistol, Smg, Rifle, Sniper, and Shotgun bullets
 
 ## Texture Mapping
 - Pistol: Assets/pistol.png
@@ -35,10 +38,11 @@
 
 ## Tuning Workflow
 1. Open Scenes/pistol.tscn
-2. Select a weapon node (PistolNode, SmgNode, RifleNode, SniperNode, ShotgunNode)
-3. Adjust Sprite2D position/scale/rotation for hold look
-4. Adjust Marker2D position to the barrel tip
-5. Run game and test keys 1 to 5
+2. Select the root gun node to change total weapon scale
+3. Select a weapon node (PistolNode, SmgNode, RifleNode, SniperNode, ShotgunNode)
+4. Adjust Sprite2D position/rotation for hold look
+5. Adjust Marker2D position to the barrel tip
+6. Run game and test keys 1 to 5
 
 ## Git Safety Workflow
 1. Check current state

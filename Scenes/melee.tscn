@@ -1,0 +1,35 @@
+[gd_scene load_steps=3 format=3 uid="uid://cwl268n3f44i7"]
+
+[ext_resource type="Texture2D" uid="uid://dbwbpai6ppkwm" path="res://Assets/Sword12.png" id="1_sword"]
+[ext_resource type="Script" path="res://Scripts/Weapons/MeleeSwing.cs" id="2_melee"]
+
+[sub_resource type="Animation" id="1_swing"]
+length = 0.08
+loop_mode = 0
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:rotation")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.08),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [0.0, 6.28318]
+}
+
+[node name="MeleeNode" type="Node2D"]
+script = ExtResource("2_melee")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(0, -9.53674e-07)
+scale = Vector2(4.5, 2.21786)
+texture = ExtResource("1_sword")
+
+[node name="Marker2D" type="Marker2D" parent="."]
+position = Vector2(18, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/Swing = SubResource("1_swing")
