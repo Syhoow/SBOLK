@@ -13,9 +13,6 @@ public partial class Enemy : CharacterBody2D
     protected AnimationPlayer animation;
     private AnimationPlayer impactframe;
     private Sprite2D sprite;
-
-    private Vector2 pushVelocity = Vector2.Zero;
-    private const float pushFriction = 8f;
     
     private Vector2 knockback = Vector2.Zero;
     private float kbtimer = 0.0f;
@@ -126,7 +123,6 @@ public partial class Enemy : CharacterBody2D
 
         MoveAndSlide();
         _HandleTypeBehavior(dt);
-        _HandlePlayerPush(dt);
 
         if (Type == EnemyType.Gun)
         {
@@ -354,26 +350,5 @@ public partial class Enemy : CharacterBody2D
             impactframe.Play("impact");
             GD.Print("enemy got damaged"+health);
         }
-    }
-
-    private void _HandlePlayerPush(float delta)
-    {
-        for (int i = 0; i < GetSlideCollisionCount(); i++)
-        {
-            var collision = GetSlideCollision(i);
-            if (collision.GetCollider() is Player player)
-            {
-                Vector2 pushDir = (GlobalPosition - player.GlobalPosition).Normalized();
-                float pushStrength = player.Velocity.Dot(pushDir);
-
-                if (pushStrength > 0f)
-                {
-                    pushVelocity = pushDir * pushStrength * 2f;
-                }
-            }
-        }
-
-        // Fade push out over time
-        pushVelocity = pushVelocity.MoveToward(Vector2.Zero, pushFriction * pushVelocity.Length() * delta);
     }
 }

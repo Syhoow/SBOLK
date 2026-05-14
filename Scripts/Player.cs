@@ -11,7 +11,7 @@ public partial class Player : CharacterBody2D
 	private const float friction = acceleration/speed;
 	private bool isDashing = false;
 	public bool isInvisible = false;
-	private float dashDisabledDuration = 0.2f;
+	private float dashDisabledDuration = 1f;
 	private float dashDisabledTimer = 0f;
 	private float dashDuration = 0.2f;
 	private float dashTimer = 0f;
