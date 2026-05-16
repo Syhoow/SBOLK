@@ -26,7 +26,8 @@ public partial class Player : CharacterBody2D
 	private CollisionShape2D hitbox;
 	public CollisionShape2D wallcollision;
 	private float maxHealth = 100f;
-	private float health = 100f;
+	public float health = 100f;
+	public float GetHealth() => health;
 	private ProgressBar healthBar;
 	private Control endrunUI;
 	private AnimationPlayer animPlayer;
@@ -49,6 +50,8 @@ public partial class Player : CharacterBody2D
 	public override void _PhysicsProcess(double delta)
 	{
 		float dt = (float)delta;
+
+		healthBar.Value = health;
 
 		if (dashCooldownTimer > 0f) dashCooldownTimer -= dt;
 

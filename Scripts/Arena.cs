@@ -41,6 +41,7 @@ public partial class Arena : TileMapLayer
             {
                 var player = GetTree().Root.GetNode<Player>("/root/Main/ArenaLayer/Player");
                 player.GlobalPosition = GetGlobalMousePosition();
+                Player.Instance.health -= 5f; // Apply damage for dashing out of bounds
             }
             if (isoutsideTimer <= 0f)
             {

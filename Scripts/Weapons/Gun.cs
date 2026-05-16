@@ -82,7 +82,7 @@ public partial class Gun : Node2D
         var dt = (float)delta;
         AimAtMouse();
         TickTimers(dt);
-        HandleWeaponSelectionInput();
+        //HandleWeaponSelectionInput();
         HandleShootInput();
     }
 
@@ -219,5 +219,14 @@ public partial class Gun : Node2D
 
         if (_sprite == null || _muzzle == null)
             GD.PushError($"Weapon node '{activeNode.Name}' is missing Sprite2D or Marker2D child.");
+    }
+
+    public void UpgradeWeapon(WeaponType newWeapon)
+    {
+        if (!_weaponTable.ContainsKey(newWeapon)) return;
+        _currentWeapon = newWeapon;
+        _shotCooldown = 0f;
+        ApplyWeaponVisual(_currentWeapon);
+        EmitSignal(SignalName.WeaponChanged, _currentWeapon.ToString());
     }
 }

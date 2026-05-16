@@ -55,10 +55,10 @@ text = "3"
 
 [node name="Reroll" type="Button" parent="Control"]
 layout_mode = 0
-offset_left = 488.0
-offset_top = 408.0
-offset_right = 536.0
-offset_bottom = 456.0
+offset_left = 525.0
+offset_top = 419.0
+offset_right = 573.0
+offset_bottom = 467.0
 pivot_offset = Vector2(96, 64)
 text = "4"
 
@@ -77,6 +77,14 @@ offset_top = 480.0
 offset_right = 616.0
 offset_bottom = 503.0
 text = "[shake]money[/shake]"
+
+[node name="NewGun" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 364.0
+offset_top = 427.0
+offset_right = 461.0
+offset_bottom = 465.0
+text = "2nd Gun -"
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
@@ -102,7 +110,7 @@ offset_right = 289.0
 offset_bottom = 111.0
 text = "Player Health"
 
-[node name="PlayerDamge" type="Label" parent="."]
+[node name="PlayerDamage" type="Label" parent="."]
 layout_mode = 0
 offset_left = 188.0
 offset_top = 113.0

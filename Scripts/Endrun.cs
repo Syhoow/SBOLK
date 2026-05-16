@@ -12,12 +12,40 @@ public partial class Endrun : Control
         public int Price;
         public string Label;
     }
-    private Label MoneyLabel;
-    private Button button1, button2, button3, button4, rerollButton;
+
+    // Shop buttons
+    private Button button1, button2, button3;
+    private Button continueButton;
+    private Button rerollButton;
+    private Button newGunButton;
+
+    // Labels
+    private Label moneyLabel;
+    private Label enemyCountLabel;
+    private Label playerHealthLabel;
+    private Label playerDamageLabel;
+    private Label potCountLabel;
+    private Label potHealLabel;
+    private Label enemyHPLabel;
+    private Label enemyDamageLabel;
+    private Label goalLabel;
+    private Label arenaXLabel;
+    private Label arenaYLabel;
+
+    // Shop state
     private int rerollCost = 4;
     private int rerollCostWave = 4;
     private bool[] sold = new bool[3];
     private ShopOffer[] currentOffers = new ShopOffer[3];
+
+    // Gun upgrade state
+    private int gunsOwned = 0;
+    private int currentGunIndex = 0;
+    private static readonly WeaponType[] GunProgression = {
+        WeaponType.Pistol,
+        WeaponType.Rifle,
+        WeaponType.Smg
+    };
 
     private static readonly UpgradeType[] AllUpgrades = {
         UpgradeType.MaxHealth,
@@ -30,31 +58,56 @@ public partial class Endrun : Control
 
     public override void _Ready()
     {
-        MoneyLabel = GetNode<Label>("Control/Money");
-        button1 = GetNode<Button>("Control/Button");
-        button2 = GetNode<Button>("Control/Button2");
-        button3 = GetNode<Button>("Control/Button3");
-        button4 = GetNode<Button>("Control/Button4");
+        // Shop buttons
+        button1      = GetNode<Button>("Control/Button");
+        button2      = GetNode<Button>("Control/Button2");
+        button3      = GetNode<Button>("Control/Button3");
+        continueButton = GetNode<Button>("Control/Button4");
         rerollButton = GetNode<Button>("Control/Reroll");
+        newGunButton = GetNode<Button>("Control/NewGun");
 
-        button1.Pressed += () => ApplyUpgrade(0);
-        button2.Pressed += () => ApplyUpgrade(1);
-        button3.Pressed += () => ApplyUpgrade(2);
-        button4.Pressed += () => Continue();
+        // Labels
+        moneyLabel       = GetNode<Label>("Control/Money");
+        enemyCountLabel  = GetNode<Label>("EnemyCount");
+        playerHealthLabel = GetNode<Label>("PlayerHealth");
+        playerDamageLabel = GetNode<Label>("PlayerDamage");
+        potCountLabel    = GetNode<Label>("PotCount");
+        potHealLabel     = GetNode<Label>("Pot Heal");
+        enemyHPLabel     = GetNode<Label>("EnemyHP");
+        enemyDamageLabel = GetNode<Label>("EnemyDamage");
+        goalLabel        = GetNode<Label>("Goal");
+        arenaXLabel      = GetNode<Label>("ArenaX");
+        arenaYLabel      = GetNode<Label>("ArenaY");
+
+        // Connect buttons
+        button1.Pressed      += () => ApplyUpgrade(0);
+        button2.Pressed      += () => ApplyUpgrade(1);
+        button3.Pressed      += () => ApplyUpgrade(2);
+        continueButton.Pressed += () => Continue();
         rerollButton.Pressed += Reroll;
-
-        Reroll();
+        newGunButton.Pressed += BuyNewGun;
     }
 
     public override void _Process(double delta)
     {
-        MoneyLabel.Text = $"Money: {GameControl.Instance?.money}g";
+        if (GameControl.Instance == null) return;
+
+        moneyLabel.Text       = $"Money: {GameControl.Instance.money}g";
+        enemyCountLabel.Text  = $"Enemy Count: {GameControl.Instance.WaveEnemyCount}";
+        enemyHPLabel.Text     = $"Enemy HP: {GameControl.Instance.WaveEnemyHP}";
+        enemyDamageLabel.Text = $"Enemy DMG: {Enemy.Instance?.damage}";
+        goalLabel.Text        = $"Portal Goal: {GameControl.Instance.WaveGoal}";
+        arenaXLabel.Text      = $"Arena W: {Arena.Instance?.ArenaWidth}";
+        arenaYLabel.Text      = $"Arena H: {Arena.Instance?.ArenaHeight}";
+        playerHealthLabel.Text = $"Player HP: {Player.Instance?.GetHealth()}";
+        playerDamageLabel.Text = $"Bullet DMG: {Bullet.Damage}";
+        potCountLabel.Text    = $"Pot Count: {GameControl.Instance.MaxHealingPots}";
+        potHealLabel.Text     = $"Pot Heal: 30hp"; // change 30 to your actual pot heal amount
     }
 
     private ShopOffer GenerateOffer(UpgradeType type)
     {
         var counts = GameControl.Instance?.purchaseCounts;
-
         ShopOffer offer = new ShopOffer { Type = type };
 
         switch (type)
@@ -141,7 +194,7 @@ public partial class Endrun : Control
         rerollCost += 5;
         rerollButton.Text = $"REROLL [{rerollCost}g]";
 
-        sold = new bool[3]; // reset sold on reroll
+        sold = new bool[3];
 
         var pool = new List<UpgradeType>(AllUpgrades);
         for (int i = 0; i < 3; i++)
@@ -179,7 +232,6 @@ public partial class Endrun : Control
         if (GameControl.Instance.money < offer.Price) return;
         GameControl.Instance.money -= offer.Price;
 
-        // track purchase by type+amount
         string key = $"{offer.Type}_{offer.Amount}";
         if (!GameControl.Instance.purchaseCounts.ContainsKey(key))
             GameControl.Instance.purchaseCounts[key] = 0;
@@ -198,13 +250,17 @@ public partial class Endrun : Control
                 break;
             case UpgradeType.ArenaX:
                 if (Arena.Instance != null)
+                {
                     Arena.Instance.ArenaWidth += (int)offer.Amount;
                     Arena.Instance.Rebuild();
+                }
                 break;
             case UpgradeType.ArenaY:
                 if (Arena.Instance != null)
+                {
                     Arena.Instance.ArenaHeight += (int)offer.Amount;
                     Arena.Instance.Rebuild();
+                }
                 break;
             case UpgradeType.FloatingItemCount:
                 if (GameControl.Instance != null)
@@ -216,25 +272,68 @@ public partial class Endrun : Control
         UpdateButtons();
     }
 
+    private void BuyNewGun()
+{
+    if (GameControl.Instance == null) return;
+    if (gunsOwned >= GunProgression.Length - 1) return;
+
+    int[] prices = { 500, 5000 }; // Rifle = 500, Smg = 1000
+    int price = prices[gunsOwned];
+
+    if (GameControl.Instance.money < price) return;
+    GameControl.Instance.money -= price;
+
+    currentGunIndex++;
+    var gun = Player.Instance?.GetNode<Gun>("Gun");
+    gun?.UpgradeWeapon(GunProgression[currentGunIndex]);
+    gunsOwned++;
+
+    UpdateGunButton();
+}
+
+    private void UpdateGunButton()
+    {
+        int nextIndex = currentGunIndex + 1;
+        if (nextIndex >= GunProgression.Length)
+        {
+            newGunButton.Text = "MAX GUN";
+            newGunButton.Disabled = true;
+            return;
+        }
+
+        int[] prices = { 500, 1000 };
+        string nextGunName = GunProgression[nextIndex].ToString().ToUpper();
+        newGunButton.Text = $"UPGRADE: {nextGunName}  [{prices[gunsOwned]}g]";
+        newGunButton.Disabled = false;
+    }
+
     private void Continue()
     {
-        if (GameControl.Instance != null)
-            GameControl.Instance.DifficultyMultiplier *= 1.5f;
-            GameControl.Instance.EnemyMultiplier *= 1.25f;
-            GameControl.Instance.goal = GameControl.Instance.WaveGoal;
-            GameControl.Instance.goalBar.MaxValue = GameControl.Instance.goal;
-            GameControl.Instance.currentGoal = 0;// reset goal for next round
-            GameControl.Instance.money = (int)(GameControl.Instance.money * 0.5f);
+        if (GameControl.Instance == null) return;
+
+        GameControl.Instance.DifficultyMultiplier *= 1.5f;
+        GameControl.Instance.EnemyMultiplier *= 1.25f;
+        GameControl.Instance.goal = GameControl.Instance.WaveGoal;
+        GameControl.Instance.goalBar.MaxValue = GameControl.Instance.goal;
+        GameControl.Instance.currentGoal = 0;
+        GameControl.Instance.money = (int)(GameControl.Instance.money * 0.5f);
+
         foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
             enemy.QueueFree();
-        
-        Enemy.Instance.health *= 1.25f;
-        Enemy.Instance.damage *= 1.5f;
+
+        if (Enemy.Instance != null)
+        {
+            Enemy.Instance.health *= 1.25f;
+            Enemy.Instance.damage *= 1.5f;
+        }
+
         Visible = false;
-        Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2));
+        Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(
+            new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2)
+        );
         GameControl.Instance.isPlaying = true;
-        GameControl.Instance?.CallDeferred(nameof(GameControl.UnfreezeLayers));
-        GameControl.Instance?.CallDeferred(nameof(GameControl.QueueFreePortal));
+        GameControl.Instance.CallDeferred(nameof(GameControl.UnfreezeLayers));
+        GameControl.Instance.CallDeferred(nameof(GameControl.QueueFreePortal));
     }
 
     public void OpenShop()
@@ -243,7 +342,16 @@ public partial class Endrun : Control
         sold = new bool[3];
         rerollCost = rerollCostWave;
         rerollButton.Text = $"REROLL [{rerollCost}g]";
-        Reroll();
+        UpdateGunButton();
+
+        var pool = new List<UpgradeType>(AllUpgrades);
+        for (int i = 0; i < 3; i++)
+        {
+            int idx = (int)GD.RandRange(0, pool.Count - 1);
+            currentOffers[i] = GenerateOffer(pool[idx]);
+            pool.RemoveAt(idx);
+        }
+        UpdateButtons();
         Visible = true;
     }
 }
