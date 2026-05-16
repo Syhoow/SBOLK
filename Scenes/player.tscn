@@ -1,9 +1,9 @@
-[gd_scene load_steps=10 format=3 uid="uid://dci3tsp12eon2"]
+[gd_scene load_steps=13 format=3 uid="uid://dci3tsp12eon2"]
 
 [ext_resource type="Script" uid="uid://xsjb0smklq5x" path="res://Scripts/Player.cs" id="1_cvnsp"]
-[ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_v0iea"]
 [ext_resource type="Texture2D" uid="uid://8cwq5vy5q6bl" path="res://Assets/shadow.png" id="2_fkybt"]
 [ext_resource type="Script" uid="uid://b8bkd4yk65xuc" path="res://Scripts/Cam.cs" id="3_6t5aa"]
+[ext_resource type="Texture2D" uid="uid://dhntl28hgckl3" path="res://Assets/sbolkplayer.png" id="3_x3wgy"]
 [ext_resource type="PackedScene" uid="uid://bwmnj0wgaidfv" path="res://Scenes/pistol.tscn" id="5_fkybt"]
 [ext_resource type="Script" uid="uid://byuq8ay01php6" path="res://addons/trail_2d/trail_2d.gd" id="6_x3wgy"]
 
@@ -17,6 +17,44 @@ radius = 18.0278
 _data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 2
 
+[sub_resource type="Animation" id="Animation_x3wgy"]
+resource_name = "Player"
+length = 0.2684
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0666667, 0.133333, 0.2, 0.266667),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 0]
+}
+
+[sub_resource type="Animation" id="Animation_3smsa"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_8erm5"]
+_data = {
+&"Player": SubResource("Animation_x3wgy"),
+&"RESET": SubResource("Animation_3smsa")
+}
+
 [node name="Player" type="CharacterBody2D"]
 collision_layer = 5
 collision_mask = 5
@@ -25,12 +63,16 @@ script = ExtResource("1_cvnsp")
 
 [node name="Shadow" type="Sprite2D" parent="."]
 texture_filter = 1
-position = Vector2(0, 10)
+position = Vector2(0, 13)
+scale = Vector2(2, 2)
 texture = ExtResource("2_fkybt")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.25, 0.25)
-texture = ExtResource("1_v0iea")
+texture_filter = 1
+position = Vector2(0, -6)
+scale = Vector2(2, 2)
+texture = ExtResource("3_x3wgy")
+hframes = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_cvnsp")
@@ -52,5 +94,10 @@ shape = SubResource("CircleShape2D_6t5aa")
 visible = false
 width_curve = SubResource("Curve_3smsa")
 script = ExtResource("6_x3wgy")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_8erm5")
+}
 
 [connection signal="area_entered" from="Area2D" to="." method="_on_area_2d_area_entered"]

@@ -107,6 +107,8 @@ bbcode_edit/editor/open_current_file_documentation={
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+viewport/hdr_2d=true
+viewport/transparent_background=true
 textures/stretch/mode="disabled"
 textures/size/window_height_override=0
 textures/size/window_width_override=0

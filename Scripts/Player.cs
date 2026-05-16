@@ -29,6 +29,8 @@ public partial class Player : CharacterBody2D
 	private float health = 100f;
 	private ProgressBar healthBar;
 	private Control endrunUI;
+	private AnimationPlayer animPlayer;
+	private Sprite2D Sprite;
 	
 
 	public override void _Ready()
@@ -38,7 +40,10 @@ public partial class Player : CharacterBody2D
 		wallcollision = GetNode<CollisionShape2D>("CollisionShape2D");
 		healthBar = GetNode<ProgressBar>("/root/Main/HUD/Health");
 		endrunUI = GetNode<Control>("/root/Main/HUD/Control");
+		animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+		animPlayer.Play("Player");
 		healthBar.Value = health;
+		Sprite = GetNode<Sprite2D>("Sprite2D");
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -105,6 +110,11 @@ public partial class Player : CharacterBody2D
 				CollisionMask |= (1u << 0);
 			}
 		}
+
+		if(GetGlobalMousePosition().X > GlobalPosition.X)
+			Sprite.FlipH = true;
+		else
+			Sprite.FlipH = false;
 
 		MoveAndSlide();
 	}

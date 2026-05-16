@@ -64,6 +64,7 @@ public partial class Enemy : CharacterBody2D
     private bool isspawning = true;
 
     public CanvasLayer arenaLayer;
+    public CpuParticles2D hit;
 
     private int random = (int)GD.RandRange(0, 8);
 
@@ -79,6 +80,7 @@ public partial class Enemy : CharacterBody2D
         animation.Seek((float)GD.RandRange(0, animation.CurrentAnimationLength), true);
         sprite = GetNode<Sprite2D>("Sprite2D");
         arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
+        hit = GetNode<CpuParticles2D>("CPUParticles2D");
 
         switch (Type)
         {
@@ -375,6 +377,7 @@ public partial class Enemy : CharacterBody2D
             impactframe.Stop();
             impactframe.Seek(0, true);
             impactframe.Play("impact");
+            hit.Emitting = true;
         }
     }
 }

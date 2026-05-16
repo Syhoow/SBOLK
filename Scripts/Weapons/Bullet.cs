@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 public partial class Bullet : Node2D
@@ -6,9 +7,14 @@ public partial class Bullet : Node2D
     private float _lifeSeconds = 2f;
     public static int Damage = 50;
     private Vector2 _direction = Vector2.Right;
+    private Sprite2D spritecolor;
+    private RandomNumberGenerator _rng = new RandomNumberGenerator();
 
     public override void _Ready()
     {
+        spritecolor = GetNode<Sprite2D>("Sprite2D");
+        _rng.Randomize();
+        spritecolor.Frame = _rng.RandiRange(0, 4);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -51,3 +57,5 @@ public partial class Bullet : Node2D
 
     
 }
+
+

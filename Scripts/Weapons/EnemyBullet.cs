@@ -6,10 +6,16 @@ public partial class EnemyBullet : Node2D
     private float _lifeSeconds = 3f;
     private Vector2 _direction = Vector2.Right;
     public float Damage = 10f;
+    private Sprite2D spritecolor;
+    private RandomNumberGenerator _rng = new RandomNumberGenerator();
 
     public override void _Ready()
     {
+        spritecolor = GetNode<Sprite2D>("Sprite2D");
+        _rng.Randomize();
+        spritecolor.Frame = _rng.RandiRange(0, 4);
         AddToGroup("enemy_bullet");
+        
     }
 
     public override void _PhysicsProcess(double delta)

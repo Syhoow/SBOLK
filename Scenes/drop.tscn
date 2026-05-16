@@ -8,7 +8,7 @@
 radius = 8.0
 
 [sub_resource type="Curve" id="Curve_r0ybf"]
-_data = [Vector2(0, 0.516854), 0.0, 3.37977, 0, 0, Vector2(0.340426, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+_data = [Vector2(0, 0.460674), 0.0, 10.8636, 0, 0, Vector2(0.0319149, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
 point_count = 3
 
 [node name="Area2D" type="Area2D"]
@@ -22,6 +22,13 @@ texture = ExtResource("3_1okqs")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_pcs5o")
+
+[node name="Trail2D2" type="Line2D" parent="."]
+width = 15.0
+width_curve = SubResource("Curve_r0ybf")
+default_color = Color(0, 0, 0, 1)
+script = ExtResource("3_r0ybf")
+length = 5
 
 [node name="Trail2D" type="Line2D" parent="."]
 width = 5.0

@@ -32,6 +32,11 @@ ArenaHeight = 20
 position = Vector2(480, 272)
 
 [node name="EnemyLayer" type="CanvasLayer" parent="."]
+layer = 3
+follow_viewport_enabled = true
+
+[node name="MarkerLayer" type="CanvasLayer" parent="EnemyLayer"]
+layer = 2
 follow_viewport_enabled = true
 
 [node name="HUD" type="CanvasLayer" parent="."]

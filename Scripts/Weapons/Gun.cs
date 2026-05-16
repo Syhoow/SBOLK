@@ -98,7 +98,7 @@ public partial class Gun : Node2D
 
         _weaponTable[WeaponType.Smg] = new WeaponStats(
             type: WeaponType.Smg,
-            fireInterval: 0.10f,
+            fireInterval: 0.07f,
             bulletSpeed: 1500f,
             spreadDegrees: 4.5f,
             pelletsPerShot: 1,
@@ -106,7 +106,7 @@ public partial class Gun : Node2D
 
         _weaponTable[WeaponType.Rifle] = new WeaponStats(
             type: WeaponType.Rifle,
-            fireInterval: 0.20f,
+            fireInterval: 0.15f,
             bulletSpeed: 1500f,
             spreadDegrees: 2.0f,
             pelletsPerShot: 1,
@@ -189,7 +189,7 @@ public partial class Gun : Node2D
         var direction = _muzzle.GlobalTransform.X.Rotated(spreadOffset).Normalized();
 
         var bullet = _bulletScene.Instantiate<Bullet>();
-        var canvasLayer = GetTree().Root.GetNode<CanvasLayer>("Main/ArenaLayer");
+        var canvasLayer = GetTree().Root.GetNode<CanvasLayer>("Main/EnemyLayer");
         canvasLayer.AddChild(bullet);
 
         bullet.GlobalPosition = _muzzle.GlobalPosition;

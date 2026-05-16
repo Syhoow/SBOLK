@@ -20,6 +20,7 @@ public partial class GameControl : Node2D
     public ProgressBar goalBar;
     public CanvasLayer enemyLayer;
     public CanvasLayer arenaLayer;
+    public CanvasLayer markerLayer;
     public bool isPlaying = true;
     public bool goalReached = false;
     private float spawnTimer = 0f;
@@ -41,6 +42,7 @@ public partial class GameControl : Node2D
         goalBar = GetNode<ProgressBar>("HUD/Goal");
         enemyLayer = GetNode<CanvasLayer>("/root/Main/EnemyLayer");
         arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
+        markerLayer = GetNode<CanvasLayer>("/root/Main/EnemyLayer/MarkerLayer");
 
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
     }
@@ -108,7 +110,7 @@ public partial class GameControl : Node2D
 
         var marker = Marker.Instantiate();
         ((Node2D)marker).GlobalPosition = spawnPos;
-        enemyLayer.AddChild(marker);
+        markerLayer.AddChild(marker);
         marker.AddToGroup("marker");
 
         await ToSignal(GetTree().CreateTimer(MarkerWarningTime), "timeout");
