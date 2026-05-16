@@ -80,3 +80,10 @@ offset_bottom = 43.0
 
 [node name="Control" parent="HUD" instance=ExtResource("9_ynf5e")]
 visible = false
+
+[node name="LogoutButton" type="Button" parent="HUD"]
+offset_left = 16.0
+offset_top = 56.0
+offset_right = 112.0
+offset_bottom = 80.0
+text = "Logout"

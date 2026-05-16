@@ -42,11 +42,22 @@ public partial class GameControl : Node2D
         enemyLayer = GetNode<CanvasLayer>("/root/Main/EnemyLayer");
         arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
 
+        // Connect logout button
+        var logoutButton = GetNode<Button>("HUD/LogoutButton");
+        logoutButton.Pressed += Logout;
+
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
     }
 
     public override void _Process(double delta)
     {
+        // Check for logout input
+        if (Input.IsActionJustPressed("logout"))
+        {
+            Logout();
+            return;
+        }
+
         spawnTimer += (float)delta;
         GD.Print(money);
         if(isPlaying)
@@ -211,5 +222,41 @@ public partial class GameControl : Node2D
         isPlaying = true;
         enemyLayer.ProcessMode = ProcessModeEnum.Inherit;
         arenaLayer.ProcessMode = ProcessModeEnum.Inherit;
+    }
+
+    public void Logout()
+    {
+        GD.Print("Logout called from GameControl");
+        // Try to call Firebase logout if available
+        try
+        {
+            // Call the autoloaded Firebase node's logout method if present
+            var fbNode = GetNode<Node>("/root/Firebase");
+            if (fbNode != null)
+            {
+                fbNode.Call("logout");
+            }
+        }
+        catch (System.Exception e)
+        {
+            GD.PrintErr("Firebase logout call failed: ", e.Message);
+        }
+
+        // Ensure saved auth file is removed (plugin uses user://user.auth)
+        string userAuthPath = "user://user.auth";
+        GD.Print("Checking for auth file at: " + userAuthPath);
+        try
+        {
+            if (FileAccess.FileExists(userAuthPath))
+            {
+                DirAccess.RemoveAbsolute(userAuthPath);
+            }
+        }
+        catch (System.Exception e)
+        {
+            GD.PrintErr("Error checking/removing auth file: ", e.Message);
+        }
+
+        GetTree().ChangeSceneToFile("res://Scenes/Authentication.tscn");
     }
 }
