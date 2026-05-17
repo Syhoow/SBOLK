@@ -80,10 +80,14 @@ public partial class Gun : Node2D
     public override void _Process(double delta)
     {
         var dt = (float)delta;
-        AimAtMouse();
-        TickTimers(dt);
-        //HandleWeaponSelectionInput();
-        HandleShootInput();
+        if(!Arena.Instance.isEliminated)
+        {
+            AimAtMouse();
+            TickTimers(dt);
+            //HandleWeaponSelectionInput();
+            HandleShootInput();
+        }
+        
     }
 
     private void BuildWeaponTable()
@@ -175,7 +179,10 @@ public partial class Gun : Node2D
         if (_bulletScene == null || _muzzle == null) return;
 
         for (var i = 0; i < stats.PelletsPerShot; i++)
+        {
+            Cam.Instance?.ScreenShake(5, 0.2f);
             SpawnBullet(stats);
+        }
 
         _shotCooldown = stats.FireInterval;
     }

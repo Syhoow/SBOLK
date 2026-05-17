@@ -35,23 +35,31 @@ public partial class Arena : TileMapLayer
 
         if (isOutside)
         {
+		    Player.Instance.animPlayer.Play("PlayerOutside");
             isoutsideTimer -= (float)delta;
             Modulate = new Color(1f, 0f, 0f);
             if (ismouseInside && Input.IsActionJustPressed("dash"))
             {
-                var player = GetTree().Root.GetNode<Player>("/root/Main/ArenaLayer/Player");
+                var player = GetTree().Root.GetNode<Player>("/root/Main/EnemyLayer/Player");
                 player.GlobalPosition = GetGlobalMousePosition();
-                Player.Instance.health -= 5f; // Apply damage for dashing out of bounds
+                Player.Instance.damageOverlay.Visible = true;
+                var tween = CreateTween();
+                tween.TweenInterval(0.2f); // delay
+                tween.TweenCallback(Callable.From(() => Player.Instance.damageOverlay.Visible = false));
+                Player.Instance.health -= 5; // Apply damage for dashing out of bounds
             }
+            
             if (isoutsideTimer <= 0f)
             {
                 isEliminated = true;
+                Player.Instance.health = 0; // Eliminate player after timer runs out
                 GD.Print("player out!");
             }
             
         }
         else
         {
+            Player.Instance.animPlayer.Play("Player");
             Modulate = new Color(1f, 1f, 1f);
         }
     }

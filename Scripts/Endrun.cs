@@ -99,7 +99,7 @@ public partial class Endrun : Control
         goalLabel.Text        = $"Portal Goal: {GameControl.Instance.WaveGoal}";
         arenaXLabel.Text      = $"Arena W: {Arena.Instance?.ArenaWidth}";
         arenaYLabel.Text      = $"Arena H: {Arena.Instance?.ArenaHeight}";
-        playerHealthLabel.Text = $"Player HP: {Player.Instance?.GetHealth()}";
+        playerHealthLabel.Text = $"Player HP: {Player.Instance?.maxHealth}";
         playerDamageLabel.Text = $"Bullet DMG: {Bullet.Damage}";
         potCountLabel.Text    = $"Pot Count: {GameControl.Instance.MaxHealingPots}";
         potHealLabel.Text     = $"Pot Heal: 30hp"; // change 30 to your actual pot heal amount
@@ -301,7 +301,7 @@ public partial class Endrun : Control
             return;
         }
 
-        int[] prices = { 500, 1000 };
+        int[] prices = { 500, 5000 };
         string nextGunName = GunProgression[nextIndex].ToString().ToUpper();
         newGunButton.Text = $"UPGRADE: {nextGunName}  [{prices[gunsOwned]}g]";
         newGunButton.Disabled = false;
@@ -309,24 +309,9 @@ public partial class Endrun : Control
 
     private void Continue()
     {
-        if (GameControl.Instance == null) return;
-
-        GameControl.Instance.DifficultyMultiplier *= 1.5f;
-        GameControl.Instance.EnemyMultiplier *= 1.25f;
         GameControl.Instance.goal = GameControl.Instance.WaveGoal;
         GameControl.Instance.goalBar.MaxValue = GameControl.Instance.goal;
-        GameControl.Instance.currentGoal = 0;
         GameControl.Instance.money = (int)(GameControl.Instance.money * 0.5f);
-
-        foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
-            enemy.QueueFree();
-
-        if (Enemy.Instance != null)
-        {
-            Enemy.Instance.health *= 1.25f;
-            Enemy.Instance.damage *= 1.5f;
-        }
-
         Visible = false;
         Player.Instance.GlobalPosition = Arena.Instance.ToGlobal(
             new Vector2(Arena.Instance.ArenaWidth * 25f / 2, (Arena.Instance.ArenaHeight - 1) * 25f / 2)

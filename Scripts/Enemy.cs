@@ -57,8 +57,8 @@ public partial class Enemy : CharacterBody2D
     private float strafeChangeCooldown = 2.0f;
     private float strafeChangeTimer = 0f;
     
-    public float health = 100;
-    public float damage = 5;
+    public int health = 100;
+    public int damage = 5;
     private float spawnTimer = 0f;
     private float spawnDuration = 1f;
     private bool isspawning = true;
@@ -73,7 +73,7 @@ public partial class Enemy : CharacterBody2D
         Instance = this;
         animation = GetNode<AnimationPlayer>("AnimationPlayer");
         impactframe = GetNode<AnimationPlayer>("Impact");
-        player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
+        player = GetNode<CharacterBody2D>("/root/Main/EnemyLayer/Player");
         impactframe.Stop();
         impactframe.Seek(0, true);
         animation.Play("Running");
