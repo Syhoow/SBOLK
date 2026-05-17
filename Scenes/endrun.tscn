@@ -55,10 +55,10 @@ text = "3"
 
 [node name="Reroll" type="Button" parent="Control"]
 layout_mode = 0
-offset_left = 488.0
-offset_top = 408.0
-offset_right = 536.0
-offset_bottom = 456.0
+offset_left = 525.0
+offset_top = 419.0
+offset_right = 573.0
+offset_bottom = 467.0
 pivot_offset = Vector2(96, 64)
 text = "4"
 
@@ -78,6 +78,14 @@ offset_right = 616.0
 offset_bottom = 503.0
 text = "[shake]money[/shake]"
 
+[node name="NewGun" type="Button" parent="Control"]
+layout_mode = 0
+offset_left = 364.0
+offset_top = 427.0
+offset_right = 461.0
+offset_bottom = 465.0
+text = "2nd Gun -"
+
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
 offset_left = 64.0
@@ -85,3 +93,83 @@ offset_top = 56.0
 offset_right = 142.0
 offset_bottom = 79.0
 text = "RUN INFO"
+
+[node name="EnemyCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 89.0
+offset_right = 143.0
+offset_bottom = 112.0
+text = "Enemy Count"
+
+[node name="PlayerHealth" type="Label" parent="."]
+layout_mode = 0
+offset_left = 186.0
+offset_top = 88.0
+offset_right = 289.0
+offset_bottom = 111.0
+text = "Player Health"
+
+[node name="PlayerDamage" type="Label" parent="."]
+layout_mode = 0
+offset_left = 188.0
+offset_top = 113.0
+offset_right = 292.0
+offset_bottom = 136.0
+text = "Player Damage"
+
+[node name="PotCount" type="Label" parent="."]
+layout_mode = 0
+offset_left = 193.0
+offset_top = 134.0
+offset_right = 310.0
+offset_bottom = 157.0
+text = "Pot Count"
+
+[node name="Pot Heal" type="Label" parent="."]
+layout_mode = 0
+offset_left = 204.0
+offset_top = 160.0
+offset_right = 321.0
+offset_bottom = 183.0
+text = "Pot Heal"
+
+[node name="EnemyHP" type="Label" parent="."]
+layout_mode = 0
+offset_left = 65.0
+offset_top = 123.0
+offset_right = 143.0
+offset_bottom = 146.0
+text = "Enemy HP"
+
+[node name="EnemyDamage" type="Label" parent="."]
+layout_mode = 0
+offset_left = 64.0
+offset_top = 154.0
+offset_right = 142.0
+offset_bottom = 177.0
+text = "Enemy Damage"
+
+[node name="Goal" type="Label" parent="."]
+layout_mode = 0
+offset_left = 63.0
+offset_top = 185.0
+offset_right = 184.0
+offset_bottom = 208.0
+text = "Portal Goal"
+
+[node name="ArenaX" type="Label" parent="."]
+layout_mode = 0
+offset_left = 298.0
+offset_top = 197.0
+offset_right = 419.0
+offset_bottom = 220.0
+text = "Arena X"
+
+[node name="ArenaY" type="Label" parent="."]
+layout_mode = 0
+offset_left = 298.0
+offset_top = 252.0
+offset_right = 419.0
+offset_bottom = 275.0
+text = "Arena Y"

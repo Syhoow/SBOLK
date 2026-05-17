@@ -16,7 +16,7 @@ public partial class Drop : Area2D
     public override void _Ready()
     {
         Instance = this;
-        player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
+        player = GetNode<CharacterBody2D>("/root/Main/EnemyLayer/Player");
         // Launch away from the player
         Vector2 awayDirection = (GlobalPosition - player.GlobalPosition).Normalized();
         // Add a slight upward arc to make it feel more natural

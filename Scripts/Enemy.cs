@@ -57,13 +57,14 @@ public partial class Enemy : CharacterBody2D
     private float strafeChangeCooldown = 2.0f;
     private float strafeChangeTimer = 0f;
     
-    public float health = 100;
-    public float damage = 5;
+    public int health = 100;
+    public int damage = 5;
     private float spawnTimer = 0f;
     private float spawnDuration = 1f;
     private bool isspawning = true;
 
     public CanvasLayer arenaLayer;
+    public CpuParticles2D hit;
 
     private int random = (int)GD.RandRange(0, 8);
 
@@ -72,13 +73,14 @@ public partial class Enemy : CharacterBody2D
         Instance = this;
         animation = GetNode<AnimationPlayer>("AnimationPlayer");
         impactframe = GetNode<AnimationPlayer>("Impact");
-        player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
+        player = GetNode<CharacterBody2D>("/root/Main/EnemyLayer/Player");
         impactframe.Stop();
         impactframe.Seek(0, true);
         animation.Play("Running");
         animation.Seek((float)GD.RandRange(0, animation.CurrentAnimationLength), true);
         sprite = GetNode<Sprite2D>("Sprite2D");
         arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
+        hit = GetNode<CpuParticles2D>("CPUParticles2D");
 
         switch (Type)
         {
@@ -375,6 +377,7 @@ public partial class Enemy : CharacterBody2D
             impactframe.Stop();
             impactframe.Seek(0, true);
             impactframe.Play("impact");
+            hit.Emitting = true;
         }
     }
 }

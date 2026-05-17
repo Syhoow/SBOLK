@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=12 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="Script" uid="uid://b07jumtx2yqpp" path="res://Scripts/GameControl.cs" id="1_jjvhh"]
@@ -9,6 +9,31 @@
 [ext_resource type="PackedScene" uid="uid://sg6fmtub7a7f" path="res://Scenes/pot.tscn" id="5_hptm8"]
 [ext_resource type="PackedScene" uid="uid://c4h4bhx5ca67g" path="res://Scenes/portal.tscn" id="7_6bp64"]
 [ext_resource type="PackedScene" uid="uid://c8ooa4gc1pk7v" path="res://Scenes/endrun.tscn" id="9_ynf5e"]
+[ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="10_hptm8"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_d1ilt"]
+shader = ExtResource("10_hptm8")
+shader_parameter/overlay = true
+shader_parameter/resolution = Vector2(640, 480)
+shader_parameter/brightness = 1.4
+shader_parameter/scanlines_opacity = 0.034
+shader_parameter/scanlines_width = 0.5
+shader_parameter/grille_opacity = 0.0
+shader_parameter/roll = false
+shader_parameter/roll_speed = 8.0
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 0.1
+shader_parameter/distort_intensity = 0.05
+shader_parameter/aberration = 0.00800005
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.06
+shader_parameter/pixelate = false
+shader_parameter/discolor = false
+shader_parameter/warp_amount = 0.326
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.5
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_jjvhh")
@@ -28,42 +53,32 @@ follow_viewport_enabled = true
 ArenaWidth = 20
 ArenaHeight = 20
 
-[node name="Player" parent="ArenaLayer" instance=ExtResource("1_jjgbg")]
-position = Vector2(480, 272)
+[node name="MarkerLayer" type="CanvasLayer" parent="."]
+follow_viewport_enabled = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+visible = false
+offset_right = 960.0
+offset_bottom = 540.0
+color = Color(0, 0, 0, 1)
+
+[node name="Button" type="Button" parent="CanvasLayer"]
+visible = false
+offset_left = 440.0
+offset_top = 344.0
+offset_right = 519.0
+offset_bottom = 375.0
+text = "Continue"
 
 [node name="EnemyLayer" type="CanvasLayer" parent="."]
 follow_viewport_enabled = true
 
+[node name="Player" parent="EnemyLayer" instance=ExtResource("1_jjgbg")]
+position = Vector2(480, 272)
+
 [node name="HUD" type="CanvasLayer" parent="."]
-
-[node name="MarginContainer" type="MarginContainer" parent="HUD"]
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -300.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = 110.0
-
-[node name="VBoxContainer" type="VBoxContainer" parent="HUD/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 6
-
-[node name="WeaponLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Weapon: Pistol"
-horizontal_alignment = 2
-
-[node name="AmmoLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer"]
-layout_mode = 2
-text = "Ammo: 12/72"
-horizontal_alignment = 2
-
-[node name="DamageLabel" type="Label" parent="HUD/MarginContainer/VBoxContainer"]
-visible = false
-layout_mode = 2
-text = "Hit -0"
-horizontal_alignment = 2
 
 [node name="Goal" type="ProgressBar" parent="HUD"]
 offset_left = 192.0
@@ -71,19 +86,39 @@ offset_top = 16.0
 offset_right = 768.0
 offset_bottom = 43.0
 max_value = 300.0
+show_percentage = false
+
+[node name="Label" type="Label" parent="HUD"]
+offset_left = 471.0
+offset_top = 18.0
+offset_right = 511.0
+offset_bottom = 41.0
+text = "Goal "
 
 [node name="Health" type="ProgressBar" parent="HUD"]
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 112.0
 offset_bottom = 43.0
+show_percentage = false
+
+[node name="Label2" type="Label" parent="HUD"]
+offset_left = 42.0
+offset_top = 17.0
+offset_right = 82.0
+offset_bottom = 40.0
+text = "Health"
 
 [node name="Control" parent="HUD" instance=ExtResource("9_ynf5e")]
 visible = false
 
-[node name="LogoutButton" type="Button" parent="HUD"]
-offset_left = 16.0
-offset_top = 56.0
-offset_right = 112.0
-offset_bottom = 80.0
-text = "Logout"
+[node name="CanvasLayer2" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer2"]
+material = SubResource("ShaderMaterial_d1ilt")
+offset_right = 960.0
+offset_bottom = 540.0
+mouse_filter = 2
+color = Color(1, 1, 1, 0)
+
+[connection signal="pressed" from="CanvasLayer/Button" to="." method="_on_button_pressed"]

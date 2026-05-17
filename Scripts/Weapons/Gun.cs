@@ -80,10 +80,14 @@ public partial class Gun : Node2D
     public override void _Process(double delta)
     {
         var dt = (float)delta;
-        AimAtMouse();
-        TickTimers(dt);
-        HandleWeaponSelectionInput();
-        HandleShootInput();
+        if(!Arena.Instance.isEliminated)
+        {
+            AimAtMouse();
+            TickTimers(dt);
+            //HandleWeaponSelectionInput();
+            HandleShootInput();
+        }
+        
     }
 
     private void BuildWeaponTable()
@@ -98,7 +102,7 @@ public partial class Gun : Node2D
 
         _weaponTable[WeaponType.Smg] = new WeaponStats(
             type: WeaponType.Smg,
-            fireInterval: 0.10f,
+            fireInterval: 0.07f,
             bulletSpeed: 1500f,
             spreadDegrees: 4.5f,
             pelletsPerShot: 1,
@@ -106,7 +110,7 @@ public partial class Gun : Node2D
 
         _weaponTable[WeaponType.Rifle] = new WeaponStats(
             type: WeaponType.Rifle,
-            fireInterval: 0.20f,
+            fireInterval: 0.15f,
             bulletSpeed: 1500f,
             spreadDegrees: 2.0f,
             pelletsPerShot: 1,
@@ -175,7 +179,10 @@ public partial class Gun : Node2D
         if (_bulletScene == null || _muzzle == null) return;
 
         for (var i = 0; i < stats.PelletsPerShot; i++)
+        {
+            Cam.Instance?.ScreenShake(5, 0.2f);
             SpawnBullet(stats);
+        }
 
         _shotCooldown = stats.FireInterval;
     }
@@ -189,7 +196,7 @@ public partial class Gun : Node2D
         var direction = _muzzle.GlobalTransform.X.Rotated(spreadOffset).Normalized();
 
         var bullet = _bulletScene.Instantiate<Bullet>();
-        var canvasLayer = GetTree().Root.GetNode<CanvasLayer>("Main/ArenaLayer");
+        var canvasLayer = GetTree().Root.GetNode<CanvasLayer>("Main/EnemyLayer");
         canvasLayer.AddChild(bullet);
 
         bullet.GlobalPosition = _muzzle.GlobalPosition;
@@ -219,5 +226,14 @@ public partial class Gun : Node2D
 
         if (_sprite == null || _muzzle == null)
             GD.PushError($"Weapon node '{activeNode.Name}' is missing Sprite2D or Marker2D child.");
+    }
+
+    public void UpgradeWeapon(WeaponType newWeapon)
+    {
+        if (!_weaponTable.ContainsKey(newWeapon)) return;
+        _currentWeapon = newWeapon;
+        _shotCooldown = 0f;
+        ApplyWeaponVisual(_currentWeapon);
+        EmitSignal(SignalName.WeaponChanged, _currentWeapon.ToString());
     }
 }

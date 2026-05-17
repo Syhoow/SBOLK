@@ -13,59 +13,64 @@ public partial class GameControl : Node2D
     [Export] public float SpawnInterval = 0.5f;
     [Export] public float MarkerWarningTime = 1.5f; // how long marker shows before enemy spawns
     [Export] public int MaxEnemies = 5;
-    public float goal = 300;
-    public float currentGoal = 0;
+    public int goal = 300;
+    public int currentGoal = 0;
     private CharacterBody2D player;
     private Arena arena;
     public ProgressBar goalBar;
+    public Label GoalLabel;
+    public Label HealthLabel;
     public CanvasLayer enemyLayer;
     public CanvasLayer arenaLayer;
+    public CanvasLayer markerLayer;
+    public CanvasLayer hudLayer;
+    public ColorRect gameover;
+    public Button record;
     public bool isPlaying = true;
     public bool goalReached = false;
     private float spawnTimer = 0f;
     public float DifficultyMultiplier = 1f;
     public float EnemyMultiplier = 1f;
     public int WaveEnemyCount => (int)(5 * EnemyMultiplier);
-    public float WaveEnemyHP => 100f * EnemyMultiplier;
-    public float WaveGoal => 100f * DifficultyMultiplier;
+    public int WaveEnemyHP => (int)(100f * EnemyMultiplier);
+    public int WaveGoal => (int)(100f * DifficultyMultiplier);
     public int currentWave = 0;
     private int _activeEnemies = 0;
     public int money = 0;
+    public int score = 0;
     public Dictionary<string, int> purchaseCounts = new Dictionary<string, int>();
     
     public override void _Ready()
     {
         Instance = this;
-        player = GetNode<CharacterBody2D>("/root/Main/ArenaLayer/Player");
+        player = GetNode<CharacterBody2D>("/root/Main/EnemyLayer/Player");
         arena = GetNode<Arena>("/root/Main/ArenaLayer/Arena");
         goalBar = GetNode<ProgressBar>("HUD/Goal");
         enemyLayer = GetNode<CanvasLayer>("/root/Main/EnemyLayer");
         arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
-
-        // Connect logout button
-        var logoutButton = GetNode<Button>("HUD/LogoutButton");
-        logoutButton.Pressed += Logout;
+        markerLayer = GetNode<CanvasLayer>("/root/Main/MarkerLayer");
+        hudLayer = GetNode<CanvasLayer>("/root/Main/HUD");
+        GoalLabel = GetNode<Label>("HUD/Label");
+        HealthLabel = GetNode<Label>("HUD/Label2");
+        gameover = GetNode<ColorRect>("CanvasLayer/ColorRect");
+        record = GetNode<Button>("CanvasLayer/Button");
+        gameover.Modulate = new Color(1, 1, 1, 0);
 
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
     }
 
     public override void _Process(double delta)
     {
-        // Check for logout input
-        if (Input.IsActionJustPressed("logout"))
-        {
-            Logout();
-            return;
-        }
-
         spawnTimer += (float)delta;
-        GD.Print(money);
         if(isPlaying)
         if(spawnTimer >= SpawnInterval)
         {
             spawnTimer = 0f;
             SpawnWithWarning();
         }
+
+        GoalLabel.Text = $"Goal: {currentGoal} / {goal}";
+        HealthLabel.Text = $"Health: {Player.Instance?.GetHealth() ?? 0f} / {Player.Instance?.maxHealth ?? 0f}";
 
         if(currentGoal >= goal && !goalReached)
         {
@@ -119,7 +124,7 @@ public partial class GameControl : Node2D
 
         var marker = Marker.Instantiate();
         ((Node2D)marker).GlobalPosition = spawnPos;
-        enemyLayer.AddChild(marker);
+        markerLayer.AddChild(marker);
         marker.AddToGroup("marker");
 
         await ToSignal(GetTree().CreateTimer(MarkerWarningTime), "timeout");
@@ -174,17 +179,17 @@ public partial class GameControl : Node2D
 
     private void OnEnemyKilled(Enemy enemy)
     {
-        //currentGoal += 5f; // Increase goal when enemy is killed
+        score += 10; // flat score per kill, can be modified by enemy type later
         goalBar.Value = currentGoal;
     }
 
     public void OnDropCollected()
-{
-    currentGoal += 5f;
-    int goldEarned = (int)GD.RandRange(1, 5); // flat small amount
-    money += goldEarned;
-    goalBar.Value = currentGoal;
-}
+    {
+        currentGoal += 5;
+        int goldEarned = (int)GD.RandRange(1, 5); // flat small amount
+        money += goldEarned;
+        goalBar.Value = currentGoal;
+    }
 
     public void SpawnPortal(Vector2 position)
     {
@@ -224,39 +229,8 @@ public partial class GameControl : Node2D
         arenaLayer.ProcessMode = ProcessModeEnum.Inherit;
     }
 
-    public void Logout()
+    public void _on_button_pressed()
     {
-        GD.Print("Logout called from GameControl");
-        // Try to call Firebase logout if available
-        try
-        {
-            // Call the autoloaded Firebase node's logout method if present
-            var fbNode = GetNode<Node>("/root/Firebase");
-            if (fbNode != null)
-            {
-                fbNode.Call("logout");
-            }
-        }
-        catch (System.Exception e)
-        {
-            GD.PrintErr("Firebase logout call failed: ", e.Message);
-        }
-
-        // Ensure saved auth file is removed (plugin uses user://user.auth)
-        string userAuthPath = "user://user.auth";
-        GD.Print("Checking for auth file at: " + userAuthPath);
-        try
-        {
-            if (FileAccess.FileExists(userAuthPath))
-            {
-                DirAccess.RemoveAbsolute(userAuthPath);
-            }
-        }
-        catch (System.Exception e)
-        {
-            GD.PrintErr("Error checking/removing auth file: ", e.Message);
-        }
-
-        GetTree().ChangeSceneToFile("res://Scenes/Authentication.tscn");
+        GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
     }
 }
