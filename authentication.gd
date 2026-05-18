@@ -10,7 +10,7 @@ func _ready():
 	
 	if Firebase.Auth.check_auth_file():
 		%StateLabel.text = "Logged in"
-		get_tree().change_scene_to_file("res://Scenes/main.tscn")
+		get_tree().change_scene_to_file("res://Scenes/titlescreen.tscn")
 
 
 func _process(delta):
@@ -35,13 +35,13 @@ func on_login_succeeded(auth):
 	%StateLabel.text = "Login success!"
 	Firebase.Auth.save_auth(auth)
 	if Firebase.Auth.check_auth_file():
-		get_tree().change_scene_to_file("res://Scenes/main.tscn")
+		get_tree().change_scene_to_file("res://Scenes/titlescreen.tscn")
 	
 func on_signup_succeeded(auth):
 	%StateLabel.text = "Sign up success!"
 	Firebase.Auth.save_auth(auth)
 	if Firebase.Auth.check_auth_file():
-		get_tree().change_scene_to_file("res://Scenes/main.tscn")
+		get_tree().change_scene_to_file("res://Scenes/titlescreen.tscn")
 	
 func on_login_failed(error_code, message):
 	print(error_code)

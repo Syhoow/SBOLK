@@ -52,4 +52,3 @@ text = "Sign In"
 
 [connection signal="pressed" from="VBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/SignUpButton" to="." method="_on_sign_up_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/SignUpButton" to="." method="_on_sign_button_pressed"]

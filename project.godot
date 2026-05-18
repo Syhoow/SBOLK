@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Romeo Project"
-run/main_scene="uid://sg28q4u53woa"
+run/main_scene="uid://dnsmi28y1ja2h"
 config/features=PackedStringArray("4.4", "C#", "GL Compatibility")
 config/icon="res://Assets/icon.svg"
 
@@ -35,7 +35,7 @@ project/assembly_name="Romeo Project"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/any_icon.editor/plugin.cfg", "res://addons/bbcode_edit.editor/plugin.cfg", "res://addons/godot-firebase/plugin.cfg", "res://addons/trail_2d/plugin.cfg")
+enabled=PackedStringArray("res://addons/any_icon.editor/plugin.cfg", "res://addons/bbcode_edit.editor/plugin.cfg", "res://addons/trail_2d/plugin.cfg")
 
 [input]
 
