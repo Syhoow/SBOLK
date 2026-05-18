@@ -100,7 +100,7 @@ offset_right = 265.0
 offset_bottom = 23.0
 text = "Logged In As : [account username]"
 
-[node name="Label2" type="Label" parent="."]
+[node name="Top1NameLabel" type="Label" parent="."]
 offset_left = 560.0
 offset_top = 32.0
 offset_right = 810.0
