@@ -20,6 +20,7 @@ public partial class GameControl : Node2D
     public ProgressBar goalBar;
     public Label GoalLabel;
     public Label HealthLabel;
+    public Label ScoreLabel;
     public CanvasLayer enemyLayer;
     public CanvasLayer arenaLayer;
     public CanvasLayer markerLayer;
@@ -54,6 +55,7 @@ public partial class GameControl : Node2D
         HealthLabel = GetNode<Label>("HUD/Label2");
         gameover = GetNode<ColorRect>("CanvasLayer/ColorRect");
         record = GetNode<Button>("CanvasLayer/Button");
+        ScoreLabel = GetNode<Label>("CanvasLayer/Label");
         gameover.Modulate = new Color(1, 1, 1, 0);
 
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
@@ -66,12 +68,15 @@ public partial class GameControl : Node2D
         if(spawnTimer >= SpawnInterval)
         {
             spawnTimer = 0f;
-            SpawnWithWarning();
+            if(Player.Instance.health > 0)
+            {
+                SpawnWithWarning();
+            }
+            
         }
 
         GoalLabel.Text = $"Goal: {currentGoal} / {goal}";
         HealthLabel.Text = $"Health: {Player.Instance?.GetHealth() ?? 0f} / {Player.Instance?.maxHealth ?? 0f}";
-
         if(currentGoal >= goal && !goalReached)
         {
             GD.Print("Goal reached! You win!");
@@ -179,12 +184,11 @@ public partial class GameControl : Node2D
 
     private void OnEnemyKilled(Enemy enemy)
     {
-        score += 10; // flat score per kill, can be modified by enemy type later
-        goalBar.Value = currentGoal;
     }
 
     public void OnDropCollected()
     {
+        score += 10;
         currentGoal += 5;
         int goldEarned = (int)GD.RandRange(1, 5); // flat small amount
         money += goldEarned;

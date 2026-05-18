@@ -144,6 +144,8 @@ public partial class Player : CharacterBody2D
 			GameControl.Instance.gameover.Visible = true;
 			tween.TweenProperty(GameControl.Instance.gameover, "modulate:a", 0.95f, 2f);
 			GameControl.Instance.record.Visible = true;
+			GameControl.Instance.ScoreLabel.Text = $"Score: {GameControl.Instance.score}";
+			GameControl.Instance.ScoreLabel.Visible = true;
 			GD.Print("Player has died!");
 		}
 
