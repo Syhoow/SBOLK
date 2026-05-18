@@ -72,6 +72,14 @@ offset_right = 519.0
 offset_bottom = 375.0
 text = "Continue"
 
+[node name="Label" type="Label" parent="CanvasLayer"]
+visible = false
+offset_left = 600.0
+offset_top = 241.0
+offset_right = 652.0
+offset_bottom = 264.0
+text = "Score: "
+
 [node name="EnemyLayer" type="CanvasLayer" parent="."]
 follow_viewport_enabled = true
 
