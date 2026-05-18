@@ -26,6 +26,11 @@ public partial class Titlescreen : Node2D
         GetTree().ChangeSceneToFile("res://Scenes/Authentication.tscn");
     }
 
+    public void _on_leaderboard_button_pressed()
+    {
+        GetTree().ChangeSceneToFile("res://Scenes/leaderboard.tscn");
+    }
+
     private void SetUserLabelFromAuth()
     {
         if (_userLabel == null)

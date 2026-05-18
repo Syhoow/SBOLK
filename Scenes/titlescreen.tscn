@@ -118,3 +118,4 @@ mouse_filter = 2
 
 [connection signal="pressed" from="PlayButton" to="." method="_on_button_pressed"]
 [connection signal="pressed" from="SignOutButton" to="." method="_on_sign_out_button_pressed"]
+[connection signal="pressed" from="LeaderBoardButton" to="." method="_on_leaderboard_button_pressed"]

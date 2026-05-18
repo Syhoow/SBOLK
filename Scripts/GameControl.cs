@@ -40,6 +40,18 @@ public partial class GameControl : Node2D
     public int money = 0;
     public int score = 0;
     public Dictionary<string, int> purchaseCounts = new Dictionary<string, int>();
+    private bool _scoreSubmitted = false;
+    private bool _waitingForScoreAuth = false;
+    private bool _waitingForUserdata = false;
+    private string _pendingScoreUid = "";
+    private string _cachedEmail = "";
+    private string _cachedUid = "";
+    private int _pendingScoreValue = 0;
+    private bool _waitingForBestScore = false;
+    private string _pendingBestUid = "";
+    private string _pendingBestEmail = "";
+    private int _pendingBestScore = 0;
+    private Node _pendingBestDatabase;
     
     public override void _Ready()
     {
@@ -59,6 +71,7 @@ public partial class GameControl : Node2D
         gameover.Modulate = new Color(1, 1, 1, 0);
 
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
+        PrimeAuthCache();
     }
 
     public override void _Process(double delta)
@@ -236,5 +249,353 @@ public partial class GameControl : Node2D
     public void _on_button_pressed()
     {
         GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
+    }
+
+    public void SubmitScoreToLeaderboard(int finalScore)
+    {
+        _pendingScoreValue = finalScore;
+        SubmitScoreToLeaderboard();
+    }
+
+    public void SubmitScoreToLeaderboard()
+    {
+        if (_scoreSubmitted)
+        {
+            return;
+        }
+
+        var scoreToSubmit = _pendingScoreValue > 0 ? _pendingScoreValue : score;
+
+        var firebase = GetNodeOrNull<Node>("/root/Firebase");
+        var authNode = firebase?.GetNodeOrNull<Node>("Auth");
+        var database = firebase?.GetNodeOrNull<Node>("Database");
+        if (authNode == null || database == null)
+        {
+            return;
+        }
+
+        var isLoggedInVar = (Variant)authNode.Call("is_logged_in");
+        var isLoggedIn = isLoggedInVar.VariantType == Variant.Type.Bool && isLoggedInVar.AsBool();
+        if (!isLoggedIn)
+        {
+            if (!_waitingForScoreAuth)
+            {
+                _waitingForScoreAuth = true;
+                var callable = new Callable(this, nameof(OnScoreAuthRequest));
+                if (!authNode.IsConnected("auth_request", callable))
+                {
+                    authNode.Connect("auth_request", callable);
+                }
+            }
+
+            var hasAuthFileVar = (Variant)authNode.Call("check_auth_file");
+            var hasAuthFile = hasAuthFileVar.VariantType == Variant.Type.Bool && hasAuthFileVar.AsBool();
+            if (!hasAuthFile)
+            {
+                authNode.Call("login_anonymous");
+            }
+            return;
+        }
+
+        var authVar = authNode.Get("auth");
+        if (authVar.VariantType != Variant.Type.Dictionary)
+        {
+            return;
+        }
+
+        var authDict = (Godot.Collections.Dictionary)authVar;
+        var email = _cachedEmail;
+        if (string.IsNullOrEmpty(email))
+        {
+            email = "anonymous";
+        }
+        if (authDict.ContainsKey("email"))
+        {
+            var emailVar = (Variant)authDict["email"];
+            if (emailVar.VariantType != Variant.Type.Nil)
+            {
+                var emailStr = emailVar.AsString();
+                if (!string.IsNullOrEmpty(emailStr))
+                {
+                    email = emailStr;
+                    _cachedEmail = emailStr;
+                }
+            }
+        }
+
+        var uid = _cachedUid;
+        if (authDict.ContainsKey("localid"))
+        {
+            uid = ((Variant)authDict["localid"]).AsString();
+        }
+        else if (authDict.ContainsKey("localId"))
+        {
+            uid = ((Variant)authDict["localId"]).AsString();
+        }
+
+        if (!string.IsNullOrEmpty(uid))
+        {
+            _cachedUid = uid;
+        }
+
+        if (string.IsNullOrEmpty(uid))
+        {
+            return;
+        }
+
+        if (string.IsNullOrEmpty(email) || email == "anonymous")
+        {
+            _pendingScoreUid = uid;
+            _pendingScoreValue = scoreToSubmit;
+            RequestUserdataForScore(authNode);
+            return;
+        }
+
+        SubmitScorePayload(database, uid, email, scoreToSubmit);
+    }
+
+    private void RequestUserdataForScore(Node authNode)
+    {
+        if (_waitingForUserdata)
+        {
+            return;
+        }
+
+        _waitingForUserdata = true;
+        var callable = new Callable(this, nameof(OnUserdataReceived));
+        if (!authNode.IsConnected("userdata_received", callable))
+        {
+            authNode.Connect("userdata_received", callable);
+        }
+        authNode.Call("get_user_data");
+    }
+
+    private void OnUserdataReceived(GodotObject userdata)
+    {
+        _waitingForUserdata = false;
+
+        if (userdata == null)
+        {
+            return;
+        }
+
+        var emailVar = userdata.Get("email");
+        var email = "anonymous";
+        if (emailVar.VariantType != Variant.Type.Nil)
+        {
+            var emailStr = emailVar.AsString();
+            if (!string.IsNullOrEmpty(emailStr))
+            {
+                email = emailStr;
+            }
+        }
+
+        var uid = _pendingScoreUid;
+        if (string.IsNullOrEmpty(uid))
+        {
+            var uidVar = userdata.Get("local_id");
+            if (uidVar.VariantType != Variant.Type.Nil)
+            {
+                uid = uidVar.AsString();
+            }
+        }
+
+        if (!string.IsNullOrEmpty(uid))
+        {
+            _cachedUid = uid;
+        }
+
+        if (!string.IsNullOrEmpty(email) && email != "anonymous")
+        {
+            _cachedEmail = email;
+        }
+
+        if (string.IsNullOrEmpty(_pendingScoreUid) && _pendingScoreValue <= 0)
+        {
+            _pendingScoreUid = "";
+            return;
+        }
+
+        var firebase = GetNodeOrNull<Node>("/root/Firebase");
+        var database = firebase?.GetNodeOrNull<Node>("Database");
+        if (database == null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(uid))
+        {
+            var scoreValue = _pendingScoreValue;
+            if (scoreValue <= 0)
+            {
+                scoreValue = score;
+            }
+            SubmitScorePayload(database, uid, email, scoreValue);
+        }
+        _pendingScoreUid = "";
+        _pendingScoreValue = 0;
+    }
+
+    private void PrimeAuthCache()
+    {
+        var firebase = GetNodeOrNull<Node>("/root/Firebase");
+        var authNode = firebase?.GetNodeOrNull<Node>("Auth");
+        if (authNode == null)
+        {
+            return;
+        }
+
+        var isLoggedInVar = (Variant)authNode.Call("is_logged_in");
+        var isLoggedIn = isLoggedInVar.VariantType == Variant.Type.Bool && isLoggedInVar.AsBool();
+        if (!isLoggedIn)
+        {
+            authNode.Call("check_auth_file");
+            return;
+        }
+
+        var authVar = authNode.Get("auth");
+        if (authVar.VariantType != Variant.Type.Dictionary)
+        {
+            return;
+        }
+
+        var authDict = (Godot.Collections.Dictionary)authVar;
+        if (authDict.ContainsKey("localid"))
+        {
+            _cachedUid = ((Variant)authDict["localid"]).AsString();
+        }
+        else if (authDict.ContainsKey("localId"))
+        {
+            _cachedUid = ((Variant)authDict["localId"]).AsString();
+        }
+
+        if (authDict.ContainsKey("email"))
+        {
+            var emailVar = (Variant)authDict["email"];
+            if (emailVar.VariantType != Variant.Type.Nil)
+            {
+                var emailStr = emailVar.AsString();
+                if (!string.IsNullOrEmpty(emailStr))
+                {
+                    _cachedEmail = emailStr;
+                    return;
+                }
+            }
+        }
+
+        RequestUserdataForScore(authNode);
+    }
+
+    private void SubmitScorePayload(Node database, string uid, string email, int scoreValue)
+    {
+        if (_scoreSubmitted)
+        {
+            return;
+        }
+
+        CheckAndSubmitBest(database, uid, email, scoreValue);
+    }
+
+    private void CheckAndSubmitBest(Node database, string uid, string email, int scoreValue)
+    {
+        if (_scoreSubmitted)
+        {
+            return;
+        }
+
+        if (_waitingForBestScore)
+        {
+            if (scoreValue > _pendingBestScore)
+            {
+                _pendingBestScore = scoreValue;
+                _pendingBestEmail = email;
+                _pendingBestUid = uid;
+            }
+            return;
+        }
+
+        _waitingForBestScore = true;
+        _pendingBestScore = scoreValue;
+        _pendingBestEmail = email;
+        _pendingBestUid = uid;
+        _pendingBestDatabase = database;
+
+        var reference = (Node)database.Call("get_once_database_reference", "leaderboards/global");
+        var successCallable = new Callable(this, nameof(OnBestScoreLoaded));
+        var failedCallable = new Callable(this, nameof(OnBestScoreFailed));
+        if (!reference.IsConnected("once_successful", successCallable))
+        {
+            reference.Connect("once_successful", successCallable);
+        }
+        if (!reference.IsConnected("once_failed", failedCallable))
+        {
+            reference.Connect("once_failed", failedCallable);
+        }
+        reference.Call("once", uid);
+    }
+
+    private void OnBestScoreLoaded(Godot.Collections.Dictionary snapshot)
+    {
+        _waitingForBestScore = false;
+
+        var existingScore = 0;
+        if (snapshot != null && snapshot.Count > 0 && snapshot.ContainsKey("score"))
+        {
+            existingScore = ParseScoreVariant((Variant)snapshot["score"]);
+        }
+
+        if (_pendingBestScore <= existingScore)
+        {
+            _scoreSubmitted = true;
+            return;
+        }
+
+        if (_pendingBestDatabase == null || string.IsNullOrEmpty(_pendingBestUid))
+        {
+            return;
+        }
+
+        var payload = new Godot.Collections.Dictionary
+        {
+            { "email", _pendingBestEmail },
+            { "score", _pendingBestScore },
+            { "updatedAt", Time.GetUnixTimeFromSystem() }
+        };
+
+        var reference = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/global");
+        reference.Call("update", _pendingBestUid, payload);
+        _scoreSubmitted = true;
+    }
+
+    private void OnBestScoreFailed()
+    {
+        _waitingForBestScore = false;
+    }
+
+    private static int ParseScoreVariant(Variant value)
+    {
+        switch (value.VariantType)
+        {
+            case Variant.Type.Int:
+                return (int)value.AsInt64();
+            case Variant.Type.Float:
+                return (int)value.AsDouble();
+            case Variant.Type.String:
+                if (int.TryParse(value.AsString(), out var parsed))
+                {
+                    return parsed;
+                }
+                break;
+        }
+        return 0;
+    }
+
+    private void OnScoreAuthRequest(long resultCode, Variant _resultContent)
+    {
+        _waitingForScoreAuth = false;
+        if (resultCode == 1)
+        {
+            SubmitScoreToLeaderboard();
+        }
     }
 }

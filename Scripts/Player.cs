@@ -146,6 +146,7 @@ public partial class Player : CharacterBody2D
 			GameControl.Instance.record.Visible = true;
 			GameControl.Instance.ScoreLabel.Text = $"Score: {GameControl.Instance.score}";
 			GameControl.Instance.ScoreLabel.Visible = true;
+			GameControl.Instance.SubmitScoreToLeaderboard(GameControl.Instance.score);
 			GD.Print("Player has died!");
 		}
 
