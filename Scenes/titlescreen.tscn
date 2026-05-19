@@ -95,6 +95,20 @@ offset_right = 184.0
 offset_bottom = 512.0
 text = "Settings"
 
+[node name="ShopButton" type="Button" parent="."]
+offset_left = 776.0
+offset_top = 395.0
+offset_right = 842.0
+offset_bottom = 451.0
+text = "SHOP"
+
+[node name="InventoryButton" type="Button" parent="."]
+offset_left = 848.0
+offset_top = 394.0
+offset_right = 914.0
+offset_bottom = 450.0
+text = "INVENTORY"
+
 [node name="Label" type="Label" parent="."]
 offset_right = 265.0
 offset_bottom = 23.0
@@ -109,6 +123,7 @@ rotation = 0.270526
 text = "[no.1 player on the leaderboard]"
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+visible = false
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
 material = SubResource("ShaderMaterial_up5sg")
@@ -119,3 +134,6 @@ mouse_filter = 2
 [connection signal="pressed" from="PlayButton" to="." method="_on_button_pressed"]
 [connection signal="pressed" from="SignOutButton" to="." method="_on_sign_out_button_pressed"]
 [connection signal="pressed" from="LeaderBoardButton" to="." method="_on_leaderboard_button_pressed"]
+[connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]
+[connection signal="pressed" from="ShopButton" to="." method="_on_ShopButton_pressed"]
+[connection signal="pressed" from="InventoryButton" to="." method="_on_InventoryButton_pressed"]

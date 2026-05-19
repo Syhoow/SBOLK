@@ -256,4 +256,14 @@ public partial class Titlescreen : Node2D
         }
         return 0;
     }
+
+    private void _on_ShopButton_pressed()
+    {
+        GetTree().ChangeSceneToFile("res://Scenes/shop.tscn");
+    }
+
+    private void _on_InventoryButton_pressed()
+    {
+        GetTree().ChangeSceneToFile("res://Scenes/inventory.tscn");
+    }
 }
