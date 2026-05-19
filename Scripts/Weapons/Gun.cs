@@ -21,6 +21,7 @@ public partial class Gun : Node2D
     private PackedScene _bulletScene;
     private Marker2D _muzzle;
     private Sprite2D _sprite;
+    private const bool autofire = true;
 
     private WeaponType _currentWeapon = WeaponType.Pistol;
     private float _shotCooldown;
@@ -164,12 +165,6 @@ public partial class Gun : Node2D
     {
         var stats = _weaponTable[_currentWeapon];
         if (_shotCooldown > 0f) return;
-
-        var wantsToShoot = stats.IsAutomatic
-            ? Input.IsActionPressed("fire")
-            : Input.IsActionJustPressed("fire");
-
-        if (!wantsToShoot) return;
 
         FireCurrentWeapon(stats);
     }

@@ -123,7 +123,6 @@ rotation = 0.270526
 text = "[no.1 player on the leaderboard]"
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
-visible = false
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
 material = SubResource("ShaderMaterial_up5sg")
