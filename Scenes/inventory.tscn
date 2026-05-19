@@ -1,0 +1,49 @@
+[gd_scene load_steps=3 format=3 uid="uid://7w4tw64tljtg"]
+
+[ext_resource type="Script" uid="uid://beqs8e0qd2muj" path="res://Scripts/Inventory.cs" id="1_wdn4f"]
+[ext_resource type="PackedScene" uid="uid://cngm5tynpm3ej" path="res://Scenes/inventoryitem.tscn" id="2_k5gp2"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_wdn4f")
+InventoryItemScene = ExtResource("2_k5gp2")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 485.0
+offset_top = 66.0
+offset_right = 560.0
+offset_bottom = 89.0
+text = "Inventory"
+
+[node name="EquippedLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 196.0
+offset_top = 282.0
+offset_right = 269.0
+offset_bottom = 305.0
+text = "Equipped"
+
+[node name="ItemGrid" type="GridContainer" parent="."]
+layout_mode = 0
+offset_left = 439.0
+offset_top = 183.0
+offset_right = 479.0
+offset_bottom = 223.0
+columns = 3
+
+[node name="Button" type="Button" parent="."]
+layout_mode = 0
+offset_left = 427.0
+offset_top = 320.0
+offset_right = 477.0
+offset_bottom = 351.0
+text = "Close
+"
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
