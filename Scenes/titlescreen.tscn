@@ -95,6 +95,20 @@ offset_right = 184.0
 offset_bottom = 512.0
 text = "Settings"
 
+[node name="Button6" type="Button" parent="."]
+offset_left = 776.0
+offset_top = 399.0
+offset_right = 853.0
+offset_bottom = 445.0
+text = "SHOP"
+
+[node name="Button7" type="Button" parent="."]
+offset_left = 858.0
+offset_top = 399.0
+offset_right = 957.0
+offset_bottom = 445.0
+text = "INVENTORY"
+
 [node name="Label" type="Label" parent="."]
 offset_right = 265.0
 offset_bottom = 23.0
@@ -117,3 +131,5 @@ offset_bottom = 540.0
 mouse_filter = 2
 
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="Button6" to="." method="_on_button_6_pressed"]
+[connection signal="pressed" from="Button7" to="." method="_on_button_7_pressed"]

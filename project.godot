@@ -15,6 +15,10 @@ run/main_scene="uid://co8v83uukrjxq"
 config/features=PackedStringArray("4.4", "C#", "GL Compatibility")
 config/icon="res://Assets/icon.svg"
 
+[autoload]
+
+CosmeticManager="*res://Scripts/CosmeticManager.cs"
+
 [display]
 
 window/size/viewport_width=960
