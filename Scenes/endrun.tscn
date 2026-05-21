@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8ooa4gc1pk7v"]
+[gd_scene load_steps=4 format=3 uid="uid://c8ooa4gc1pk7v"]
 
 [ext_resource type="Script" uid="uid://upmvqk2wescn" path="res://Scripts/Endrun.cs" id="1_ar4qx"]
+[ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="2_bj5ul"]
+[ext_resource type="Texture2D" uid="uid://boxfkqa3yo8v8" path="res://Assets/MapInfo.png" id="3_iua3w"]
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -34,6 +36,7 @@ offset_right = 840.0
 offset_bottom = 232.0
 pivot_offset = Vector2(96, 64)
 text = "1"
+script = ExtResource("2_bj5ul")
 
 [node name="Button2" type="Button" parent="Control"]
 layout_mode = 0
@@ -43,6 +46,7 @@ offset_right = 840.0
 offset_bottom = 368.0
 pivot_offset = Vector2(96, 64)
 text = "2"
+script = ExtResource("2_bj5ul")
 
 [node name="Button3" type="Button" parent="Control"]
 layout_mode = 0
@@ -52,6 +56,7 @@ offset_right = 840.0
 offset_bottom = 504.0
 pivot_offset = Vector2(96, 64)
 text = "3"
+script = ExtResource("2_bj5ul")
 
 [node name="Reroll" type="Button" parent="Control"]
 layout_mode = 0
@@ -61,6 +66,7 @@ offset_right = 573.0
 offset_bottom = 467.0
 pivot_offset = Vector2(96, 64)
 text = "4"
+script = ExtResource("2_bj5ul")
 
 [node name="Button4" type="Button" parent="Control"]
 layout_mode = 0
@@ -69,6 +75,8 @@ offset_top = 496.0
 offset_right = 520.0
 offset_bottom = 544.0
 pivot_offset = Vector2(96, 64)
+text = "NEXT ROUND"
+script = ExtResource("2_bj5ul")
 
 [node name="Money" type="Label" parent="Control"]
 layout_mode = 0
@@ -85,6 +93,7 @@ offset_top = 427.0
 offset_right = 461.0
 offset_bottom = 465.0
 text = "2nd Gun -"
+script = ExtResource("2_bj5ul")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0
@@ -160,16 +169,22 @@ text = "Portal Goal"
 
 [node name="ArenaX" type="Label" parent="."]
 layout_mode = 0
-offset_left = 298.0
-offset_top = 197.0
-offset_right = 419.0
-offset_bottom = 220.0
+offset_left = 284.0
+offset_top = 199.0
+offset_right = 405.0
+offset_bottom = 222.0
 text = "Arena X"
 
 [node name="ArenaY" type="Label" parent="."]
 layout_mode = 0
-offset_left = 298.0
-offset_top = 252.0
-offset_right = 419.0
-offset_bottom = 275.0
+offset_left = 433.0
+offset_top = 139.0
+offset_right = 554.0
+offset_bottom = 162.0
 text = "Arena Y"
+
+[node name="MapInfo" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(448, 256)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("3_iua3w")

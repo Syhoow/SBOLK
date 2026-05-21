@@ -1,10 +1,12 @@
-[gd_scene load_steps=8 format=3 uid="uid://dnsmi28y1ja2h"]
+[gd_scene load_steps=24 format=3 uid="uid://dnsmi28y1ja2h"]
 
 [ext_resource type="Texture2D" uid="uid://blmfetrce4yiu" path="res://Assets/SBOLKTitle.png" id="1_3lblr"]
 [ext_resource type="Shader" uid="uid://daog02l8yu3gp" path="res://Assets/Shader/swirl.gdshader" id="1_u4xby"]
 [ext_resource type="Script" uid="uid://bhnvt3igxoxhe" path="res://Scripts/Titlescreen.cs" id="1_wshof"]
 [ext_resource type="Texture2D" uid="uid://ls36ac3s727v" path="res://Assets/titlebackground.png" id="2_h87bp"]
 [ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="5_qf0g6"]
+[ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="5_up5sg"]
+[ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="6_w7bgp"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_h87bp"]
 shader = ExtResource("1_u4xby")
@@ -14,6 +16,62 @@ shader_parameter/scanline_wave_frequency = 40.0
 shader_parameter/scanline_wave_speed = 2.0
 shader_parameter/alternate_direction = true
 shader_parameter/viewport_size = Vector2(960, 540)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j0nra"]
+bg_color = Color(0, 0, 0, 0.905882)
+corner_radius_top_left = 20
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w7bgp"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qr3m1"]
+bg_color = Color(0, 0, 0, 0.905882)
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sf6xc"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_blg7r"]
+bg_color = Color(0, 0, 0, 0.905882)
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lkqyf"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wf248"]
+bg_color = Color(0, 0, 0, 0.905882)
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rsi7w"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f1s1v"]
+bg_color = Color(0, 0, 0, 0.905882)
+corner_radius_top_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y82uc"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sn34e"]
+bg_color = Color(0, 0, 0, 0.905882)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_47k5g"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ghb0b"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_up5sg"]
+bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_up5sg"]
 shader = ExtResource("5_qf0g6")
@@ -61,66 +119,125 @@ scale = Vector2(2, 2)
 texture = ExtResource("1_3lblr")
 
 [node name="PlayButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 408.0
 offset_top = 272.0
 offset_right = 568.0
 offset_bottom = 328.0
-text = "Play"
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_j0nra")
+theme_override_styles/normal = SubResource("StyleBoxFlat_w7bgp")
+text = "PLAY"
+script = ExtResource("6_w7bgp")
 
 [node name="TutorialButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 408.0
 offset_top = 344.0
 offset_right = 568.0
 offset_bottom = 400.0
-text = "Tutorial"
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_qr3m1")
+theme_override_styles/normal = SubResource("StyleBoxFlat_sf6xc")
+text = "TUTORIAL"
+script = ExtResource("6_w7bgp")
 
 [node name="SignOutButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 408.0
 offset_top = 416.0
 offset_right = 568.0
 offset_bottom = 472.0
-text = "Sign Out"
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_j0nra")
+theme_override_styles/normal = SubResource("StyleBoxFlat_w7bgp")
+text = "SIGN OUT"
+script = ExtResource("6_w7bgp")
 
 [node name="LeaderBoardButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 776.0
 offset_top = 456.0
 offset_right = 936.0
 offset_bottom = 512.0
-text = "LeaderBoard"
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_blg7r")
+theme_override_styles/normal = SubResource("StyleBoxFlat_lkqyf")
+text = "LEADERBOARD"
+script = ExtResource("6_w7bgp")
 
 [node name="SettingsButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 24.0
 offset_top = 456.0
 offset_right = 184.0
 offset_bottom = 512.0
-text = "Settings"
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_wf248")
+theme_override_styles/normal = SubResource("StyleBoxFlat_rsi7w")
+text = "SETTINGS"
+script = ExtResource("6_w7bgp")
 
 [node name="ShopButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 776.0
 offset_top = 395.0
 offset_right = 842.0
 offset_bottom = 451.0
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_f1s1v")
+theme_override_styles/normal = SubResource("StyleBoxFlat_y82uc")
 text = "SHOP"
+script = ExtResource("6_w7bgp")
 
 [node name="InventoryButton" type="Button" parent="."]
+texture_filter = 1
 offset_left = 848.0
 offset_top = 394.0
 offset_right = 914.0
 offset_bottom = 450.0
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_sn34e")
+theme_override_styles/normal = SubResource("StyleBoxFlat_47k5g")
 text = "INVENTORY"
+script = ExtResource("6_w7bgp")
 
 [node name="Label" type="Label" parent="."]
-offset_right = 265.0
-offset_bottom = 23.0
+texture_filter = 1
+offset_left = 18.0
+offset_top = 17.0
+offset_right = 283.0
+offset_bottom = 40.0
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_ghb0b")
 text = "Logged In As : [account username]"
+horizontal_alignment = 1
 
-[node name="Top1NameLabel" type="Label" parent="."]
+[node name="Top1NameLabel" type="RichTextLabel" parent="."]
+light_mask = 0
+texture_filter = 1
 offset_left = 560.0
 offset_top = 32.0
-offset_right = 810.0
+offset_right = 560.0
 offset_bottom = 55.0
 rotation = 0.270526
-text = "[no.1 player on the leaderboard]"
+theme_override_fonts/normal_font = ExtResource("5_up5sg")
+theme_override_font_sizes/normal_font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_up5sg")
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
+autowrap_mode = 0
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 

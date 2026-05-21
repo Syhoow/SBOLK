@@ -1,17 +1,65 @@
-[gd_scene load_steps=3 format=3 uid="uid://c4h4bhx5ca67g"]
+[gd_scene load_steps=6 format=3 uid="uid://c4h4bhx5ca67g"]
 
-[ext_resource type="Texture2D" uid="uid://dimycew6ntvej" path="res://Assets/icon.svg" id="1_j20fm"]
+[ext_resource type="Texture2D" uid="uid://chd0e6nmglae5" path="res://Assets/portalt.png" id="1_j20fm"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_344ge"]
-radius = 40.0
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_oi2tk"]
+radius = 24.0
+height = 122.0
+
+[sub_resource type="Animation" id="Animation_dashy"]
+resource_name = "portal"
+length = 0.5
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.0999, 0.1998, 0.2997, 0.3996, 0.4995),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5]
+}
+
+[sub_resource type="Animation" id="Animation_j20fm"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_uwyjv"]
+_data = {
+&"RESET": SubResource("Animation_j20fm"),
+&"portal": SubResource("Animation_dashy")
+}
 
 [node name="Node2D" type="Node2D"]
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.75, 0.75)
+texture_filter = 1
+position = Vector2(-1, -2)
+scale = Vector2(4, 4)
 texture = ExtResource("1_j20fm")
+hframes = 6
 
 [node name="Area2D" type="Area2D" parent="." groups=["portal"]]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
-shape = SubResource("CircleShape2D_344ge")
+shape = SubResource("CapsuleShape2D_oi2tk")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_uwyjv")
+}
+autoplay = "portal"

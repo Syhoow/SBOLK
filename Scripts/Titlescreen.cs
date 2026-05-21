@@ -4,7 +4,7 @@ using System;
 public partial class Titlescreen : Node2D
 {
     private Label _userLabel;
-    private Label _top1Label;
+    private RichTextLabel _top1Label;
     private Node _firebase;
     private Node _auth;
     private Node _database;
@@ -13,7 +13,7 @@ public partial class Titlescreen : Node2D
     public override void _Ready()
     {
         _userLabel = GetNodeOrNull<Label>("Label");
-        _top1Label = GetNodeOrNull<Label>("Top1NameLabel");
+        _top1Label = GetNodeOrNull<RichTextLabel>("Top1NameLabel");
         SetUserLabelFromAuth();
         FetchTop1();
     }
@@ -215,7 +215,7 @@ public partial class Titlescreen : Node2D
             return;
         }
 
-        _top1Label.Text = $"No.1: {bestEmail} ({bestScore})";
+        _top1Label.Text = $"No.1: {bestEmail} [wave][rainbow]({bestScore})[/rainbow][/wave]";
     }
 
     private void OnTop1Failed()

@@ -8,10 +8,12 @@ public partial class Bullet : Node2D
     public static int Damage = 50;
     private Vector2 _direction = Vector2.Right;
     private Sprite2D spritecolor;
+    public static Bullet Instance;
     private RandomNumberGenerator _rng = new RandomNumberGenerator();
 
     public override void _Ready()
     {
+        Instance = this;
         spritecolor = GetNode<Sprite2D>("Sprite2D");
         _rng.Randomize();
         spritecolor.Frame = _rng.RandiRange(0, 4);
@@ -26,6 +28,11 @@ public partial class Bullet : Node2D
         {
             QueueFree();
             return;
+        }
+
+        if (Player.Instance.health <= 0f)
+        {
+            Damage = 50;
         }
 
         Position += _direction * _speed * dt;
