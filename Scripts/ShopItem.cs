@@ -10,12 +10,13 @@ public partial class ShopItem : PanelContainer
     {
         cosmetic = c;
         GetNode<Label>("VBoxContainer/Label").Text = c.Name;
-        GetNode<Label>("VBoxContainer/Label2").Text = $"{c.Price} coins";
+        var ownedCount = CosmeticManager.Instance.GetOwnedCount(c.Id);
+        GetNode<Label>("VBoxContainer/Label2").Text = $"{c.Price} coins (Owned: {ownedCount}/{CosmeticManager.MaxStack})";
 
         var btn = GetNode<Button>("VBoxContainer/Button");
-        bool owned = CosmeticManager.Instance.OwnedIds.Contains(c.Id);
-        btn.Text = owned ? "Owned" : "Buy";
-        btn.Disabled = owned;
+        bool atMax = ownedCount >= CosmeticManager.MaxStack;
+        btn.Text = atMax ? "Max" : "Buy";
+        btn.Disabled = atMax;
 
         // Connect the signal in code
         btn.Pressed += _on_Button_pressed;

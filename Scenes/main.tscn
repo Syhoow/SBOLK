@@ -119,6 +119,9 @@ text = "Health"
 
 [node name="Control" parent="HUD" instance=ExtResource("9_ynf5e")]
 visible = false
+pistolIcon = null
+rifleIcon = null
+smgIcon = null
 
 [node name="CanvasLayer2" type="CanvasLayer" parent="."]
 

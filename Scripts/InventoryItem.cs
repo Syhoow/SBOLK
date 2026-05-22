@@ -6,10 +6,10 @@ public partial class InventoryItem : PanelContainer
     public Action OnEquipped;
     private string cosmeticId;
 
-    public void Setup(string id)
+    public void Setup(string id, int count)
     {
         cosmeticId = id;
-        GetNode<Label>("VBoxContainer/Label").Text = id;
+        GetNode<Label>("VBoxContainer/Label").Text = $"{id} x{count}";
 
         var btn = GetNode<Button>("VBoxContainer/Button");
         btn.Text = CosmeticManager.Instance.EquippedHat == id ? "Equipped" : "Equip";

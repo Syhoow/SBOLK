@@ -32,8 +32,10 @@ public partial class CosmeticManager : Node
         new Cosmetic { Id = "hat_9", Name = "hat9", Type = "hat", Price = 150 },
     };
 
+    public const int MaxStack = 10;
+
     public int Coins = 1000;
-    public Array<string> OwnedIds = new();
+    public Dictionary OwnedCounts = new();
     public string EquippedHat = "";
 
     // Offer system
@@ -115,10 +117,10 @@ public partial class CosmeticManager : Node
         return hours > 0 ? $"{hours}h {minutes}m" : $"{minutes}m {seconds}s";
     }
 
-    public void SetData(int coins, Array<string> ownedIds, string equippedHat)
+    public void SetData(int coins, Dictionary ownedCounts, string equippedHat)
     {
         Coins = coins;
-        OwnedIds = ownedIds;
+        OwnedCounts = ownedCounts;
         EquippedHat = equippedHat;
         QueueSave();
         DataChanged?.Invoke();
@@ -126,25 +128,60 @@ public partial class CosmeticManager : Node
 
     public bool Purchase(string id)
     {
-        foreach (var c in AllCosmetics)
+        var cosmetic = FindCosmetic(id);
+        if (cosmetic == null)
         {
-            if (c.Id == id && !OwnedIds.Contains(id) && Coins >= c.Price)
-            {
-                Coins -= c.Price;
-                OwnedIds.Add(id);
-                QueueSave();
-                DataChanged?.Invoke();
-                return true;
-            }
+            return false;
         }
-        return false;
+
+        var currentCount = GetOwnedCount(id);
+        if (currentCount >= MaxStack)
+        {
+            return false;
+        }
+
+        if (Coins < cosmetic.Value.Price)
+        {
+            return false;
+        }
+
+        Coins -= cosmetic.Value.Price;
+        OwnedCounts[id] = currentCount + 1;
+        QueueSave();
+        DataChanged?.Invoke();
+        return true;
     }
 
     public void Equip(string id)
     {
+        if (GetOwnedCount(id) <= 0)
+        {
+            return;
+        }
         EquippedHat = id;
         QueueSave();
         DataChanged?.Invoke();
+    }
+
+    public int GetOwnedCount(string id)
+    {
+        if (OwnedCounts.ContainsKey(id))
+        {
+            return ParseIntVariant((Variant)OwnedCounts[id], 0);
+        }
+        return 0;
+    }
+
+    private Cosmetic? FindCosmetic(string id)
+    {
+        foreach (var c in AllCosmetics)
+        {
+            if (c.Id == id)
+            {
+                return c;
+            }
+        }
+        return null;
     }
 
     private void EnsureFirebaseNodes()
@@ -257,7 +294,7 @@ public partial class CosmeticManager : Node
     private void ResetSessionState()
     {
         Coins = 1000;
-        OwnedIds = new Array<string>();
+        OwnedCounts = new Dictionary();
         EquippedHat = "";
         CurrentOfferIndices = new Array<int>();
         OfferTimeRemaining = 0;
@@ -338,9 +375,13 @@ public partial class CosmeticManager : Node
                 Coins = ParseIntVariant((Variant)snapshot["coins"], Coins);
             }
 
-            if (snapshot.ContainsKey("owned"))
+            if (snapshot.ContainsKey("ownedCounts"))
             {
-                OwnedIds = ParseStringArrayVariant((Variant)snapshot["owned"], OwnedIds);
+                OwnedCounts = ParseOwnedCountsVariant((Variant)snapshot["ownedCounts"], OwnedCounts);
+            }
+            else if (snapshot.ContainsKey("owned"))
+            {
+                OwnedCounts = ConvertLegacyOwned(ParseStringArrayVariant((Variant)snapshot["owned"], new Array<string>()));
             }
 
             if (snapshot.ContainsKey("equippedHat"))
@@ -459,7 +500,7 @@ public partial class CosmeticManager : Node
         var payload = new Dictionary
         {
             { "coins", Coins },
-            { "owned", OwnedIds },
+            { "ownedCounts", OwnedCounts },
             { "equippedHat", EquippedHat },
             { "offerIndices", CurrentOfferIndices },
             { "offerExpiresAt", _offerExpiresAt },
@@ -507,9 +548,13 @@ public partial class CosmeticManager : Node
         {
             Coins = ParseIntVariant((Variant)data["coins"], Coins);
         }
-        if (data.ContainsKey("owned"))
+        if (data.ContainsKey("ownedCounts"))
         {
-            OwnedIds = ParseStringArrayVariant((Variant)data["owned"], OwnedIds);
+            OwnedCounts = ParseOwnedCountsVariant((Variant)data["ownedCounts"], OwnedCounts);
+        }
+        else if (data.ContainsKey("owned"))
+        {
+            OwnedCounts = ConvertLegacyOwned(ParseStringArrayVariant((Variant)data["owned"], new Array<string>()));
         }
         if (data.ContainsKey("equippedHat"))
         {
@@ -544,7 +589,7 @@ public partial class CosmeticManager : Node
         var data = new Dictionary
         {
             { "coins", Coins },
-            { "owned", OwnedIds },
+            { "ownedCounts", OwnedCounts },
             { "equippedHat", EquippedHat },
             { "offerIndices", CurrentOfferIndices },
             { "offerExpiresAt", _offerExpiresAt },
@@ -635,6 +680,66 @@ public partial class CosmeticManager : Node
             var itemVar = (Variant)item;
             result.Add(ParseIntVariant(itemVar, 0));
         }
+        return result;
+    }
+
+    private static Dictionary ParseOwnedCountsVariant(Variant value, Dictionary fallback)
+    {
+        if (value.VariantType != Variant.Type.Dictionary)
+        {
+            return fallback;
+        }
+
+        var result = new Dictionary();
+        var dict = value.AsGodotDictionary();
+        foreach (var key in dict.Keys)
+        {
+            var keyStr = key.ToString();
+            if (string.IsNullOrEmpty(keyStr))
+            {
+                continue;
+            }
+
+            var count = ParseIntVariant((Variant)dict[key], 0);
+            if (count <= 0)
+            {
+                continue;
+            }
+            if (count > MaxStack)
+            {
+                count = MaxStack;
+            }
+
+            result[keyStr] = count;
+        }
+
+        return result;
+    }
+
+    private static Dictionary ConvertLegacyOwned(Array<string> ownedIds)
+    {
+        var result = new Dictionary();
+        foreach (var id in ownedIds)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                continue;
+            }
+
+            var current = 0;
+            if (result.ContainsKey(id))
+            {
+                current = ParseIntVariant((Variant)result[id], 0);
+            }
+
+            current += 1;
+            if (current > MaxStack)
+            {
+                current = MaxStack;
+            }
+            result[id] = current;
+        }
+
         return result;
     }
 }

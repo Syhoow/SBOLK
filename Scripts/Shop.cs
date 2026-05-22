@@ -12,6 +12,11 @@ public partial class Shop : Control
         coinsLabel = GetNode<Label>("CoinsLabel");
         timerLabel = GetNode<Label>("TimerLabel");
         itemGrid = GetNode<GridContainer>("ItemGrid");
+        if (CosmeticManager.Instance != null)
+        {
+            CosmeticManager.Instance.DataChanged += OnDataChanged;
+        }
+        TreeExiting += OnTreeExiting;
         Refresh();
     }
 
@@ -42,5 +47,18 @@ public partial class Shop : Control
     private void _on_button_pressed()
     {
         GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
+    }
+
+    private void OnDataChanged()
+    {
+        Refresh();
+    }
+
+    private void OnTreeExiting()
+    {
+        if (CosmeticManager.Instance != null)
+        {
+            CosmeticManager.Instance.DataChanged -= OnDataChanged;
+        }
     }
 }

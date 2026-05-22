@@ -10,6 +10,11 @@ public partial class Inventory : Control
     {
         itemGrid = GetNode<GridContainer>("ItemGrid");
         equippedLabel = GetNode<Label>("EquippedLabel");
+        if (CosmeticManager.Instance != null)
+        {
+            CosmeticManager.Instance.DataChanged += OnDataChanged;
+        }
+        TreeExiting += OnTreeExiting;
         Refresh();
     }
 
@@ -20,10 +25,16 @@ public partial class Inventory : Control
         foreach (Node child in itemGrid.GetChildren())
             child.QueueFree();
 
-        foreach (var id in CosmeticManager.Instance.OwnedIds)
+        foreach (var key in CosmeticManager.Instance.OwnedCounts.Keys)
         {
+            var id = key.ToString();
+            var count = CosmeticManager.Instance.GetOwnedCount(id);
+            if (count <= 0)
+            {
+                continue;
+            }
             var item = InventoryItemScene.Instantiate<InventoryItem>();
-            item.Setup(id);
+            item.Setup(id, count);
             item.OnEquipped += Refresh;
             itemGrid.AddChild(item);
         }
@@ -32,5 +43,18 @@ public partial class Inventory : Control
     private void _on_button_pressed()
     {
         GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
+    }
+
+    private void OnDataChanged()
+    {
+        Refresh();
+    }
+
+    private void OnTreeExiting()
+    {
+        if (CosmeticManager.Instance != null)
+        {
+            CosmeticManager.Instance.DataChanged -= OnDataChanged;
+        }
     }
 }
