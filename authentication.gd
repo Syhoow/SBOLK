@@ -55,9 +55,6 @@ func on_signup_failed(error_code, message):
 
 
 func logout():
-	# Clear the saved auth file used by the Firebase plugin
-	var auth_path = "user://user.auth"
-	if FileAccess.file_exists(auth_path):
-		DirAccess.remove_absolute(auth_path)
+	Firebase.Auth.logout()
 	%StateLabel.text = "Logged out"
 	get_tree().change_scene_to_file("res://Scenes/Authentication.tscn")

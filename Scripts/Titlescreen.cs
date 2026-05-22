@@ -25,11 +25,9 @@ public partial class Titlescreen : Node2D
 
     public void _on_sign_out_button_pressed()
     {
-        var authPath = "user://user.auth";
-        if (FileAccess.FileExists(authPath))
-        {
-            DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(authPath));
-        }
+        var firebase = GetNodeOrNull<Node>("/root/Firebase");
+        var authNode = firebase?.GetNodeOrNull<Node>("Auth");
+        authNode?.Call("logout");
         GetTree().ChangeSceneToFile("res://Scenes/Authentication.tscn");
     }
 
