@@ -20,7 +20,7 @@ public partial class Endrun : Control
     private Button newGunButton;
 
     // Labels
-    private Label moneyLabel;
+    private RichTextLabel moneyLabel;
     private Label enemyCountLabel;
     private Label playerHealthLabel;
     private Label playerDamageLabel;
@@ -31,6 +31,10 @@ public partial class Endrun : Control
     private Label goalLabel;
     private Label arenaXLabel;
     private Label arenaYLabel;
+
+    [Export] private Texture2D pistolIcon;
+    [Export] private Texture2D rifleIcon;
+    [Export] private Texture2D smgIcon;
 
     // Shop state
     private int rerollCost = 4;
@@ -67,14 +71,13 @@ public partial class Endrun : Control
         newGunButton = GetNode<Button>("Control/NewGun");
 
         // Labels
-        moneyLabel       = GetNode<Label>("Control/Money");
+        moneyLabel       = GetNode<RichTextLabel>("Control/Money");
         enemyCountLabel  = GetNode<Label>("EnemyCount");
         playerHealthLabel = GetNode<Label>("PlayerHealth");
         playerDamageLabel = GetNode<Label>("PlayerDamage");
         potCountLabel    = GetNode<Label>("PotCount");
-        potHealLabel     = GetNode<Label>("Pot Heal");
+        potHealLabel     = GetNode<Label>("HP");
         enemyHPLabel     = GetNode<Label>("EnemyHP");
-        enemyDamageLabel = GetNode<Label>("EnemyDamage");
         goalLabel        = GetNode<Label>("Goal");
         arenaXLabel      = GetNode<Label>("ArenaX");
         arenaYLabel      = GetNode<Label>("ArenaY");
@@ -92,17 +95,16 @@ public partial class Endrun : Control
     {
         if (GameControl.Instance == null) return;
 
-        moneyLabel.Text       = $"Money: {GameControl.Instance.money}g";
-        enemyCountLabel.Text  = $"Enemy Count: {GameControl.Instance.WaveEnemyCount}";
-        enemyHPLabel.Text     = $"Enemy HP: {GameControl.Instance.WaveEnemyHP}";
-        enemyDamageLabel.Text = $"Enemy DMG: {Enemy.Instance?.damage}";
-        goalLabel.Text        = $"Portal Goal: {GameControl.Instance.WaveGoal}";
-        arenaXLabel.Text      = $"Arena W: {Arena.Instance?.ArenaWidth}";
-        arenaYLabel.Text      = $"Arena H: {Arena.Instance?.ArenaHeight}";
-        playerHealthLabel.Text = $"Player HP: {Player.Instance?.maxHealth}";
-        playerDamageLabel.Text = $"Bullet DMG: {Bullet.Damage}";
-        potCountLabel.Text    = $"Pot Count: {GameControl.Instance.MaxHealingPots}";
-        potHealLabel.Text     = $"Pot Heal: 30hp"; // change 30 to your actual pot heal amount
+        moneyLabel.Text       = $"${GameControl.Instance.money}";
+        enemyCountLabel.Text  = $"COUNT: {GameControl.Instance.WaveEnemyCount}";
+        enemyHPLabel.Text     = $"HP: {GameControl.Instance.WaveEnemyHP}";
+        goalLabel.Text        = $"{GameControl.Instance.WaveGoal}";
+        arenaXLabel.Text      = $"X: {Arena.Instance?.ArenaWidth}";
+        arenaYLabel.Text      = $"Y: {Arena.Instance?.ArenaHeight}";
+        playerHealthLabel.Text = $"Max HP: {Player.Instance?.maxHealth}";
+        playerDamageLabel.Text = $"DMG: {Bullet.Damage}";
+        potCountLabel.Text    = $"Potions: {GameControl.Instance.MaxHealingPots}";
+        potHealLabel.Text     = $"HP: {Player.Instance?.health}"; // change 30 to your actual pot heal amount
     }
 
     private ShopOffer GenerateOffer(UpgradeType type)
@@ -121,7 +123,7 @@ public partial class Endrun : Control
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
                 offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"MAX HEALTH +{offer.Amount}  [{offer.Price}g]";
+                offer.Label  = $"MAX HEALTH +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.Heal:
@@ -133,7 +135,7 @@ public partial class Endrun : Control
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
                 offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"HEAL +{offer.Amount} HP  [{offer.Price}g]";
+                offer.Label  = $"HEAL +{offer.Amount} HP  [${offer.Price}]";
                 break;
             }
             case UpgradeType.BulletDamage:
@@ -145,7 +147,7 @@ public partial class Endrun : Control
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
                 offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"BULLET DMG +{offer.Amount}  [{offer.Price}g]";
+                offer.Label  = $"BULLET DMG +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.ArenaX:
@@ -157,7 +159,7 @@ public partial class Endrun : Control
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
                 offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"ARENA WIDTH +{offer.Amount}  [{offer.Price}g]";
+                offer.Label  = $"ARENA SIZE X +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.ArenaY:
@@ -169,7 +171,7 @@ public partial class Endrun : Control
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
                 offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"ARENA HEIGHT +{offer.Amount}  [{offer.Price}g]";
+                offer.Label  = $"ARENA SIZE Y +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.FloatingItemCount:
@@ -178,7 +180,7 @@ public partial class Endrun : Control
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = 1f;
                 offer.Price  = (int)(GD.RandRange(20, 100) * (1f + timesBought * 0.5f));
-                offer.Label  = $"FLOATING ITEM +1  [{offer.Price}g]";
+                offer.Label  = $"POTION +1  [${offer.Price}]";
                 break;
             }
         }
@@ -192,7 +194,7 @@ public partial class Endrun : Control
         if (GameControl.Instance.money < rerollCost) return;
         GameControl.Instance.money -= rerollCost;
         rerollCost += 5;
-        rerollButton.Text = $"REROLL [{rerollCost}g]";
+        rerollButton.Text = $"REROLL [${rerollCost}]";
 
         sold = new bool[3];
 
@@ -298,13 +300,23 @@ public partial class Endrun : Control
         {
             newGunButton.Text = "MAX GUN";
             newGunButton.Disabled = true;
+            newGunButton.Icon = null;
             return;
         }
 
         int[] prices = { 500, 5000 };
         string nextGunName = GunProgression[nextIndex].ToString().ToUpper();
-        newGunButton.Text = $"UPGRADE: {nextGunName}  [{prices[gunsOwned]}g]";
+        newGunButton.Text = $"UPGRADE: {nextGunName}  [${prices[gunsOwned]}]";
         newGunButton.Disabled = false;
+
+        // set icon based on next gun
+        newGunButton.Icon = GunProgression[nextIndex] switch
+        {
+            WeaponType.Rifle => rifleIcon,
+            WeaponType.Smg   => smgIcon,
+            WeaponType.Pistol => pistolIcon,
+            _ => null
+        };
     }
 
     private void Continue()
@@ -326,7 +338,7 @@ public partial class Endrun : Control
         rerollCostWave = (int)(rerollCostWave * 1.5f);
         sold = new bool[3];
         rerollCost = rerollCostWave;
-        rerollButton.Text = $"REROLL [{rerollCost}g]";
+        rerollButton.Text = $"REROLL [${rerollCost}]";
         UpdateGunButton();
 
         var pool = new List<UpgradeType>(AllUpgrades);
