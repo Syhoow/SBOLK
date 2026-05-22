@@ -264,4 +264,9 @@ public partial class Titlescreen : Node2D
     {
         GetTree().ChangeSceneToFile("res://Scenes/inventory.tscn");
     }
+
+    private void _on_MarketplaceButton_pressed()
+    {
+        GetTree().ChangeSceneToFile("res://Scenes/marketplace.tscn");
+    }
 }
