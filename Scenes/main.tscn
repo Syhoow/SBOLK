@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=14 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="Script" uid="uid://b07jumtx2yqpp" path="res://Scripts/GameControl.cs" id="1_jjvhh"]
@@ -10,6 +10,30 @@
 [ext_resource type="PackedScene" uid="uid://c4h4bhx5ca67g" path="res://Scenes/portal.tscn" id="7_6bp64"]
 [ext_resource type="PackedScene" uid="uid://c8ooa4gc1pk7v" path="res://Scenes/endrun.tscn" id="9_ynf5e"]
 [ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="10_hptm8"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d1ilt"]
+bg_color = Color(0, 0, 0, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hptm8"]
+bg_color = Color(1, 0, 0.254902, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_d1ilt"]
 shader = ExtResource("10_hptm8")
@@ -89,39 +113,39 @@ position = Vector2(480, 272)
 [node name="HUD" type="CanvasLayer" parent="."]
 
 [node name="Goal" type="ProgressBar" parent="HUD"]
-offset_left = 192.0
-offset_top = 16.0
-offset_right = 768.0
-offset_bottom = 43.0
+offset_left = 191.0
+offset_top = 28.0
+offset_right = 767.0
+offset_bottom = 55.0
 max_value = 300.0
 show_percentage = false
 
 [node name="Label" type="Label" parent="HUD"]
-offset_left = 471.0
-offset_top = 18.0
-offset_right = 511.0
-offset_bottom = 41.0
+offset_left = 470.0
+offset_top = 28.0
+offset_right = 510.0
+offset_bottom = 51.0
 text = "Goal "
 
 [node name="Health" type="ProgressBar" parent="HUD"]
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 112.0
-offset_bottom = 43.0
+offset_left = 24.0
+offset_top = 28.0
+offset_right = 120.0
+offset_bottom = 124.0
+theme_override_styles/background = SubResource("StyleBoxFlat_d1ilt")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hptm8")
+fill_mode = 3
 show_percentage = false
 
 [node name="Label2" type="Label" parent="HUD"]
-offset_left = 42.0
-offset_top = 17.0
-offset_right = 82.0
-offset_bottom = 40.0
+offset_left = 43.0
+offset_top = 40.0
+offset_right = 95.0
+offset_bottom = 63.0
 text = "Health"
 
 [node name="Control" parent="HUD" instance=ExtResource("9_ynf5e")]
 visible = false
-pistolIcon = null
-rifleIcon = null
-smgIcon = null
 
 [node name="CanvasLayer2" type="CanvasLayer" parent="."]
 

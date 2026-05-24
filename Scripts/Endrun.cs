@@ -13,6 +13,10 @@ public partial class Endrun : Control
         public string Label;
     }
 
+    private float _displayedMoney = 0f;
+    private float _targetMoney = 0f;
+    private bool _moneyAnimating = false;
+
     // Shop buttons
     private Button button1, button2, button3;
     private Button continueButton;
@@ -32,9 +36,9 @@ public partial class Endrun : Control
     private Label arenaXLabel;
     private Label arenaYLabel;
 
-    [Export] private Texture2D pistolIcon;
-    [Export] private Texture2D rifleIcon;
-    [Export] private Texture2D smgIcon;
+    private Texture2D pistolIcon;
+    private Texture2D rifleIcon;
+    private Texture2D smgIcon;
 
     // Shop state
     private int rerollCost = 4;
@@ -62,6 +66,10 @@ public partial class Endrun : Control
 
     public override void _Ready()
     {
+
+        pistolIcon = GD.Load<Texture2D>("res://Assets/Pistolpixel.png");
+        rifleIcon  = GD.Load<Texture2D>("res://Assets/shotgunpixel.png");
+        smgIcon    = GD.Load<Texture2D>("res://Assets/smgpixel.png");
         // Shop buttons
         button1      = GetNode<Button>("Control/Button");
         button2      = GetNode<Button>("Control/Button2");
@@ -95,7 +103,19 @@ public partial class Endrun : Control
     {
         if (GameControl.Instance == null) return;
 
-        moneyLabel.Text       = $"${GameControl.Instance.money}";
+        if (_moneyAnimating)
+        {
+            float remaining = _targetMoney - _displayedMoney;
+            float speed = Mathf.Max(1f, remaining * 5f);
+            _displayedMoney = Mathf.MoveToward(_displayedMoney, _targetMoney, speed * (float)delta);
+            if (Mathf.IsEqualApprox(_displayedMoney, _targetMoney))
+                _moneyAnimating = false;
+            moneyLabel.Text = $"${(int)_displayedMoney}";
+        }
+        else
+        {
+            moneyLabel.Text = $"${GameControl.Instance.money}";
+        }
         enemyCountLabel.Text  = $"COUNT: {GameControl.Instance.WaveEnemyCount}";
         enemyHPLabel.Text     = $"HP: {GameControl.Instance.WaveEnemyHP}";
         goalLabel.Text        = $"{GameControl.Instance.WaveGoal}";
@@ -306,7 +326,7 @@ public partial class Endrun : Control
 
         int[] prices = { 500, 5000 };
         string nextGunName = GunProgression[nextIndex].ToString().ToUpper();
-        newGunButton.Text = $"UPGRADE: {nextGunName}  [${prices[gunsOwned]}]";
+        newGunButton.Text = $"UPGRADE: [${prices[gunsOwned]}]";
         newGunButton.Disabled = false;
 
         // set icon based on next gun
@@ -331,10 +351,15 @@ public partial class Endrun : Control
         GameControl.Instance.isPlaying = true;
         GameControl.Instance.CallDeferred(nameof(GameControl.UnfreezeLayers));
         GameControl.Instance.CallDeferred(nameof(GameControl.QueueFreePortal));
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+        Input.MouseMode = Input.MouseModeEnum.Confined;
     }
 
     public void OpenShop()
     {
+        _displayedMoney = 0f;
+        _targetMoney = GameControl.Instance != null ? GameControl.Instance.money : 0f;
+        _moneyAnimating = true;
         rerollCostWave = (int)(rerollCostWave * 1.5f);
         sold = new bool[3];
         rerollCost = rerollCostWave;
