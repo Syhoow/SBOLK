@@ -80,10 +80,10 @@ public partial class Marketplace : Control
         {
             if (ListingItemScene == null) continue;
             var item = ListingItemScene.Instantiate<MarketplaceListing>();
-            var history = MarketplaceManager.Instance.GetPriceHistory(listing.ItemId);
-            item.Setup(listing, history);
             item.OnBuyPressed += OnListingBuyPressed;
-            _listingsContainer.AddChild(item);
+            _listingsContainer.AddChild(item);  // _Ready() runs here, initialising all labels
+            var history = MarketplaceManager.Instance.GetPriceHistory(listing.ItemId);
+            item.Setup(listing, history);        // labels now exist
         }
     }
 

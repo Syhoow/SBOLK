@@ -463,7 +463,7 @@ public partial class CosmeticManager : Node
         GenerateOffers();
     }
 
-    private void QueueSave()
+    public void QueueSave()
     {
         _dirty = true;
         SaveCache();

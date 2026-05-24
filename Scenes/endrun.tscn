@@ -1,11 +1,8 @@
-[gd_scene load_steps=14 format=3 uid="uid://c8ooa4gc1pk7v"]
+[gd_scene load_steps=11 format=3 uid="uid://c8ooa4gc1pk7v"]
 
 [ext_resource type="Script" uid="uid://upmvqk2wescn" path="res://Scripts/Endrun.cs" id="1_ar4qx"]
-[ext_resource type="Texture2D" uid="uid://npbtdssg0m8w" path="res://Assets/Pistolpixel.png" id="2_at4ti"]
 [ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="2_bj5ul"]
-[ext_resource type="Texture2D" uid="uid://cbtf6e31c0vvg" path="res://Assets/shotgunpixel.png" id="3_vbwix"]
 [ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="3_wssy8"]
-[ext_resource type="Texture2D" uid="uid://cq30vpdh1i1df" path="res://Assets/smgpixel.png" id="4_ga2wk"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wssy8"]
 bg_color = Color(1, 1, 0, 1)
@@ -56,9 +53,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_ar4qx")
-pistolIcon = ExtResource("2_at4ti")
-rifleIcon = ExtResource("3_vbwix")
-smgIcon = ExtResource("4_ga2wk")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 0
