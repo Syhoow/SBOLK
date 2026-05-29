@@ -4,6 +4,7 @@ public partial class Shop : Control
 {
     private Label coinsLabel;
     private Label timerLabel;
+    private Label tradeTokensLabel;
     private GridContainer itemGrid;
     [Export] public PackedScene ShopItemScene;
 
@@ -11,6 +12,7 @@ public partial class Shop : Control
     {
         coinsLabel = GetNode<Label>("CoinsLabel");
         timerLabel = GetNode<Label>("TimerLabel");
+        tradeTokensLabel = GetNodeOrNull<Label>("TradeTokensLabel");
         itemGrid = GetNode<GridContainer>("ItemGrid");
         if (CosmeticManager.Instance != null)
         {
@@ -24,8 +26,10 @@ public partial class Shop : Control
     {
         timerLabel.Text = $"Refreshes in: {CosmeticManager.Instance.GetTimeRemainingText()}";
         coinsLabel.Text = $"Coins: {CosmeticManager.Instance.Coins}";
+        if (tradeTokensLabel != null)
+            tradeTokensLabel.Text = $"Trade Tokens: {CosmeticManager.Instance.TradeTokens}";
 
-        if (CosmeticManager.Instance.OfferTimeRemaining >= 3599.9f)
+        if (CosmeticManager.Instance.OfferTimeRemaining <= 0)
             Refresh();
     }
 

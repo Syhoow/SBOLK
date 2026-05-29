@@ -27,6 +27,7 @@ public partial class GameControl : Node2D
     public CanvasLayer hudLayer;
     public ColorRect gameover;
     public Button record;
+    public Label TokensLabel;
     public bool isPlaying = true;
     public bool goalReached = false;
     private float spawnTimer = 0f;
@@ -69,6 +70,18 @@ public partial class GameControl : Node2D
         record = GetNode<Button>("CanvasLayer/Button");
         ScoreLabel = GetNode<Label>("CanvasLayer/Label");
         gameover.Modulate = new Color(1, 1, 1, 0);
+
+        TokensLabel = new Label();
+        TokensLabel.Visible = false;
+        TokensLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        TokensLabel.AnchorLeft = 0f;
+        TokensLabel.AnchorRight = 1f;
+        TokensLabel.AnchorTop = 0.5f;
+        TokensLabel.AnchorBottom = 0.5f;
+        TokensLabel.OffsetTop = 40f;
+        TokensLabel.OffsetBottom = 70f;
+        TokensLabel.AddThemeFontSizeOverride("font_size", 22);
+        GetNode<CanvasLayer>("CanvasLayer").AddChild(TokensLabel);
 
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
         PrimeAuthCache();
@@ -203,9 +216,10 @@ public partial class GameControl : Node2D
     {
         score += 10;
         currentGoal += 5;
-        int goldEarned = (int)GD.RandRange(1, 5); // flat small amount
+        int goldEarned = (int)GD.RandRange(1, 5);
         money += goldEarned;
         goalBar.Value = currentGoal;
+        CosmeticManager.Instance?.OnScoreUpdated(score);
     }
 
     public void SpawnPortal(Vector2 position)

@@ -16,6 +16,7 @@ public partial class MarketplaceManager : Node
         public int    Price;
         public int    Quantity;
         public double CreatedAt;
+        public double ExpiresAt;   // Unix UTC timestamp — set to CreatedAt + 86400 (24 h)
     }
 
     public class TradeRecord
@@ -41,6 +42,8 @@ public partial class MarketplaceManager : Node
     private bool   _waitingForAuth;
     private bool   _claimingPayouts;
     private string _myUid = "";
+    private float _pollTimer = 0f;
+    private const float PollInterval = 30f;
 
     // ─── Lifecycle ───────────────────────────────────────────────────────────
 
@@ -51,6 +54,39 @@ public partial class MarketplaceManager : Node
         LoadCache();
         TryLoadFromCloud();
     }
+
+    public override void _Process(double delta)
+    {
+        // Auto-expire listings whose ExpiresAt has passed (uses computer clock)
+        double nowUtc = DateTimeToUnix(DateTime.UtcNow);
+        bool anyExpired = false;
+        for (int i = Listings.Count - 1; i >= 0; i--)
+        {
+            if (Listings[i].ExpiresAt > 0 && nowUtc >= Listings[i].ExpiresAt)
+            {
+                Listings.RemoveAt(i);
+                anyExpired = true;
+            }
+        }
+        if (anyExpired)
+        {
+            SaveCache();
+            DataChanged?.Invoke();
+        }
+
+        // Poll Firebase every 30 s while logged in
+        if (!IsLoggedIn()) return;
+        _pollTimer += (float)delta;
+        if (_pollTimer >= PollInterval)
+        {
+            _pollTimer = 0f;
+            TryLoadFromCloud();
+        }
+    }
+
+    // Convert DateTime to Unix seconds for clock-based expiry
+    public static double DateTimeToUnix(DateTime dt)
+        => (dt.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
 
     // ─── Firebase plumbing ───────────────────────────────────────────────────
 
@@ -226,7 +262,8 @@ public partial class MarketplaceManager : Node
         var uid = GetCurrentUid();
         if (string.IsNullOrEmpty(uid)) return false;
 
-        var id = uid + "_" + itemId + "_" + (long)Time.GetUnixTimeFromSystem();
+        double now = DateTimeToUnix(DateTime.UtcNow);
+        var id = uid + "_" + itemId + "_" + (long)now;
         var listing = new Listing
         {
             Id          = id,
@@ -236,12 +273,14 @@ public partial class MarketplaceManager : Node
             SellerEmail = GetDisplayName(),
             Price       = price,
             Quantity    = quantity,
-            CreatedAt   = Time.GetUnixTimeFromSystem()
+            CreatedAt   = now,
+            ExpiresAt   = now + 86400   // 24 hours from now, timed by computer clock
         };
 
-        // Deduct item from seller inventory immediately
+        // Deduct item from seller inventory immediately and persist
         CosmeticManager.Instance.OwnedCounts[itemId] =
             CosmeticManager.Instance.GetOwnedCount(itemId) - quantity;
+        CosmeticManager.Instance.QueueSave();
 
         Listings.Add(listing);
         SaveCache();
@@ -253,6 +292,45 @@ public partial class MarketplaceManager : Node
         {
             var refNode = (Node)_database.Call("get_once_database_reference", ListingsPath + "/" + id);
             refNode.Call("update", "", ListingToDict(listing));
+        }
+
+        return true;
+    }
+
+    // ─── Cancel listing (seller takes item back) ─────────────────────────────
+
+    public bool CancelListing(string listingId)
+    {
+        if (CosmeticManager.Instance == null) return false;
+
+        var listing = Listings.Find(l => l.Id == listingId);
+        if (listing == null) return false;
+
+        var uid = GetCurrentUid();
+        if (string.IsNullOrEmpty(uid)) return false;
+        if (listing.SellerUid != uid) return false;   // only seller can cancel
+
+        // Return item(s) to seller inventory
+        CosmeticManager.Instance.OwnedCounts[listing.ItemId] =
+            CosmeticManager.Instance.GetOwnedCount(listing.ItemId) + listing.Quantity;
+        CosmeticManager.Instance.QueueSave();
+
+        Listings.Remove(listing);
+        SaveCache();
+        DataChanged?.Invoke();
+
+        // Mark cancelled in Firebase
+        EnsureFirebaseNodes();
+        if (_database != null && IsLoggedIn())
+        {
+            var listRef = (Node)_database.Call("get_once_database_reference",
+                ListingsPath + "/" + listingId);
+            listRef.Call("update", "", new Godot.Collections.Dictionary
+            {
+                { "quantity",  0    },
+                { "sold",      true },
+                { "cancelled", true }
+            });
         }
 
         return true;
@@ -542,16 +620,20 @@ public partial class MarketplaceManager : Node
     private static Listing ParseListing(string id, Godot.Collections.Dictionary d)
     {
         if (d == null) return null;
+        double createdAt = d.ContainsKey("createdAt") ? ParseDouble((Variant)d["createdAt"], 0) : 0;
+        double expiresAt = d.ContainsKey("expiresAt") ? ParseDouble((Variant)d["expiresAt"], 0)
+                                                       : (createdAt > 0 ? createdAt + 86400 : 0);
         return new Listing
         {
             Id          = id,
-            ItemId      = d.ContainsKey("itemId")      ? ((Variant)d["itemId"]).AsString()       : "",
-            ItemName    = d.ContainsKey("itemName")     ? ((Variant)d["itemName"]).AsString()     : "",
-            SellerUid   = d.ContainsKey("sellerUid")   ? ((Variant)d["sellerUid"]).AsString()    : "",
-            SellerEmail = d.ContainsKey("sellerEmail")  ? ((Variant)d["sellerEmail"]).AsString()  : "?",
-            Price       = d.ContainsKey("price")        ? ParseInt((Variant)d["price"], 0)        : 0,
-            Quantity    = d.ContainsKey("quantity")     ? ParseInt((Variant)d["quantity"], 0)     : 0,
-            CreatedAt   = d.ContainsKey("createdAt")    ? ParseDouble((Variant)d["createdAt"], 0) : 0,
+            ItemId      = d.ContainsKey("itemId")     ? ((Variant)d["itemId"]).AsString()      : "",
+            ItemName    = d.ContainsKey("itemName")    ? ((Variant)d["itemName"]).AsString()    : "",
+            SellerUid   = d.ContainsKey("sellerUid")  ? ((Variant)d["sellerUid"]).AsString()   : "",
+            SellerEmail = d.ContainsKey("sellerEmail") ? ((Variant)d["sellerEmail"]).AsString() : "?",
+            Price       = d.ContainsKey("price")       ? ParseInt((Variant)d["price"], 0)       : 0,
+            Quantity    = d.ContainsKey("quantity")    ? ParseInt((Variant)d["quantity"], 0)    : 0,
+            CreatedAt   = createdAt,
+            ExpiresAt   = expiresAt,
         };
     }
 
@@ -565,7 +647,8 @@ public partial class MarketplaceManager : Node
             { "sellerEmail", l.SellerEmail },
             { "price",       l.Price       },
             { "quantity",    l.Quantity    },
-            { "createdAt",   l.CreatedAt   }
+            { "createdAt",   l.CreatedAt   },
+            { "expiresAt",   l.ExpiresAt   }
         };
 
     private static int ParseInt(Variant v, int fallback) => v.VariantType switch

@@ -7,34 +7,41 @@ public partial class CosmeticManager : Node
     public static CosmeticManager Instance;
     public event Action DataChanged;
 
+    public enum Rarity { Common, Rare, Legendary }
+
     public struct Cosmetic
     {
         public string Id;
         public string Name;
         public string Type;
         public int Price;
+        public Rarity Rarity;
         public Texture2D Icon;
     }
 
     public Cosmetic[] AllCosmetics = new[]
     {
-        new Cosmetic { Id = "hat_crown",  Name = "Crown",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_cap",    Name = "Cap",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_wizard", Name = "Wizard", Type = "hat", Price = 150 },
-        new Cosmetic { Id = "hat_1",  Name = "hat1",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_2",    Name = "hat2",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_3", Name = "hat3", Type = "hat", Price = 150 },
-        new Cosmetic { Id = "hat_4",  Name = "hat4",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_5",    Name = "hat5",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_6", Name = "hat6", Type = "hat", Price = 150 },
-        new Cosmetic { Id = "hat_7",  Name = "hat7",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_8",    Name = "hat8",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_9", Name = "hat9", Type = "hat", Price = 150 },
+        new Cosmetic { Id = "hat_crown",  Name = "Crown of Eternity", Type = "hat", Price = 50,  Rarity = Rarity.Legendary },
+        new Cosmetic { Id = "hat_cap",    Name = "Cap",               Type = "hat", Price = 75,  Rarity = Rarity.Rare },
+        new Cosmetic { Id = "hat_wizard", Name = "Wizard Hat",        Type = "hat", Price = 100, Rarity = Rarity.Rare },
+        new Cosmetic { Id = "hat_1",  Name = "Red Top Hat",   Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_2",  Name = "Green Cap",     Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_3",  Name = "Orange Wizard", Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_4",  Name = "Teal Top Hat",  Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_5",  Name = "Pink Crown",    Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_6",  Name = "Lime Cap",      Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_7",  Name = "Gold Wizard",   Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_8",  Name = "Blue Top Hat",  Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_9",  Name = "Purple Crown",  Type = "hat", Price = 50, Rarity = Rarity.Common },
     };
 
     public const int MaxStack = 10;
 
     public int Coins = 1000;
+    public int TradeTokens = 0;
+    private int _trackedScore = 0;
+    private const int ScorePerReward = 1000;
+    private const int TokensPerReward = 10;
     public Dictionary OwnedCounts = new();
     public string EquippedHat = "";
 
@@ -76,9 +83,11 @@ public partial class CosmeticManager : Node
 
     public override void _Process(double delta)
     {
-        if (OfferTimeRemaining > 0)
+        // Drive timer from computer clock so it counts down correctly even when offline
+        double nowUtc = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        if (_offerExpiresAt > 0)
         {
-            OfferTimeRemaining -= delta;
+            OfferTimeRemaining = _offerExpiresAt - nowUtc;
             if (OfferTimeRemaining <= 0)
                 GenerateOffers();
         }
@@ -129,27 +138,40 @@ public partial class CosmeticManager : Node
     public bool Purchase(string id)
     {
         var cosmetic = FindCosmetic(id);
-        if (cosmetic == null)
-        {
-            return false;
-        }
+        if (cosmetic == null) return false;
 
         var currentCount = GetOwnedCount(id);
-        if (currentCount >= MaxStack)
+        if (currentCount >= MaxStack) return false;
+
+        if (cosmetic.Value.Rarity == Rarity.Legendary)
         {
-            return false;
+            if (TradeTokens < cosmetic.Value.Price) return false;
+            TradeTokens -= cosmetic.Value.Price;
+        }
+        else
+        {
+            if (Coins < cosmetic.Value.Price) return false;
+            Coins -= cosmetic.Value.Price;
         }
 
-        if (Coins < cosmetic.Value.Price)
-        {
-            return false;
-        }
-
-        Coins -= cosmetic.Value.Price;
         OwnedCounts[id] = currentCount + 1;
         QueueSave();
         DataChanged?.Invoke();
         return true;
+    }
+
+    public void OnScoreUpdated(int newScore)
+    {
+        int newMilestones = newScore / ScorePerReward;
+        int oldMilestones = _trackedScore / ScorePerReward;
+        int earned = newMilestones - oldMilestones;
+        if (earned > 0)
+        {
+            TradeTokens += earned * TokensPerReward;
+            QueueSave();
+            DataChanged?.Invoke();
+        }
+        _trackedScore = newScore;
     }
 
     public void Equip(string id)
@@ -159,6 +181,17 @@ public partial class CosmeticManager : Node
             return;
         }
         EquippedHat = id;
+        QueueSave();
+        DataChanged?.Invoke();
+    }
+
+    public void Unequip(string id)
+    {
+        if (EquippedHat != id)
+        {
+            return;
+        }
+        EquippedHat = "";
         QueueSave();
         DataChanged?.Invoke();
     }
@@ -294,6 +327,8 @@ public partial class CosmeticManager : Node
     private void ResetSessionState()
     {
         Coins = 1000;
+        TradeTokens = 0;
+        _trackedScore = 0;
         OwnedCounts = new Dictionary();
         EquippedHat = "";
         CurrentOfferIndices = new Array<int>();
@@ -390,6 +425,12 @@ public partial class CosmeticManager : Node
                 EquippedHat = equippedVar.VariantType == Variant.Type.String ? equippedVar.AsString() : EquippedHat;
             }
 
+            if (snapshot.ContainsKey("tradeTokens"))
+            {
+                int cloudTokens = ParseIntVariant((Variant)snapshot["tradeTokens"], TradeTokens);
+                TradeTokens = Math.Max(TradeTokens, cloudTokens);
+            }
+
             if (snapshot.ContainsKey("offerIndices"))
             {
                 CurrentOfferIndices = ParseIntArrayVariant((Variant)snapshot["offerIndices"], CurrentOfferIndices);
@@ -442,7 +483,7 @@ public partial class CosmeticManager : Node
         if (list.Count > 0)
         {
             AllCosmetics = list.ToArray();
-            GenerateOffers();
+            ApplyOfferTimer();
             DataChanged?.Invoke();
         }
     }
@@ -500,6 +541,7 @@ public partial class CosmeticManager : Node
         var payload = new Dictionary
         {
             { "coins", Coins },
+            { "tradeTokens", TradeTokens },
             { "ownedCounts", OwnedCounts },
             { "equippedHat", EquippedHat },
             { "offerIndices", CurrentOfferIndices },
@@ -560,6 +602,11 @@ public partial class CosmeticManager : Node
         {
             EquippedHat = ((Variant)data["equippedHat"]).AsString();
         }
+        if (data.ContainsKey("tradeTokens"))
+        {
+            int cachedTokens = ParseIntVariant((Variant)data["tradeTokens"], TradeTokens);
+            TradeTokens = Math.Max(TradeTokens, cachedTokens);
+        }
         if (data.ContainsKey("offerIndices"))
         {
             CurrentOfferIndices = ParseIntArrayVariant((Variant)data["offerIndices"], CurrentOfferIndices);
@@ -580,7 +627,13 @@ public partial class CosmeticManager : Node
             return;
         }
 
-        var uid = UpdateCurrentUidFromAuth();
+        var uid = _currentUid;
+        if (string.IsNullOrEmpty(uid))
+        {
+            uid = GetUidFromAuth();
+            if (!string.IsNullOrEmpty(uid))
+                _currentUid = uid;
+        }
         if (string.IsNullOrEmpty(uid))
         {
             return;
@@ -589,6 +642,7 @@ public partial class CosmeticManager : Node
         var data = new Dictionary
         {
             { "coins", Coins },
+            { "tradeTokens", TradeTokens },
             { "ownedCounts", OwnedCounts },
             { "equippedHat", EquippedHat },
             { "offerIndices", CurrentOfferIndices },
@@ -608,6 +662,30 @@ public partial class CosmeticManager : Node
     private static string GetCachePath(string uid)
     {
         return CachePathPrefix + uid + ".json";
+    }
+
+    // Returns the per-item icon if it exists in Assets/Icons/{itemId}.png,
+    // otherwise generates a unique colored placeholder so every item looks distinct.
+    public static Texture2D LoadItemIcon(string itemId)
+    {
+        if (!string.IsNullOrEmpty(itemId))
+        {
+            var path = $"res://Assets/Icons/{itemId}.png";
+            if (ResourceLoader.Exists(path))
+                return GD.Load<Texture2D>(path);
+        }
+        return MakePlaceholderIcon(itemId);
+    }
+
+    private static Texture2D MakePlaceholderIcon(string itemId)
+    {
+        int hash = string.IsNullOrEmpty(itemId) ? 12345 : Math.Abs(itemId.GetHashCode());
+        float r = (hash * 13 % 200 + 55) / 255f;
+        float g = (hash * 29 % 200 + 55) / 255f;
+        float b = (hash * 47 % 200 + 55) / 255f;
+        var img = Image.Create(32, 32, false, Image.Format.Rgba8);
+        img.Fill(new Color(r, g, b, 1f));
+        return ImageTexture.CreateFromImage(img);
     }
 
     private static int ParseIntVariant(Variant value, int fallback)

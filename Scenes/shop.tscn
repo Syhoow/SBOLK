@@ -30,6 +30,13 @@ offset_right = 202.0
 offset_bottom = 398.0
 text = "money:"
 
+[node name="TradeTokensLabel" type="Label" parent="."]
+offset_left = 144.0
+offset_top = 395.0
+offset_right = 300.0
+offset_bottom = 418.0
+text = "Trade Tokens: 0"
+
 [node name="ItemGrid" type="GridContainer" parent="."]
 layout_direction = 2
 offset_left = 290.0

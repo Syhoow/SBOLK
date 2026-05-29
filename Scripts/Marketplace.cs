@@ -1,4 +1,5 @@
 using Godot;
+using System;
 using System.Collections.Generic;
 
 public partial class Marketplace : Control
@@ -14,23 +15,39 @@ public partial class Marketplace : Control
     private Label _statusLabel;
     private Button _postButton;
     private Button _refreshButton;
+    private PriceChart _postChart;
+    private TextureRect _postIcon;
 
-    private List<string> _sellableItemIds = new();
+    private Panel _historyPanel;
+    private VBoxContainer _historyContainer;
+
+    private List<string> _sellableItemIds   = new();
     private List<string> _sellableItemNames = new();
 
     public override void _Ready()
     {
-        _coinsLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/TopBar/CoinsLabel");
+        _coinsLabel        = GetNodeOrNull<Label>        ("MarginContainer/VBoxContainer/TopBar/CoinsLabel");
         _listingsContainer = GetNodeOrNull<VBoxContainer>("MarginContainer/VBoxContainer/ScrollContainer/ListingsContainer");
-        _postPanel = GetNodeOrNull<Panel>("PostPanel");
-        _itemSelector = GetNodeOrNull<OptionButton>("PostPanel/VBoxContainer/ItemSelector");
-        _priceInput = GetNodeOrNull<SpinBox>("PostPanel/VBoxContainer/PriceRow/PriceInput");
-        _qtyInput = GetNodeOrNull<SpinBox>("PostPanel/VBoxContainer/QtyRow/QtyInput");
-        _statusLabel = GetNodeOrNull<Label>("MarginContainer/VBoxContainer/TopBar/StatusLabel");
-        _postButton = GetNodeOrNull<Button>("MarginContainer/VBoxContainer/TopBar/PostButton");
-        _refreshButton = GetNodeOrNull<Button>("MarginContainer/VBoxContainer/TopBar/RefreshButton");
+        _postPanel         = GetNodeOrNull<Panel>        ("PostPanel");
+        _itemSelector      = GetNodeOrNull<OptionButton> ("PostPanel/VBoxContainer/ItemSelectorRow/ItemSelector");
+        _postIcon          = GetNodeOrNull<TextureRect>  ("PostPanel/VBoxContainer/ItemSelectorRow/PostItemIcon");
+        _priceInput        = GetNodeOrNull<SpinBox>      ("PostPanel/VBoxContainer/PriceRow/PriceInput");
+        _qtyInput          = GetNodeOrNull<SpinBox>      ("PostPanel/VBoxContainer/QtyRow/QtyInput");
+        _statusLabel       = GetNodeOrNull<Label>        ("MarginContainer/VBoxContainer/TopBar/StatusLabel");
+        _postButton        = GetNodeOrNull<Button>       ("MarginContainer/VBoxContainer/TopBar/PostButton");
+        _refreshButton     = GetNodeOrNull<Button>       ("MarginContainer/VBoxContainer/TopBar/RefreshButton");
+        _postChart         = GetNodeOrNull<PriceChart>   ("PostPanel/VBoxContainer/PostPriceChart");
+        _historyPanel      = GetNodeOrNull<Panel>        ("HistoryPanel");
+        _historyContainer  = GetNodeOrNull<VBoxContainer>("HistoryPanel/VBoxContainer/ScrollContainer/HistoryContainer");
 
-        if (_postPanel != null) _postPanel.Visible = false;
+        if (_postPanel    != null) _postPanel.Visible    = false;
+        if (_historyPanel != null) _historyPanel.Visible = false;
+
+        if (_postIcon != null)
+            _postIcon.Texture = CosmeticManager.LoadItemIcon("");
+
+        if (_itemSelector != null)
+            _itemSelector.ItemSelected += OnPostItemSelected;
 
         if (MarketplaceManager.Instance != null)
             MarketplaceManager.Instance.DataChanged += Refresh;
@@ -80,10 +97,11 @@ public partial class Marketplace : Control
         {
             if (ListingItemScene == null) continue;
             var item = ListingItemScene.Instantiate<MarketplaceListing>();
-            item.OnBuyPressed += OnListingBuyPressed;
-            _listingsContainer.AddChild(item);  // _Ready() runs here, initialising all labels
+            item.OnBuyPressed    += OnListingBuyPressed;
+            item.OnCancelPressed += OnListingCancelPressed;
+            _listingsContainer.AddChild(item);
             var history = MarketplaceManager.Instance.GetPriceHistory(listing.ItemId);
-            item.Setup(listing, history);        // labels now exist
+            item.Setup(listing, history);
         }
     }
 
@@ -95,17 +113,28 @@ public partial class Marketplace : Control
         Refresh();
     }
 
+    private void OnListingCancelPressed(string listingId)
+    {
+        if (MarketplaceManager.Instance == null) return;
+        bool success = MarketplaceManager.Instance.CancelListing(listingId);
+        ShowStatus(success ? "Listing cancelled — item returned to inventory." : "Could not cancel listing.");
+        Refresh();
+    }
+
     private void ShowStatus(string msg)
     {
         if (_statusLabel == null) return;
         _statusLabel.Text = msg;
     }
 
+    // ─── Post panel ──────────────────────────────────────────────────────────
+
     private void _on_PostButton_pressed()
     {
         if (_postPanel == null) return;
         PopulateItemSelector();
         _postPanel.Visible = true;
+        RefreshPostChart();
     }
 
     private void PopulateItemSelector()
@@ -113,7 +142,6 @@ public partial class Marketplace : Control
         _sellableItemIds.Clear();
         _sellableItemNames.Clear();
         if (_itemSelector == null) return;
-
         _itemSelector.Clear();
 
         if (CosmeticManager.Instance == null) return;
@@ -128,25 +156,56 @@ public partial class Marketplace : Control
 
         if (_sellableItemIds.Count == 0)
             _itemSelector.AddItem("Nothing to sell");
+
+        UpdatePostIcon();
+    }
+
+    private void OnPostItemSelected(long index)
+    {
+        RefreshPostChart();
+        UpdatePostIcon();
+    }
+
+    private void UpdatePostIcon()
+    {
+        if (_postIcon == null) return;
+        int idx = _itemSelector != null ? _itemSelector.Selected : -1;
+        string id = (idx >= 0 && idx < _sellableItemIds.Count) ? _sellableItemIds[idx] : "";
+        _postIcon.Texture = CosmeticManager.LoadItemIcon(id);
+    }
+
+    private void RefreshPostChart()
+    {
+        if (_postChart == null || MarketplaceManager.Instance == null) return;
+        int idx = _itemSelector != null ? _itemSelector.Selected : -1;
+        if (idx < 0 || idx >= _sellableItemIds.Count)
+        {
+            _postChart.SetPrices(new List<float>());
+            return;
+        }
+        string itemId = _sellableItemIds[idx];
+        var history   = MarketplaceManager.Instance.GetPriceHistory(itemId);
+        var prices    = new List<float>();
+        foreach (var record in history)
+            prices.Add(record.Price);
+        _postChart.SetPrices(prices);
     }
 
     private void _on_ConfirmPostButton_pressed()
     {
         if (_sellableItemIds.Count == 0) { ShowStatus("No items to sell."); return; }
         if (_itemSelector == null || _priceInput == null || _qtyInput == null) return;
-
         int idx = _itemSelector.Selected;
         if (idx < 0 || idx >= _sellableItemIds.Count) return;
 
-        string itemId = _sellableItemIds[idx];
+        string itemId   = _sellableItemIds[idx];
         string itemName = _sellableItemNames[idx];
-        int price = (int)_priceInput.Value;
-        int qty = (int)_qtyInput.Value;
+        int price       = (int)_priceInput.Value;
+        int qty         = (int)_qtyInput.Value;
 
         if (MarketplaceManager.Instance == null) return;
         bool success = MarketplaceManager.Instance.PostListing(itemId, itemName, price, qty);
         ShowStatus(success ? "Listing posted!" : "Failed to post (check quantity/price).");
-
         if (_postPanel != null) _postPanel.Visible = false;
         Refresh();
     }
@@ -155,6 +214,96 @@ public partial class Marketplace : Control
     {
         if (_postPanel != null) _postPanel.Visible = false;
     }
+
+    // ─── History panel ───────────────────────────────────────────────────────
+
+    private void _on_HistoryButton_pressed()
+    {
+        if (_historyPanel == null) return;
+        RebuildHistory();
+        _historyPanel.Visible = true;
+    }
+
+    private void _on_HistoryCloseButton_pressed()
+    {
+        if (_historyPanel != null) _historyPanel.Visible = false;
+    }
+
+    private void RebuildHistory()
+    {
+        if (_historyContainer == null || MarketplaceManager.Instance == null) return;
+
+        foreach (Node child in _historyContainer.GetChildren())
+            child.QueueFree();
+
+        var allHistory = MarketplaceManager.Instance.PriceHistory;
+        if (allHistory.Count == 0)
+        {
+            var empty = new Label();
+            empty.Text = "No trade history yet.";
+            empty.HorizontalAlignment = HorizontalAlignment.Center;
+            _historyContainer.AddChild(empty);
+            return;
+        }
+
+        // Build flat list sorted newest-first
+        var allTrades = new List<(string ItemId, string ItemName, int Price, double Timestamp)>();
+        foreach (var kv in allHistory)
+        {
+            string itemId   = kv.Key;
+            string itemName = itemId;
+            if (CosmeticManager.Instance != null)
+            {
+                foreach (var c in CosmeticManager.Instance.AllCosmetics)
+                    if (c.Id == itemId) { itemName = c.Name; break; }
+            }
+            foreach (var record in kv.Value)
+                allTrades.Add((itemId, itemName, record.Price, record.Timestamp));
+        }
+        allTrades.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
+
+        // Header row
+        var header = MakeHistoryRow("", "Item", "Price", "Date / Time", true);
+        _historyContainer.AddChild(header);
+
+        foreach (var trade in allTrades)
+        {
+            var dt = DateTimeOffset.FromUnixTimeSeconds((long)trade.Timestamp).ToLocalTime();
+            string dateStr = dt.ToString("yyyy-MM-dd  HH:mm");
+            var row = MakeHistoryRow(trade.ItemId, trade.ItemName, $"{trade.Price}c", dateStr, false);
+            _historyContainer.AddChild(row);
+        }
+    }
+
+    private static HBoxContainer MakeHistoryRow(string itemId, string item, string price, string date, bool isHeader)
+    {
+        var row = new HBoxContainer();
+        row.AddThemeConstantOverride("separation", 12);
+
+        var icon = new TextureRect();
+        icon.CustomMinimumSize = new Vector2(24, 24);
+        icon.ExpandMode  = TextureRect.ExpandModeEnum.IgnoreSize;
+        icon.StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered;
+        if (!isHeader)
+            icon.Texture = CosmeticManager.LoadItemIcon(itemId);
+        row.AddChild(icon);
+
+        Label MakeLabel(string text, float grow)
+        {
+            var l = new Label();
+            l.Text = text;
+            l.SizeFlagsHorizontal = (SizeFlags)(grow > 0 ? (int)SizeFlags.Expand | (int)SizeFlags.Fill : (int)SizeFlags.Fill);
+            if (isHeader) l.AddThemeFontSizeOverride("font_size", 12);
+            return l;
+        }
+
+        row.AddChild(MakeLabel(item,  3));
+        row.AddChild(MakeLabel(price, 1));
+        row.AddChild(MakeLabel(date,  2));
+        return row;
+    }
+
+    // ─── Toolbar buttons ─────────────────────────────────────────────────────
 
     private void _on_RefreshButton_pressed()
     {
