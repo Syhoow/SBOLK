@@ -27,7 +27,8 @@ public partial class GameControl : Node2D
     public CanvasLayer hudLayer;
     public ColorRect gameover;
     public Button record;
-    public Label TokensLabel;
+    public Label CoinsEarnedLabel;
+    public static bool IsTutorialMode = false;
     public bool isPlaying = true;
     public bool goalReached = false;
     private float spawnTimer = 0f;
@@ -71,19 +72,29 @@ public partial class GameControl : Node2D
         ScoreLabel = GetNode<Label>("CanvasLayer/Label");
         gameover.Modulate = new Color(1, 1, 1, 0);
 
-        TokensLabel = new Label();
-        TokensLabel.Visible = false;
-        TokensLabel.HorizontalAlignment = HorizontalAlignment.Center;
-        TokensLabel.AnchorLeft = 0f;
-        TokensLabel.AnchorRight = 1f;
-        TokensLabel.AnchorTop = 0.5f;
-        TokensLabel.AnchorBottom = 0.5f;
-        TokensLabel.OffsetTop = 40f;
-        TokensLabel.OffsetBottom = 70f;
-        TokensLabel.AddThemeFontSizeOverride("font_size", 22);
-        GetNode<CanvasLayer>("CanvasLayer").AddChild(TokensLabel);
+        CoinsEarnedLabel = new Label();
+        CoinsEarnedLabel.Visible = false;
+        CoinsEarnedLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        CoinsEarnedLabel.AnchorLeft = 0f;
+        CoinsEarnedLabel.AnchorRight = 1f;
+        CoinsEarnedLabel.AnchorTop = 0.5f;
+        CoinsEarnedLabel.AnchorBottom = 0.5f;
+        CoinsEarnedLabel.OffsetTop = 40f;
+        CoinsEarnedLabel.OffsetBottom = 70f;
+        CoinsEarnedLabel.AddThemeFontSizeOverride("font_size", 22);
+        GetNode<CanvasLayer>("CanvasLayer").AddChild(CoinsEarnedLabel);
 
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
+
+        bool isTutorial = IsTutorialMode;
+        IsTutorialMode = false;
+        if (isTutorial)
+        {
+            var tutScene = GD.Load<PackedScene>("res://Scenes/tutorial.tscn");
+            if (tutScene != null)
+                AddChild(tutScene.Instantiate());
+        }
+
         PrimeAuthCache();
     }
 
@@ -96,7 +107,8 @@ public partial class GameControl : Node2D
             spawnTimer = 0f;
             if(Player.Instance.health > 0)
             {
-                SpawnWithWarning();
+                if (TutorialManager.Instance == null || TutorialManager.Instance.EnemiesAllowed)
+                    SpawnWithWarning();
             }
             
         }
@@ -219,7 +231,6 @@ public partial class GameControl : Node2D
         int goldEarned = (int)GD.RandRange(1, 5);
         money += goldEarned;
         goalBar.Value = currentGoal;
-        CosmeticManager.Instance?.OnScoreUpdated(score);
     }
 
     public void SpawnPortal(Vector2 position)

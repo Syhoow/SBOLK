@@ -21,6 +21,8 @@ public partial class Player : CharacterBody2D
         private float invincibilityDuration = 0.5f;
         private float invincibilityTimer = 0f;
         private bool isInvincible = false;
+        private bool _isDead = false;
+        public static bool DashUsed = false;
         private Vector2 dashDirection;
         private Vector2 knockback = Vector2.Zero;
         private float kbtimer = 0.0f;
@@ -157,8 +159,9 @@ public partial class Player : CharacterBody2D
                         }
                 }
 
-                if (health <= 0f)
+                if (health <= 0f && !_isDead)
                 {
+                        _isDead = true;
                         foreach (Node enemy in GetTree().GetNodesInGroup("enemy"))
                                 enemy.QueueFree();
                         Arena.Instance.isEliminated = true;
@@ -174,11 +177,16 @@ public partial class Player : CharacterBody2D
                         GameControl.Instance.record.Visible = true;
                         GameControl.Instance.ScoreLabel.Text = $"Score: {GameControl.Instance.score}";
                         GameControl.Instance.ScoreLabel.Visible = true;
-                        int totalTokens = CosmeticManager.Instance?.TradeTokens ?? 0;
-                        if (GameControl.Instance.TokensLabel != null)
+                        int coinsEarned = GameControl.Instance.score / 10;
+                        if (CosmeticManager.Instance != null)
                         {
-                                GameControl.Instance.TokensLabel.Text = $"Trade Tokens: {totalTokens}";
-                                GameControl.Instance.TokensLabel.Visible = true;
+                                CosmeticManager.Instance.Coins += coinsEarned;
+                                CosmeticManager.Instance.QueueSave();
+                        }
+                        if (GameControl.Instance.CoinsEarnedLabel != null)
+                        {
+                                GameControl.Instance.CoinsEarnedLabel.Text = $"Coins Earned: +{coinsEarned}";
+                                GameControl.Instance.CoinsEarnedLabel.Visible = true;
                         }
                         GameControl.Instance.SubmitScoreToLeaderboard(GameControl.Instance.score);
                         GD.Print("Player has died!");
@@ -227,6 +235,7 @@ public partial class Player : CharacterBody2D
 
                                 isDashing = true;
                                 isInvisible = true;
+                                DashUsed = true;
                                 dashTimer = dashDuration;
                                 dashDisabledTimer = dashDisabledDuration;
                                 dashCooldownTimer = dashCooldown;

@@ -50,15 +50,11 @@ public partial class ShopItem : PanelContainer
         GetNode<Label>("VBoxContainer/NameLabel").Text = c.Name;
 
         var ownedCount = CosmeticManager.Instance.GetOwnedCount(c.Id);
-        string priceText = c.Rarity == CosmeticManager.Rarity.Legendary
-            ? $"{c.Price} Trade Tokens (owned: {ownedCount}/{CosmeticManager.MaxStack})"
-            : $"{c.Price} coins (owned: {ownedCount}/{CosmeticManager.MaxStack})";
+        string priceText = $"{c.Price} coins (owned: {ownedCount}/{CosmeticManager.MaxStack})";
         GetNode<Label>("VBoxContainer/PriceLabel").Text = priceText;
 
         bool atMax = ownedCount >= CosmeticManager.MaxStack;
-        bool canAfford = c.Rarity == CosmeticManager.Rarity.Legendary
-            ? CosmeticManager.Instance.TradeTokens >= c.Price
-            : CosmeticManager.Instance.Coins >= c.Price;
+        bool canAfford = CosmeticManager.Instance.Coins >= c.Price;
 
         var btn = GetNode<Button>("VBoxContainer/Button");
         btn.Text = atMax ? "Max" : "Buy";

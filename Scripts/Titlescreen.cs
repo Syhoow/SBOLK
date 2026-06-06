@@ -20,6 +20,13 @@ public partial class Titlescreen : Node2D
 
     public void _on_button_pressed()
     {
+        GameControl.IsTutorialMode = false;
+        GetTree().ChangeSceneToFile("res://Scenes/main.tscn");
+    }
+
+    public void _on_TutorialButton_pressed()
+    {
+        GameControl.IsTutorialMode = true;
         GetTree().ChangeSceneToFile("res://Scenes/main.tscn");
     }
 
@@ -268,5 +275,10 @@ public partial class Titlescreen : Node2D
     private void _on_MarketplaceButton_pressed()
     {
         GetTree().ChangeSceneToFile("res://Scenes/marketplace.tscn");
+    }
+
+    private void _on_AnalyticsButton_pressed()
+    {
+        GetTree().ChangeSceneToFile("res://Scenes/analytics.tscn");
     }
 }

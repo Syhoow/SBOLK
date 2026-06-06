@@ -38,10 +38,6 @@ public partial class CosmeticManager : Node
     public const int MaxStack = 10;
 
     public int Coins = 1000;
-    public int TradeTokens = 0;
-    private int _trackedScore = 0;
-    private const int ScorePerReward = 1000;
-    private const int TokensPerReward = 10;
     public Dictionary OwnedCounts = new();
     public string EquippedHat = "";
 
@@ -143,35 +139,13 @@ public partial class CosmeticManager : Node
         var currentCount = GetOwnedCount(id);
         if (currentCount >= MaxStack) return false;
 
-        if (cosmetic.Value.Rarity == Rarity.Legendary)
-        {
-            if (TradeTokens < cosmetic.Value.Price) return false;
-            TradeTokens -= cosmetic.Value.Price;
-        }
-        else
-        {
-            if (Coins < cosmetic.Value.Price) return false;
-            Coins -= cosmetic.Value.Price;
-        }
+        if (Coins < cosmetic.Value.Price) return false;
+        Coins -= cosmetic.Value.Price;
 
         OwnedCounts[id] = currentCount + 1;
         QueueSave();
         DataChanged?.Invoke();
         return true;
-    }
-
-    public void OnScoreUpdated(int newScore)
-    {
-        int newMilestones = newScore / ScorePerReward;
-        int oldMilestones = _trackedScore / ScorePerReward;
-        int earned = newMilestones - oldMilestones;
-        if (earned > 0)
-        {
-            TradeTokens += earned * TokensPerReward;
-            QueueSave();
-            DataChanged?.Invoke();
-        }
-        _trackedScore = newScore;
     }
 
     public void Equip(string id)
@@ -327,8 +301,6 @@ public partial class CosmeticManager : Node
     private void ResetSessionState()
     {
         Coins = 1000;
-        TradeTokens = 0;
-        _trackedScore = 0;
         OwnedCounts = new Dictionary();
         EquippedHat = "";
         CurrentOfferIndices = new Array<int>();
@@ -423,12 +395,6 @@ public partial class CosmeticManager : Node
             {
                 var equippedVar = (Variant)snapshot["equippedHat"];
                 EquippedHat = equippedVar.VariantType == Variant.Type.String ? equippedVar.AsString() : EquippedHat;
-            }
-
-            if (snapshot.ContainsKey("tradeTokens"))
-            {
-                int cloudTokens = ParseIntVariant((Variant)snapshot["tradeTokens"], TradeTokens);
-                TradeTokens = Math.Max(TradeTokens, cloudTokens);
             }
 
             if (snapshot.ContainsKey("offerIndices"))
@@ -541,7 +507,6 @@ public partial class CosmeticManager : Node
         var payload = new Dictionary
         {
             { "coins", Coins },
-            { "tradeTokens", TradeTokens },
             { "ownedCounts", OwnedCounts },
             { "equippedHat", EquippedHat },
             { "offerIndices", CurrentOfferIndices },
@@ -602,11 +567,6 @@ public partial class CosmeticManager : Node
         {
             EquippedHat = ((Variant)data["equippedHat"]).AsString();
         }
-        if (data.ContainsKey("tradeTokens"))
-        {
-            int cachedTokens = ParseIntVariant((Variant)data["tradeTokens"], TradeTokens);
-            TradeTokens = Math.Max(TradeTokens, cachedTokens);
-        }
         if (data.ContainsKey("offerIndices"))
         {
             CurrentOfferIndices = ParseIntArrayVariant((Variant)data["offerIndices"], CurrentOfferIndices);
@@ -642,7 +602,6 @@ public partial class CosmeticManager : Node
         var data = new Dictionary
         {
             { "coins", Coins },
-            { "tradeTokens", TradeTokens },
             { "ownedCounts", OwnedCounts },
             { "equippedHat", EquippedHat },
             { "offerIndices", CurrentOfferIndices },
