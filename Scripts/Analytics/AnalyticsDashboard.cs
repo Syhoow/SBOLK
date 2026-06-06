@@ -20,6 +20,8 @@ using System.Linq;
 
 public partial class AnalyticsDashboard : Control
 {
+    private const string AdminEmail = "admin123@gmail.com";
+
     // ── Shared toolbar ────────────────────────────────────────────────────────
     private Button       _syncBtn;
     private Button       _exportBtn;
@@ -78,6 +80,12 @@ public partial class AnalyticsDashboard : Control
 
     public override void _Ready()
     {
+        if (!IsCurrentUserAdmin())
+        {
+            GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
+            return;
+        }
+
         // ── Fetch all scene nodes ─────────────────────────────────────────────
 
         // Toolbar
@@ -144,6 +152,11 @@ public partial class AnalyticsDashboard : Control
 
         // Then overlay with persisted OLAP store from Firebase
         _olap.LoadFromOlapStore();
+    }
+
+    private bool IsCurrentUserAdmin()
+    {
+        return string.Equals(GameControl.CurrentUserEmail, AdminEmail, StringComparison.OrdinalIgnoreCase);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -235,6 +235,8 @@ func signup_with_email_and_password(email : String, password : String) -> void:
 # The 'mail' field will be empty since no email is linked to an anonymous user
 func login_anonymous() -> void:
 	if _is_ready():
+		if is_busy:
+			return
 		is_busy = true
 		auth_request_type = Auth_Type.LOGIN_ANON
 		var err = request(_base_url + _signup_request_url, _headers, HTTPClient.METHOD_POST, JSON.stringify(_anonymous_login_request_body))
@@ -519,8 +521,6 @@ func check_auth_file() -> bool:
 		# Will ensure "auth_request" emitted
 		return load_auth()
 	else:
-		Firebase._printerr("Encrypted Firebase Auth file does not exist")
-		auth_request.emit(ERR_DOES_NOT_EXIST, "Encrypted Firebase Auth file does not exist")
 		return false
 
 

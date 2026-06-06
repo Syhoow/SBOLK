@@ -3,6 +3,7 @@ using System.Collections.Generic;
 public partial class GameControl : Node2D
 {
     public static GameControl Instance;
+    public static string CurrentUserEmail = "";
     [Export] public PackedScene EnemyScene;
     [Export] public PackedScene Marker;
     [Export] public PackedScene Portal;
@@ -344,6 +345,7 @@ public partial class GameControl : Node2D
                 {
                     email = emailStr;
                     _cachedEmail = emailStr;
+                    CurrentUserEmail = emailStr;
                 }
             }
         }
@@ -433,6 +435,7 @@ public partial class GameControl : Node2D
         if (!string.IsNullOrEmpty(email) && email != "anonymous")
         {
             _cachedEmail = email;
+            CurrentUserEmail = email;
         }
 
         if (string.IsNullOrEmpty(_pendingScoreUid) && _pendingScoreValue <= 0)
@@ -503,6 +506,7 @@ public partial class GameControl : Node2D
                 if (!string.IsNullOrEmpty(emailStr))
                 {
                     _cachedEmail = emailStr;
+                    CurrentUserEmail = emailStr;
                     return;
                 }
             }
