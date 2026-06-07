@@ -25,7 +25,7 @@ public partial class Shop : Control
         timerLabel.Text = $"Refreshes in: {CosmeticManager.Instance.GetTimeRemainingText()}";
         coinsLabel.Text = $"Coins: {CosmeticManager.Instance.Coins}";
 
-        if (CosmeticManager.Instance.OfferTimeRemaining >= 3599.9f)
+        if (CosmeticManager.Instance.OfferTimeRemaining <= 0)
             Refresh();
     }
 

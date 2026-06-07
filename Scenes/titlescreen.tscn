@@ -45,21 +45,13 @@ corner_radius_bottom_right = 20
 bg_color = Color(0, 0, 0, 1)
 corner_radius_bottom_right = 20
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wf248"]
-bg_color = Color(0, 0, 0, 0.905882)
-corner_radius_bottom_left = 20
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rsi7w"]
-bg_color = Color(0, 0, 0, 1)
-corner_radius_bottom_left = 20
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f1s1v"]
 bg_color = Color(0, 0, 0, 0.905882)
-corner_radius_top_left = 20
+corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_y82uc"]
 bg_color = Color(0, 0, 0, 1)
-corner_radius_top_left = 20
+corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sn34e"]
 bg_color = Color(0, 0, 0, 0.905882)
@@ -72,6 +64,14 @@ bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_up5sg"]
 bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wf248"]
+bg_color = Color(0, 0, 0, 0.905882)
+corner_radius_top_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rsi7w"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_right = 20
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_up5sg"]
 shader = ExtResource("5_qf0g6")
@@ -170,25 +170,12 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_lkqyf")
 text = "LEADERBOARD"
 script = ExtResource("6_w7bgp")
 
-[node name="SettingsButton" type="Button" parent="."]
-texture_filter = 1
-offset_left = 24.0
-offset_top = 456.0
-offset_right = 184.0
-offset_bottom = 512.0
-theme_override_fonts/font = ExtResource("5_up5sg")
-theme_override_font_sizes/font_size = 30
-theme_override_styles/hover = SubResource("StyleBoxFlat_wf248")
-theme_override_styles/normal = SubResource("StyleBoxFlat_rsi7w")
-text = "SETTINGS"
-script = ExtResource("6_w7bgp")
-
 [node name="ShopButton" type="Button" parent="."]
 texture_filter = 1
-offset_left = 776.0
-offset_top = 395.0
-offset_right = 842.0
-offset_bottom = 451.0
+offset_left = 18.0
+offset_top = 456.0
+offset_right = 84.0
+offset_bottom = 512.0
 theme_override_fonts/font = ExtResource("5_up5sg")
 theme_override_font_sizes/font_size = 30
 theme_override_styles/hover = SubResource("StyleBoxFlat_f1s1v")
@@ -198,9 +185,9 @@ script = ExtResource("6_w7bgp")
 
 [node name="InventoryButton" type="Button" parent="."]
 texture_filter = 1
-offset_left = 848.0
+offset_left = 776.0
 offset_top = 394.0
-offset_right = 914.0
+offset_right = 936.0
 offset_bottom = 450.0
 theme_override_fonts/font = ExtResource("5_up5sg")
 theme_override_font_sizes/font_size = 30
@@ -239,6 +226,32 @@ autowrap_mode = 0
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="MarketplaceButton" type="Button" parent="."]
+texture_filter = 1
+offset_left = 91.0
+offset_top = 456.0
+offset_right = 179.0
+offset_bottom = 512.0
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_wf248")
+theme_override_styles/normal = SubResource("StyleBoxFlat_rsi7w")
+text = "TRADE"
+script = ExtResource("6_w7bgp")
+
+[node name="AnalyticsButton" type="Button" parent="."]
+texture_filter = 1
+offset_left = 18.0
+offset_top = 394.0
+offset_right = 178.0
+offset_bottom = 450.0
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_sn34e")
+theme_override_styles/normal = SubResource("StyleBoxFlat_47k5g")
+text = "ANALYTICS"
+script = ExtResource("6_w7bgp")
+
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
@@ -248,8 +261,11 @@ offset_bottom = 540.0
 mouse_filter = 2
 
 [connection signal="pressed" from="PlayButton" to="." method="_on_button_pressed"]
+[connection signal="pressed" from="TutorialButton" to="." method="_on_TutorialButton_pressed"]
 [connection signal="pressed" from="SignOutButton" to="." method="_on_sign_out_button_pressed"]
 [connection signal="pressed" from="LeaderBoardButton" to="." method="_on_leaderboard_button_pressed"]
 [connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]
 [connection signal="pressed" from="ShopButton" to="." method="_on_ShopButton_pressed"]
 [connection signal="pressed" from="InventoryButton" to="." method="_on_InventoryButton_pressed"]
+[connection signal="pressed" from="MarketplaceButton" to="." method="_on_MarketplaceButton_pressed"]
+[connection signal="pressed" from="AnalyticsButton" to="." method="_on_AnalyticsButton_pressed"]

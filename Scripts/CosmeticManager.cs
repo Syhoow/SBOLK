@@ -7,34 +7,37 @@ public partial class CosmeticManager : Node
     public static CosmeticManager Instance;
     public event Action DataChanged;
 
+    public enum Rarity { Common, Rare, Legendary }
+
     public struct Cosmetic
     {
         public string Id;
         public string Name;
         public string Type;
         public int Price;
+        public Rarity Rarity;
         public Texture2D Icon;
     }
 
     public Cosmetic[] AllCosmetics = new[]
     {
-        new Cosmetic { Id = "hat_crown",  Name = "Crown",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_cap",    Name = "Cap",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_wizard", Name = "Wizard", Type = "hat", Price = 150 },
-        new Cosmetic { Id = "hat_1",  Name = "hat1",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_2",    Name = "hat2",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_3", Name = "hat3", Type = "hat", Price = 150 },
-        new Cosmetic { Id = "hat_4",  Name = "hat4",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_5",    Name = "hat5",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_6", Name = "hat6", Type = "hat", Price = 150 },
-        new Cosmetic { Id = "hat_7",  Name = "hat7",  Type = "hat", Price = 100 },
-        new Cosmetic { Id = "hat_8",    Name = "hat8",    Type = "hat", Price = 50  },
-        new Cosmetic { Id = "hat_9", Name = "hat9", Type = "hat", Price = 150 },
+        new Cosmetic { Id = "hat_crown",  Name = "Pilot Goggles",        Type = "hat", Price = 500,  Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_cap",    Name = "Butterfly",          Type = "hat", Price = 5000,  Rarity = Rarity.Rare },
+        new Cosmetic { Id = "hat_wizard", Name = "Bandana",    Type = "hat", Price = 100, Rarity = Rarity.Rare },
+        new Cosmetic { Id = "hat_1",  Name = "Halo",      Type = "hat", Price = 700, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_2",  Name = "Cowboy Hat",   Type = "hat", Price = 500, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_3",  Name = "Hard Hat",     Type = "hat", Price = 300, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_4",  Name = "Halo",         Type = "hat", Price = 800, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_5",  Name = "Sombrero",     Type = "hat", Price = 500, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_6",  Name = "Magician Hat", Type = "hat", Price = 700, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_7",  Name = "Cap",        Type = "hat", Price = 900, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_8",  Name = "Jester Hat",   Type = "hat", Price = 500, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_9",  Name = "Wizard Hat",   Type = "hat", Price = 10000, Rarity = Rarity.Legendary },
     };
 
     public const int MaxStack = 10;
 
-    public int Coins = 1000;
+    public int Coins = 0;
     public Dictionary OwnedCounts = new();
     public string EquippedHat = "";
 
@@ -76,9 +79,11 @@ public partial class CosmeticManager : Node
 
     public override void _Process(double delta)
     {
-        if (OfferTimeRemaining > 0)
+        // Drive timer from computer clock so it counts down correctly even when offline
+        double nowUtc = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        if (_offerExpiresAt > 0)
         {
-            OfferTimeRemaining -= delta;
+            OfferTimeRemaining = _offerExpiresAt - nowUtc;
             if (OfferTimeRemaining <= 0)
                 GenerateOffers();
         }
@@ -129,23 +134,14 @@ public partial class CosmeticManager : Node
     public bool Purchase(string id)
     {
         var cosmetic = FindCosmetic(id);
-        if (cosmetic == null)
-        {
-            return false;
-        }
+        if (cosmetic == null) return false;
 
         var currentCount = GetOwnedCount(id);
-        if (currentCount >= MaxStack)
-        {
-            return false;
-        }
+        if (currentCount >= MaxStack) return false;
 
-        if (Coins < cosmetic.Value.Price)
-        {
-            return false;
-        }
-
+        if (Coins < cosmetic.Value.Price) return false;
         Coins -= cosmetic.Value.Price;
+
         OwnedCounts[id] = currentCount + 1;
         QueueSave();
         DataChanged?.Invoke();
@@ -159,6 +155,17 @@ public partial class CosmeticManager : Node
             return;
         }
         EquippedHat = id;
+        QueueSave();
+        DataChanged?.Invoke();
+    }
+
+    public void Unequip(string id)
+    {
+        if (EquippedHat != id)
+        {
+            return;
+        }
+        EquippedHat = "";
         QueueSave();
         DataChanged?.Invoke();
     }
@@ -293,7 +300,7 @@ public partial class CosmeticManager : Node
 
     private void ResetSessionState()
     {
-        Coins = 1000;
+        Coins = 0;
         OwnedCounts = new Dictionary();
         EquippedHat = "";
         CurrentOfferIndices = new Array<int>();
@@ -404,11 +411,15 @@ public partial class CosmeticManager : Node
         ApplyOfferTimer();
         SaveCache();
         DataChanged?.Invoke();
+        // Flush any saves that were queued before cloud data arrived.
+        TrySaveToCloud();
     }
 
     private void OnPlayerDataFailed()
     {
-        _loadedFromCloud = false;
+        // Treat a failed load as "we tried" so saves are no longer blocked.
+        _loadedFromCloud = true;
+        TrySaveToCloud();
     }
 
     private void OnCatalogLoaded(Dictionary snapshot)
@@ -418,31 +429,57 @@ public partial class CosmeticManager : Node
             return;
         }
 
-        var list = new System.Collections.Generic.List<Cosmetic>();
-        foreach (var key in snapshot.Keys)
+        // Only patch prices from the Firebase catalog — never replace names, types,
+        // or rarities, which are defined locally and would show raw IDs if overwritten.
+        bool changed = false;
+        for (int i = 0; i < AllCosmetics.Length; i++)
         {
-            var entryVar = (Variant)snapshot[key];
-            if (entryVar.VariantType != Variant.Type.Dictionary)
+            var local = AllCosmetics[i];
+
+            // Firebase keys may omit the underscore (e.g. "hat3" vs "hat_3"), so try both.
+            Variant entryVar = default;
+            bool found = false;
+            if (snapshot.ContainsKey(local.Id))
             {
-                continue;
+                entryVar = (Variant)snapshot[local.Id];
+                found = true;
+            }
+            else
+            {
+                var altKey = local.Id.Replace("_", "");
+                if (snapshot.ContainsKey(altKey))
+                {
+                    entryVar = (Variant)snapshot[altKey];
+                    found = true;
+                }
             }
 
+            if (!found || entryVar.VariantType != Variant.Type.Dictionary)
+                continue;
+
             var entry = entryVar.AsGodotDictionary();
-            var cosmetic = new Cosmetic
+            if (!entry.ContainsKey("price"))
+                continue;
+
+            int newPrice = ParseIntVariant((Variant)entry["price"], local.Price);
+            if (newPrice == local.Price)
+                continue;
+
+            AllCosmetics[i] = new Cosmetic
             {
-                Id = key.ToString(),
-                Name = entry.ContainsKey("name") ? ((Variant)entry["name"]).AsString() : key.ToString(),
-                Type = entry.ContainsKey("type") ? ((Variant)entry["type"]).AsString() : "",
-                Price = entry.ContainsKey("price") ? ParseIntVariant((Variant)entry["price"], 0) : 0,
-                Icon = null
+                Id    = local.Id,
+                Name  = local.Name,
+                Type  = local.Type,
+                Rarity = local.Rarity,
+                Icon  = local.Icon,
+                Price = newPrice
             };
-            list.Add(cosmetic);
+            changed = true;
         }
 
-        if (list.Count > 0)
+        if (changed)
         {
-            AllCosmetics = list.ToArray();
-            GenerateOffers();
+            ApplyOfferTimer();
             DataChanged?.Invoke();
         }
     }
@@ -463,7 +500,7 @@ public partial class CosmeticManager : Node
         GenerateOffers();
     }
 
-    private void QueueSave()
+    public void QueueSave()
     {
         _dirty = true;
         SaveCache();
@@ -473,6 +510,13 @@ public partial class CosmeticManager : Node
     private void TrySaveToCloud()
     {
         if (!_dirty)
+        {
+            return;
+        }
+
+        // Never write to cloud until we have confirmed what the cloud holds,
+        // otherwise a reset/default state can overwrite real player data.
+        if (!_loadedFromCloud)
         {
             return;
         }
@@ -580,7 +624,13 @@ public partial class CosmeticManager : Node
             return;
         }
 
-        var uid = UpdateCurrentUidFromAuth();
+        var uid = _currentUid;
+        if (string.IsNullOrEmpty(uid))
+        {
+            uid = GetUidFromAuth();
+            if (!string.IsNullOrEmpty(uid))
+                _currentUid = uid;
+        }
         if (string.IsNullOrEmpty(uid))
         {
             return;
@@ -608,6 +658,30 @@ public partial class CosmeticManager : Node
     private static string GetCachePath(string uid)
     {
         return CachePathPrefix + uid + ".json";
+    }
+
+    // Returns the per-item icon if it exists in Assets/Icons/{itemId}.png,
+    // otherwise generates a unique colored placeholder so every item looks distinct.
+    public static Texture2D LoadItemIcon(string itemId)
+    {
+        if (!string.IsNullOrEmpty(itemId))
+        {
+            var path = $"res://Assets/Icons/{itemId}.png";
+            if (ResourceLoader.Exists(path))
+                return GD.Load<Texture2D>(path);
+        }
+        return MakePlaceholderIcon(itemId);
+    }
+
+    private static Texture2D MakePlaceholderIcon(string itemId)
+    {
+        int hash = string.IsNullOrEmpty(itemId) ? 12345 : Math.Abs(itemId.GetHashCode());
+        float r = (hash * 13 % 200 + 55) / 255f;
+        float g = (hash * 29 % 200 + 55) / 255f;
+        float b = (hash * 47 % 200 + 55) / 255f;
+        var img = Image.Create(32, 32, false, Image.Format.Rgba8);
+        img.Fill(new Color(r, g, b, 1f));
+        return ImageTexture.CreateFromImage(img);
     }
 
     private static int ParseIntVariant(Variant value, int fallback)

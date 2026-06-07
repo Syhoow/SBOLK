@@ -3,8 +3,11 @@ using System;
 
 public partial class Titlescreen : Node2D
 {
+    private const string AdminEmail = "admin123@gmail.com";
+
     private Label _userLabel;
     private RichTextLabel _top1Label;
+    private Button _analyticsButton;
     private Node _firebase;
     private Node _auth;
     private Node _database;
@@ -14,12 +17,20 @@ public partial class Titlescreen : Node2D
     {
         _userLabel = GetNodeOrNull<Label>("Label");
         _top1Label = GetNodeOrNull<RichTextLabel>("Top1NameLabel");
+        _analyticsButton = GetNodeOrNull<Button>("AnalyticsButton");
         SetUserLabelFromAuth();
         FetchTop1();
     }
 
     public void _on_button_pressed()
     {
+        GameControl.IsTutorialMode = false;
+        GetTree().ChangeSceneToFile("res://Scenes/main.tscn");
+    }
+
+    public void _on_TutorialButton_pressed()
+    {
+        GameControl.IsTutorialMode = true;
         GetTree().ChangeSceneToFile("res://Scenes/main.tscn");
     }
 
@@ -47,6 +58,7 @@ public partial class Titlescreen : Node2D
         if (firebase == null)
         {
             _userLabel.Text = "Logged In As : [unknown]";
+            UpdateAnalyticsAccess("");
             return;
         }
 
@@ -54,6 +66,7 @@ public partial class Titlescreen : Node2D
         if (authNode == null)
         {
             _userLabel.Text = "Logged In As : [unknown]";
+            UpdateAnalyticsAccess("");
             return;
         }
 
@@ -71,7 +84,9 @@ public partial class Titlescreen : Node2D
                 }
                 if (!string.IsNullOrEmpty(email))
                 {
+                    GameControl.CurrentUserEmail = email;
                     _userLabel.Text = "Logged In As : " + email;
+                    UpdateAnalyticsAccess(email);
                     return;
                 }
             }
@@ -85,6 +100,7 @@ public partial class Titlescreen : Node2D
 
         authNode.Call("get_user_data");
         _userLabel.Text = "Logged In As : [loading]";
+        UpdateAnalyticsAccess("");
     }
 
     private void OnUserdataReceived(GodotObject userdata)
@@ -103,6 +119,8 @@ public partial class Titlescreen : Node2D
         _userLabel.Text = string.IsNullOrEmpty(email)
             ? "Logged In As : [unknown]"
             : "Logged In As : " + email;
+        GameControl.CurrentUserEmail = email;
+        UpdateAnalyticsAccess(email);
     }
 
     private void FetchTop1()
@@ -263,5 +281,34 @@ public partial class Titlescreen : Node2D
     private void _on_InventoryButton_pressed()
     {
         GetTree().ChangeSceneToFile("res://Scenes/inventory.tscn");
+    }
+
+    private void _on_MarketplaceButton_pressed()
+    {
+        GetTree().ChangeSceneToFile("res://Scenes/marketplace.tscn");
+    }
+
+    private void _on_AnalyticsButton_pressed()
+    {
+        if (!IsCurrentUserAdmin())
+        {
+            GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
+            return;
+        }
+
+        GetTree().ChangeSceneToFile("res://Scenes/analytics.tscn");
+    }
+
+    private bool IsCurrentUserAdmin()
+    {
+        return string.Equals(GameControl.CurrentUserEmail, AdminEmail, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void UpdateAnalyticsAccess(string email)
+    {
+        if (_analyticsButton != null)
+        {
+            _analyticsButton.Visible = string.Equals(email, AdminEmail, StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

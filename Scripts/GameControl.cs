@@ -3,6 +3,7 @@ using System.Collections.Generic;
 public partial class GameControl : Node2D
 {
     public static GameControl Instance;
+    public static string CurrentUserEmail = "";
     [Export] public PackedScene EnemyScene;
     [Export] public PackedScene Marker;
     [Export] public PackedScene Portal;
@@ -27,6 +28,8 @@ public partial class GameControl : Node2D
     public CanvasLayer hudLayer;
     public ColorRect gameover;
     public Button record;
+    public Label CoinsEarnedLabel;
+    public static bool IsTutorialMode = false;
     public bool isPlaying = true;
     public bool goalReached = false;
     private float spawnTimer = 0f;
@@ -70,7 +73,29 @@ public partial class GameControl : Node2D
         ScoreLabel = GetNode<Label>("CanvasLayer/Label");
         gameover.Modulate = new Color(1, 1, 1, 0);
 
+        CoinsEarnedLabel = new Label();
+        CoinsEarnedLabel.Visible = false;
+        CoinsEarnedLabel.HorizontalAlignment = HorizontalAlignment.Center;
+        CoinsEarnedLabel.AnchorLeft = 0f;
+        CoinsEarnedLabel.AnchorRight = 1f;
+        CoinsEarnedLabel.AnchorTop = 0.5f;
+        CoinsEarnedLabel.AnchorBottom = 0.5f;
+        CoinsEarnedLabel.OffsetTop = 40f;
+        CoinsEarnedLabel.OffsetBottom = 70f;
+        CoinsEarnedLabel.AddThemeFontSizeOverride("font_size", 22);
+        GetNode<CanvasLayer>("CanvasLayer").AddChild(CoinsEarnedLabel);
+
         player.GlobalPosition = arena.ToGlobal(new Vector2(arena.ArenaWidth * 25f / 2, (arena.ArenaHeight - 1) * 25f / 2));
+
+        bool isTutorial = IsTutorialMode;
+        IsTutorialMode = false;
+        if (isTutorial)
+        {
+            var tutScene = GD.Load<PackedScene>("res://Scenes/tutorial.tscn");
+            if (tutScene != null)
+                AddChild(tutScene.Instantiate());
+        }
+
         PrimeAuthCache();
     }
 
@@ -83,7 +108,8 @@ public partial class GameControl : Node2D
             spawnTimer = 0f;
             if(Player.Instance.health > 0)
             {
-                SpawnWithWarning();
+                if (TutorialManager.Instance == null || TutorialManager.Instance.EnemiesAllowed)
+                    SpawnWithWarning();
             }
             
         }
@@ -203,7 +229,7 @@ public partial class GameControl : Node2D
     {
         score += 10;
         currentGoal += 5;
-        int goldEarned = (int)GD.RandRange(1, 5); // flat small amount
+        int goldEarned = (int)GD.RandRange(1, 5);
         money += goldEarned;
         goalBar.Value = currentGoal;
     }
@@ -319,6 +345,7 @@ public partial class GameControl : Node2D
                 {
                     email = emailStr;
                     _cachedEmail = emailStr;
+                    CurrentUserEmail = emailStr;
                 }
             }
         }
@@ -408,6 +435,7 @@ public partial class GameControl : Node2D
         if (!string.IsNullOrEmpty(email) && email != "anonymous")
         {
             _cachedEmail = email;
+            CurrentUserEmail = email;
         }
 
         if (string.IsNullOrEmpty(_pendingScoreUid) && _pendingScoreValue <= 0)
@@ -478,6 +506,7 @@ public partial class GameControl : Node2D
                 if (!string.IsNullOrEmpty(emailStr))
                 {
                     _cachedEmail = emailStr;
+                    CurrentUserEmail = emailStr;
                     return;
                 }
             }

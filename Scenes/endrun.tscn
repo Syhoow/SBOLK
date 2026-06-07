@@ -1,12 +1,8 @@
-[gd_scene load_steps=13 format=3 uid="uid://c8ooa4gc1pk7v"]
+[gd_scene load_steps=11 format=3 uid="uid://c8ooa4gc1pk7v"]
 
 [ext_resource type="Script" uid="uid://upmvqk2wescn" path="res://Scripts/Endrun.cs" id="1_ar4qx"]
 [ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="2_bj5ul"]
 [ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="3_wssy8"]
-
-[sub_resource type="Curve" id="Curve_iua3w"]
-_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
-point_count = 2
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wssy8"]
 bg_color = Color(1, 1, 0, 1)
@@ -43,14 +39,7 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iua3w"]
-bg_color = Color(0, 1, 0.509804, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ga2wk"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vs0au"]
 bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_od5at"]
@@ -70,19 +59,6 @@ layout_mode = 0
 offset_right = 976.0
 offset_bottom = 544.0
 color = Color(0, 0, 0, 1)
-
-[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
-position = Vector2(487, 281)
-amount = 20
-emission_shape = 3
-emission_rect_extents = Vector2(500, 500)
-spread = 180.0
-gravity = Vector2(0, 0)
-initial_velocity_max = 252.53
-angular_velocity_max = 1.45
-linear_accel_max = 100.0
-scale_amount_max = 5.0
-scale_amount_curve = SubResource("Curve_iua3w")
 
 [node name="Control" type="Control" parent="."]
 anchors_preset = 0
@@ -164,33 +140,26 @@ autowrap_mode = 2
 script = ExtResource("2_bj5ul")
 
 [node name="Button4" type="Button" parent="Control"]
-texture_filter = 1
 layout_mode = 0
-offset_left = 64.0
-offset_top = 464.0
-offset_right = 256.0
-offset_bottom = 512.0
+offset_left = 392.0
+offset_top = 496.0
+offset_right = 584.0
+offset_bottom = 544.0
 pivot_offset = Vector2(96, 64)
-theme_override_colors/font_hover_pressed_color = Color(0.0392157, 0, 0.0392157, 1)
-theme_override_colors/font_hover_color = Color(0.0392157, 0, 0.0392157, 1)
-theme_override_fonts/font = ExtResource("3_wssy8")
-theme_override_font_sizes/font_size = 30
-theme_override_styles/hover = SubResource("StyleBoxFlat_iua3w")
-theme_override_styles/normal = SubResource("StyleBoxFlat_at4ti")
 text = "NEXT ROUND"
 script = ExtResource("2_bj5ul")
 
 [node name="Money" type="RichTextLabel" parent="Control"]
 texture_filter = 1
 layout_mode = 0
-offset_left = 418.0
-offset_top = 295.0
-offset_right = 514.0
-offset_bottom = 336.0
+offset_left = 440.0
+offset_top = 280.0
+offset_right = 536.0
+offset_bottom = 321.0
 theme_override_colors/default_color = Color(1, 1, 0, 1)
 theme_override_fonts/normal_font = ExtResource("3_wssy8")
 theme_override_font_sizes/normal_font_size = 50
-theme_override_styles/normal = SubResource("StyleBoxFlat_ga2wk")
+theme_override_styles/normal = SubResource("StyleBoxFlat_vs0au")
 bbcode_enabled = true
 text = "[shake]money[/shake]"
 fit_content = true
@@ -199,21 +168,12 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="NewGun" type="Button" parent="Control"]
-texture_filter = 1
 layout_mode = 0
-offset_left = 528.0
-offset_top = 168.0
-offset_right = 675.0
-offset_bottom = 232.0
-theme_override_colors/font_hover_color = Color(0.0392157, 0, 0.0392157, 1)
-theme_override_fonts/font = ExtResource("3_wssy8")
-theme_override_font_sizes/font_size = 25
-theme_override_styles/hover = SubResource("StyleBoxFlat_wssy8")
-theme_override_styles/normal = SubResource("StyleBoxFlat_at4ti")
+offset_left = 397.0
+offset_top = 427.0
+offset_right = 494.0
+offset_bottom = 465.0
 text = "2nd Gun -"
-icon_alignment = 1
-vertical_icon_alignment = 0
-expand_icon = true
 script = ExtResource("2_bj5ul")
 
 [node name="Label" type="RichTextLabel" parent="."]
@@ -290,15 +250,16 @@ vertical_alignment = 1
 [node name="Label7" type="RichTextLabel" parent="."]
 texture_filter = 1
 layout_mode = 0
-offset_left = 294.0
-offset_top = 427.0
-offset_right = 374.0
-offset_bottom = 468.0
+offset_left = 72.0
+offset_top = 288.0
+offset_right = 232.0
+offset_bottom = 329.0
 theme_override_colors/default_color = Color(0.745098, 0, 1, 1)
 theme_override_fonts/normal_font = ExtResource("3_wssy8")
 theme_override_font_sizes/normal_font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_od5at")
 bbcode_enabled = true
-text = "[shake]GOAL:[/shake]"
+text = "[shake]PORTAL GOAL[/shake]"
 fit_content = true
 scroll_active = false
 horizontal_alignment = 1
@@ -408,12 +369,12 @@ text = "HP"
 [node name="Goal" type="Label" parent="."]
 texture_filter = 1
 layout_mode = 0
-offset_left = 370.0
-offset_top = 429.0
-offset_right = 535.0
-offset_bottom = 461.0
+offset_left = 88.0
+offset_top = 329.0
+offset_right = 209.0
+offset_bottom = 352.0
 theme_override_fonts/font = ExtResource("3_wssy8")
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 25
 text = "PORTAL GOAL"
 
 [node name="ArenaX" type="Label" parent="."]
