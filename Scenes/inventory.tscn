@@ -1,7 +1,32 @@
-[gd_scene load_steps=3 format=3 uid="uid://7w4tw64tljtg"]
+[gd_scene load_steps=7 format=3 uid="uid://7w4tw64tljtg"]
 
 [ext_resource type="Script" uid="uid://beqs8e0qd2muj" path="res://Scripts/Inventory.cs" id="1_wdn4f"]
 [ext_resource type="PackedScene" uid="uid://cngm5tynpm3ej" path="res://Scenes/inventoryitem.tscn" id="2_k5gp2"]
+[ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="3_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(1, 1, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lbl_bg"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_equipped_bg"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -13,37 +38,67 @@ grow_vertical = 2
 script = ExtResource("1_wdn4f")
 InventoryItemScene = ExtResource("2_k5gp2")
 
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
 [node name="Label" type="Label" parent="."]
+texture_filter = 1
 layout_mode = 0
-offset_left = 485.0
-offset_top = 66.0
-offset_right = 560.0
-offset_bottom = 89.0
-text = "Inventory"
+offset_left = 340.0
+offset_top = 28.0
+offset_right = 620.0
+offset_bottom = 78.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_lbl_bg")
+text = "INVENTORY"
+horizontal_alignment = 1
 
 [node name="EquippedLabel" type="Label" parent="."]
+texture_filter = 1
 layout_mode = 0
-offset_left = 196.0
-offset_top = 282.0
-offset_right = 269.0
-offset_bottom = 305.0
-text = "Equipped"
+offset_left = 40.0
+offset_top = 100.0
+offset_right = 240.0
+offset_bottom = 130.0
+theme_override_colors/font_color = Color(0, 1, 0.509804, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_equipped_bg")
+text = "EQUIPPED"
+horizontal_alignment = 1
 
 [node name="ItemGrid" type="GridContainer" parent="."]
+layout_direction = 2
 layout_mode = 0
-offset_left = 439.0
-offset_top = 183.0
-offset_right = 479.0
-offset_bottom = 223.0
+offset_left = 152.0
+offset_top = 100.0
+offset_right = 824.0
+offset_bottom = 380.0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 columns = 3
 
 [node name="Button" type="Button" parent="."]
+texture_filter = 1
 layout_mode = 0
-offset_left = 427.0
-offset_top = 320.0
-offset_right = 477.0
-offset_bottom = 351.0
-text = "Close
-"
+offset_left = 394.0
+offset_top = 424.0
+offset_right = 570.0
+offset_bottom = 464.0
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "CLOSE"
 
 [connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

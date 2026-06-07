@@ -21,23 +21,23 @@ public partial class CosmeticManager : Node
 
     public Cosmetic[] AllCosmetics = new[]
     {
-        new Cosmetic { Id = "hat_crown",  Name = "Crown of Eternity", Type = "hat", Price = 50,  Rarity = Rarity.Legendary },
-        new Cosmetic { Id = "hat_cap",    Name = "Cap",               Type = "hat", Price = 75,  Rarity = Rarity.Rare },
-        new Cosmetic { Id = "hat_wizard", Name = "Wizard Hat",        Type = "hat", Price = 100, Rarity = Rarity.Rare },
-        new Cosmetic { Id = "hat_1",  Name = "Red Top Hat",   Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_2",  Name = "Green Cap",     Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_3",  Name = "Orange Wizard", Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_4",  Name = "Teal Top Hat",  Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_5",  Name = "Pink Crown",    Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_6",  Name = "Lime Cap",      Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_7",  Name = "Gold Wizard",   Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_8",  Name = "Blue Top Hat",  Type = "hat", Price = 50, Rarity = Rarity.Common },
-        new Cosmetic { Id = "hat_9",  Name = "Purple Crown",  Type = "hat", Price = 50, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_crown",  Name = "Pilot Goggles",        Type = "hat", Price = 500,  Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_cap",    Name = "Butterfly",          Type = "hat", Price = 5000,  Rarity = Rarity.Rare },
+        new Cosmetic { Id = "hat_wizard", Name = "Bandana",    Type = "hat", Price = 100, Rarity = Rarity.Rare },
+        new Cosmetic { Id = "hat_1",  Name = "Halo",      Type = "hat", Price = 700, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_2",  Name = "Cowboy Hat",   Type = "hat", Price = 500, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_3",  Name = "Hard Hat",     Type = "hat", Price = 300, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_4",  Name = "Halo",         Type = "hat", Price = 800, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_5",  Name = "Sombrero",     Type = "hat", Price = 500, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_6",  Name = "Magician Hat", Type = "hat", Price = 700, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_7",  Name = "Cap",        Type = "hat", Price = 900, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_8",  Name = "Jester Hat",   Type = "hat", Price = 500, Rarity = Rarity.Common },
+        new Cosmetic { Id = "hat_9",  Name = "Wizard Hat",   Type = "hat", Price = 10000, Rarity = Rarity.Legendary },
     };
 
     public const int MaxStack = 10;
 
-    public int Coins = 1000;
+    public int Coins = 0;
     public Dictionary OwnedCounts = new();
     public string EquippedHat = "";
 
@@ -300,7 +300,7 @@ public partial class CosmeticManager : Node
 
     private void ResetSessionState()
     {
-        Coins = 1000;
+        Coins = 0;
         OwnedCounts = new Dictionary();
         EquippedHat = "";
         CurrentOfferIndices = new Array<int>();
@@ -411,11 +411,15 @@ public partial class CosmeticManager : Node
         ApplyOfferTimer();
         SaveCache();
         DataChanged?.Invoke();
+        // Flush any saves that were queued before cloud data arrived.
+        TrySaveToCloud();
     }
 
     private void OnPlayerDataFailed()
     {
-        _loadedFromCloud = false;
+        // Treat a failed load as "we tried" so saves are no longer blocked.
+        _loadedFromCloud = true;
+        TrySaveToCloud();
     }
 
     private void OnCatalogLoaded(Dictionary snapshot)
@@ -425,30 +429,56 @@ public partial class CosmeticManager : Node
             return;
         }
 
-        var list = new System.Collections.Generic.List<Cosmetic>();
-        foreach (var key in snapshot.Keys)
+        // Only patch prices from the Firebase catalog — never replace names, types,
+        // or rarities, which are defined locally and would show raw IDs if overwritten.
+        bool changed = false;
+        for (int i = 0; i < AllCosmetics.Length; i++)
         {
-            var entryVar = (Variant)snapshot[key];
-            if (entryVar.VariantType != Variant.Type.Dictionary)
+            var local = AllCosmetics[i];
+
+            // Firebase keys may omit the underscore (e.g. "hat3" vs "hat_3"), so try both.
+            Variant entryVar = default;
+            bool found = false;
+            if (snapshot.ContainsKey(local.Id))
             {
-                continue;
+                entryVar = (Variant)snapshot[local.Id];
+                found = true;
+            }
+            else
+            {
+                var altKey = local.Id.Replace("_", "");
+                if (snapshot.ContainsKey(altKey))
+                {
+                    entryVar = (Variant)snapshot[altKey];
+                    found = true;
+                }
             }
 
+            if (!found || entryVar.VariantType != Variant.Type.Dictionary)
+                continue;
+
             var entry = entryVar.AsGodotDictionary();
-            var cosmetic = new Cosmetic
+            if (!entry.ContainsKey("price"))
+                continue;
+
+            int newPrice = ParseIntVariant((Variant)entry["price"], local.Price);
+            if (newPrice == local.Price)
+                continue;
+
+            AllCosmetics[i] = new Cosmetic
             {
-                Id = key.ToString(),
-                Name = entry.ContainsKey("name") ? ((Variant)entry["name"]).AsString() : key.ToString(),
-                Type = entry.ContainsKey("type") ? ((Variant)entry["type"]).AsString() : "",
-                Price = entry.ContainsKey("price") ? ParseIntVariant((Variant)entry["price"], 0) : 0,
-                Icon = null
+                Id    = local.Id,
+                Name  = local.Name,
+                Type  = local.Type,
+                Rarity = local.Rarity,
+                Icon  = local.Icon,
+                Price = newPrice
             };
-            list.Add(cosmetic);
+            changed = true;
         }
 
-        if (list.Count > 0)
+        if (changed)
         {
-            AllCosmetics = list.ToArray();
             ApplyOfferTimer();
             DataChanged?.Invoke();
         }
@@ -480,6 +510,13 @@ public partial class CosmeticManager : Node
     private void TrySaveToCloud()
     {
         if (!_dirty)
+        {
+            return;
+        }
+
+        // Never write to cloud until we have confirmed what the cloud holds,
+        // otherwise a reset/default state can overwrite real player data.
+        if (!_loadedFromCloud)
         {
             return;
         }

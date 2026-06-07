@@ -12,7 +12,12 @@ public partial class InventoryItem : PanelContainer
         cosmeticId = id;
         isEquipped = CosmeticManager.Instance.EquippedHat == id;
 
-        GetNode<Label>("VBoxContainer/Label").Text = $"{id} x{count}";
+        string displayName = id;
+        foreach (var c in CosmeticManager.Instance.AllCosmetics)
+        {
+            if (c.Id == id) { displayName = c.Name; break; }
+        }
+        GetNode<Label>("VBoxContainer/Label").Text = $"{displayName} x{count}";
 
         var icon = GetNodeOrNull<TextureRect>("VBoxContainer/TextureRect");
         if (icon != null)

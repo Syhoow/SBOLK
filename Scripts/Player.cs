@@ -39,6 +39,7 @@ public partial class Player : CharacterBody2D
         private Sprite2D Spritedeath;
         private Sprite2D Shadow;
         private Sprite2D HatSprite;
+        private Vector2 _hatBasePosition;
         private Camera2D cam;
         public ColorRect damageOverlay;
         
@@ -58,6 +59,7 @@ public partial class Player : CharacterBody2D
                 Spritedeath = GetNode<Sprite2D>("Sprite2D2");
                 Shadow = GetNode<Sprite2D>("Shadow");
                 HatSprite = GetNode<Sprite2D>("HatSprite2D");
+                _hatBasePosition = HatSprite.Position;
                 cam = GetNode<Camera2D>("Camera2D");
                 Gun = GetNode<Node2D>("Gun");
                 damageOverlay = GetNode<ColorRect>("ColorRect");
@@ -208,8 +210,10 @@ public partial class Player : CharacterBody2D
 
                 if (HatSprite != null && HatSprite.Visible)
                 {
-                        HatSprite.Position = Sprite.Position + new Vector2(0, -18f);
                         HatSprite.FlipH = Sprite.FlipH;
+                        HatSprite.Position = Sprite.FlipH
+                                ? new Vector2(-_hatBasePosition.X, _hatBasePosition.Y)
+                                : _hatBasePosition;
                 }
                 
                 MoveAndSlide();
