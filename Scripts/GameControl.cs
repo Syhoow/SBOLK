@@ -593,6 +593,19 @@ public partial class GameControl : Node2D
 
         var reference = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/global");
         reference.Call("update", _pendingBestUid, payload);
+
+        // Also push this individual run to run history so the OLAP daily chart
+        // reflects every session, not just each player's best score.
+        string runId = $"{_pendingBestUid}_{(long)Time.GetUnixTimeFromSystem()}";
+        var runPayload = new Godot.Collections.Dictionary
+        {
+            { "email",     _pendingBestEmail              },
+            { "score",     _pendingBestScore              },
+            { "timestamp", Time.GetUnixTimeFromSystem()   }
+        };
+        var runRef = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/runs");
+        runRef.Call("update", runId, runPayload);
+
         _scoreSubmitted = true;
     }
 

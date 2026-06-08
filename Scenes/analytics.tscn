@@ -106,7 +106,7 @@ text = "Sync ETL"
 unique_name_in_owner = true
 texture_filter = 1
 layout_mode = 2
-tooltip_text = "Export current query result to CSV"
+tooltip_text = "Export current query result to CSV (with metadata header)"
 theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
 theme_override_colors/font_color = Color(0, 1, 0.509804, 1)
 theme_override_fonts/font = ExtResource("3_font")
@@ -114,6 +114,19 @@ theme_override_font_sizes/font_size = 18
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 text = "Export CSV"
+
+[node name="ExportScoresButton" type="Button" parent="MarginContainer/RootVBox/TopBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+tooltip_text = "Export full leaderboard scores to CSV with metadata header"
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 0.6, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Export Scores"
 
 [node name="BackButton" type="Button" parent="MarginContainer/RootVBox/TopBar"]
 unique_name_in_owner = true
@@ -561,3 +574,41 @@ size_flags_vertical = 3
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="Marketplace Health" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+metadata/_tab_index = 2
+
+[node name="MktHealthScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MktHealthContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktHealthScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="ETL Monitor" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+metadata/_tab_index = 3
+
+[node name="EtlMonitorScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/ETL Monitor"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="EtlMonitorContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/ETL Monitor/EtlMonitorScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4

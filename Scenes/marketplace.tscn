@@ -1,27 +1,64 @@
-[gd_scene load_steps=11 format=3 uid="uid://clv2sf0m1u1q7"]
+[gd_scene load_steps=18 format=3 uid="uid://clv2sf0m1u1q7"]
 
 [ext_resource type="Script" uid="uid://ilbvhhgjbiqg" path="res://Scripts/Marketplace.cs" id="1_mktpl"]
 [ext_resource type="PackedScene" uid="uid://vgetn8xjhfue" path="res://Scenes/marketplacelisting.tscn" id="2_mlst"]
 [ext_resource type="Script" uid="uid://b3x3fj1vgvn77" path="res://Scripts/PriceChart.cs" id="3_pchart"]
 [ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="4_font"]
+[ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="4_m22oc"]
+[ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="5_1ru16"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bg"]
 bg_color = Color(0, 0, 0, 1)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
-bg_color = Color(1, 1, 0, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m22oc"]
+bg_color = Color(0.745098, 0, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1q5ya"]
+bg_color = Color(0.0470588, 0.0470588, 0.0470588, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_haeuc"]
+bg_color = Color(0, 0.509804, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xupi8"]
+bg_color = Color(0, 1, 0.509804, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j3873"]
+bg_color = Color(1, 0, 0.254902, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.25, 0.25, 0.25, 1)
+border_color = Color(0.2, 0.2, 0.2, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(1, 1, 0, 1)
 corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
@@ -51,17 +88,29 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.2, 0.2, 0.2, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m22oc"]
+shader = ExtResource("5_1ru16")
+shader_parameter/overlay = true
+shader_parameter/resolution = Vector2(640, 480)
+shader_parameter/brightness = 1.4
+shader_parameter/scanlines_opacity = 0.034
+shader_parameter/scanlines_width = 0.5
+shader_parameter/grille_opacity = 0.0
+shader_parameter/roll = false
+shader_parameter/roll_speed = 8.0
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 0.1
+shader_parameter/distort_intensity = 0.05
+shader_parameter/aberration = 0.00800005
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.06
+shader_parameter/pixelate = false
+shader_parameter/discolor = false
+shader_parameter/warp_amount = 0.326
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.5
 
 [node name="Control" type="Control"]
 layout_mode = 3
@@ -109,7 +158,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 0, 1)
 theme_override_fonts/font = ExtResource("4_font")
-theme_override_font_sizes/font_size = 40
+theme_override_font_sizes/font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_title_bg")
 text = "MARKETPLACE"
 
@@ -134,46 +183,42 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_title_bg")
 [node name="HistoryButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
 texture_filter = 1
 layout_mode = 2
-theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
-theme_override_colors/font_color = Color(0.745098, 0, 1, 1)
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 20
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_m22oc")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
 text = "HISTORY"
+script = ExtResource("4_m22oc")
 
 [node name="RefreshButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
 texture_filter = 1
 layout_mode = 2
-theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
-theme_override_colors/font_color = Color(0, 1, 0.509804, 1)
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 20
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_haeuc")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
 text = "REFRESH"
+script = ExtResource("4_m22oc")
 
 [node name="PostButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
 texture_filter = 1
 layout_mode = 2
-theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
-theme_override_colors/font_color = Color(0, 1, 0.509804, 1)
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 20
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn_green_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_xupi8")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
 text = "POST ITEM"
+script = ExtResource("4_m22oc")
 
 [node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
 texture_filter = 1
 layout_mode = 2
-theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
-theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
 theme_override_fonts/font = ExtResource("4_font")
 theme_override_font_sizes/font_size = 20
-theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn_red_normal")
+theme_override_styles/hover = SubResource("StyleBoxFlat_j3873")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
 text = "CLOSE"
+script = ExtResource("4_m22oc")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
@@ -374,6 +419,15 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 6
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_m22oc")
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(23.9898, 13.4991)
+mouse_filter = 2
 
 [connection signal="pressed" from="MarginContainer/VBoxContainer/TopBar/HistoryButton" to="." method="_on_HistoryButton_pressed"]
 [connection signal="pressed" from="MarginContainer/VBoxContainer/TopBar/RefreshButton" to="." method="_on_RefreshButton_pressed"]

@@ -71,7 +71,7 @@ public partial class Marketplace : Control
     {
         if (_coinsLabel == null) return;
         var coins = CosmeticManager.Instance != null ? CosmeticManager.Instance.Coins : 0;
-        _coinsLabel.Text = $"Coins: {coins}";
+        _coinsLabel.Text = $"Money: {coins}";
     }
 
     private void RebuildListings()
@@ -236,18 +236,11 @@ public partial class Marketplace : Control
         foreach (Node child in _historyContainer.GetChildren())
             child.QueueFree();
 
-        var allHistory = MarketplaceManager.Instance.PriceHistory;
-        if (allHistory.Count == 0)
-        {
-            var empty = new Label();
-            empty.Text = "No trade history yet.";
-            empty.HorizontalAlignment = HorizontalAlignment.Center;
-            _historyContainer.AddChild(empty);
-            return;
-        }
+        string myUid     = MarketplaceManager.Instance.MyUid;
+        var    allHistory = MarketplaceManager.Instance.PriceHistory;
 
-        // Build flat list sorted newest-first
-        var allTrades = new List<(string ItemId, string ItemName, int Price, double Timestamp)>();
+        // Build flat list of only THIS player's trades, sorted newest-first
+        var myTrades = new List<(string ItemId, string ItemName, int Price, double Timestamp, string Role)>();
         foreach (var kv in allHistory)
         {
             string itemId   = kv.Key;
@@ -258,24 +251,42 @@ public partial class Marketplace : Control
                     if (c.Id == itemId) { itemName = c.Name; break; }
             }
             foreach (var record in kv.Value)
-                allTrades.Add((itemId, itemName, record.Price, record.Timestamp));
+            {
+                bool isBuyer  = !string.IsNullOrEmpty(myUid) && record.BuyerUid  == myUid;
+                bool isSeller = !string.IsNullOrEmpty(myUid) && record.SellerUid == myUid;
+
+                if (isBuyer)
+                    myTrades.Add((itemId, itemName, record.Price, record.Timestamp, "Bought"));
+                else if (isSeller)
+                    myTrades.Add((itemId, itemName, record.Price, record.Timestamp, "Sold"));
+            }
         }
-        allTrades.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
+
+        if (myTrades.Count == 0)
+        {
+            var empty = new Label();
+            empty.Text = "You have no trade history yet.";
+            empty.HorizontalAlignment = HorizontalAlignment.Center;
+            _historyContainer.AddChild(empty);
+            return;
+        }
+
+        myTrades.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
 
         // Header row
-        var header = MakeHistoryRow("", "Item", "Price", "Date / Time", true);
+        var header = MakeHistoryRow("", "Item", "Price", "Date / Time", "Type", true);
         _historyContainer.AddChild(header);
 
-        foreach (var trade in allTrades)
+        foreach (var trade in myTrades)
         {
-            var dt = DateTimeOffset.FromUnixTimeSeconds((long)trade.Timestamp).ToLocalTime();
+            var    dt      = DateTimeOffset.FromUnixTimeSeconds((long)trade.Timestamp).ToLocalTime();
             string dateStr = dt.ToString("yyyy-MM-dd  HH:mm");
-            var row = MakeHistoryRow(trade.ItemId, trade.ItemName, $"{trade.Price}c", dateStr, false);
+            var    row     = MakeHistoryRow(trade.ItemId, trade.ItemName, $"{trade.Price}c", dateStr, trade.Role, false);
             _historyContainer.AddChild(row);
         }
     }
 
-    private static HBoxContainer MakeHistoryRow(string itemId, string item, string price, string date, bool isHeader)
+    private static HBoxContainer MakeHistoryRow(string itemId, string item, string price, string date, string role, bool isHeader)
     {
         var row = new HBoxContainer();
         row.AddThemeConstantOverride("separation", 12);
@@ -297,9 +308,17 @@ public partial class Marketplace : Control
             return l;
         }
 
+        var roleLabel = MakeLabel(role, 1);
+        if (!isHeader)
+        {
+            roleLabel.AddThemeColorOverride("font_color",
+                role == "Bought" ? new Color(0.2f, 0.9f, 0.4f) : new Color(1f, 0.6f, 0.1f));
+        }
+
         row.AddChild(MakeLabel(item,  3));
         row.AddChild(MakeLabel(price, 1));
         row.AddChild(MakeLabel(date,  2));
+        row.AddChild(roleLabel);
         return row;
     }
 

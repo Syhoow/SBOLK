@@ -16,7 +16,7 @@ using System.Text;
 //
 //   OLAP Targets (written by ETL):
 //     olap/dim_items/{itemId}             → Dimension: item metadata
-//     olap/dim_time/{dateKey}             → Dimension: date hierarchy
+//     olap/dim_time/{dateKey}             → Dimension: date hierarchy (Y→Q→M→D)
 //     olap/dim_players/{uid}              → Dimension: player info
 //     olap/fact_trades/{tradeId}          → Fact: one row per trade event
 //     olap/fact_scores/{uid}              → Fact: one row per player best score
@@ -25,10 +25,10 @@ using System.Text;
 //     olap/meta/last_etl                  → ETL run metadata
 //
 // OLAP Operations implemented:
-//   Roll-up   : aggregate trades grouped by item or by day
-//   Drill-down: expand from an item aggregate → individual trade facts
-//   Slice     : filter fact_trades on a single dimension (item OR date)
-//   Dice      : filter fact_trades on multiple dimensions (item AND date range)
+//   Roll-up   : GROUP BY item / day / month / quarter / year (full hierarchy)
+//   Drill-down: expand aggregated row → individual trade facts
+//   Slice     : filter on ONE dimension (item OR date range)
+//   Dice      : filter on MULTIPLE dimensions (item AND date range)
 // ─────────────────────────────────────────────────────────────────────────────
 
 public partial class OlapManager : Node
@@ -73,7 +73,7 @@ public partial class OlapManager : Node
         public string TradeKey;
         public string ItemKey;     // FK → dim_items
         public string TimeKey;     // FK → dim_time
-        public string PlayerKey;   // FK → dim_players (buyer, if known)
+        public string PlayerKey;   // FK → dim_players
         public int    Price;
         public int    Quantity;
         public int    TotalValue;  // Price × Quantity
@@ -111,13 +111,62 @@ public partial class OlapManager : Node
         public int   MinScore;
     }
 
+    // ── Analytics Models ─────────────────────────────────────────────────────
+
+    // Price volatility: Coefficient of Variation (StdDev / AvgPrice) per item
+    public class VolatilityRecord
+    {
+        public string ItemKey;
+        public string ItemName;
+        public float  AvgPrice;
+        public float  StdDev;
+        public float  CoeffVariation; // Higher = more volatile pricing
+        public int    TotalTrades;
+        public int    MinPrice;
+        public int    MaxPrice;
+    }
+
+    // Anomalous trade: price deviates from median by ≥ threshold factor
+    public class AnomalyRecord
+    {
+        public string ItemKey;
+        public string ItemName;
+        public int    TradePrice;
+        public float  MedianPrice;
+        public float  Ratio;      // TradePrice / MedianPrice
+        public string DateKey;
+    }
+
+    // OLAP schema row counts — displayed in ETL Monitor tab
+    public class SchemaStats
+    {
+        public int FactTradeCount;
+        public int FactScoreCount;
+        public int DimItemCount;
+        public int DimTimeCount;
+        public int DimPlayerCount;
+        public int UniqueItemsTraded;
+        public int UniqueDaysTraded;
+        public int ActiveListings;
+        public int UniqueSellers;
+    }
+
+    // Per-seller listing stats from live OLTP data
+    public class SellerRecord
+    {
+        public string SellerEmail;
+        public int    ListingCount;
+        public int    TotalVolume;
+        public float  AvgPrice;
+    }
+
     // ── In-Memory OLAP Store ─────────────────────────────────────────────────
 
-    public List<FactTrade>              FactTrades  { get; private set; } = new();
-    public List<FactScore>              FactScores  { get; private set; } = new();
-    public Dictionary<string, DimItem>  DimItems    { get; private set; } = new();
-    public Dictionary<string, DimTime>  DimTimes    { get; private set; } = new();
-    public Dictionary<string, DimPlayer> DimPlayers { get; private set; } = new();
+    public List<FactTrade>               FactTrades  { get; private set; } = new();
+    public List<FactScore>               FactScores  { get; private set; } = new();
+    public Dictionary<string, DimItem>   DimItems    { get; private set; } = new();
+    public Dictionary<string, DimTime>   DimTimes    { get; private set; } = new();
+    public Dictionary<string, DimPlayer> DimPlayers  { get; private set; } = new();
 
     // ── Firebase references ──────────────────────────────────────────────────
 
@@ -130,20 +179,21 @@ public partial class OlapManager : Node
 
     private Godot.Collections.Dictionary _oltpHistory;
     private Godot.Collections.Dictionary _oltpLeaderboard;
+    private Godot.Collections.Dictionary _oltpRuns;
     private bool _historyLoaded;
     private bool _leaderboardLoaded;
+    private bool _runsLoaded;
 
     // ── Firebase OLAP paths ──────────────────────────────────────────────────
 
-    private const string OlapRoot      = "olap";
-    private const string DimItemsPath  = "olap/dim_items";
-    private const string DimTimePath   = "olap/dim_time";
-    private const string DimPlayersPath= "olap/dim_players";
-    private const string FactTradesPath= "olap/fact_trades";
-    private const string FactScoresPath= "olap/fact_scores";
-    private const string AggByItemPath = "olap/aggregates/by_item";
-    private const string AggByDayPath  = "olap/aggregates/by_day";
-    private const string MetaPath      = "olap/meta";
+    private const string DimItemsPath   = "olap/dim_items";
+    private const string DimTimePath    = "olap/dim_time";
+    private const string DimPlayersPath = "olap/dim_players";
+    private const string FactTradesPath = "olap/fact_trades";
+    private const string FactScoresPath = "olap/fact_scores";
+    private const string AggByItemPath  = "olap/aggregates/by_item";
+    private const string AggByDayPath   = "olap/aggregates/by_day";
+    private const string MetaPath       = "olap/meta";
 
     // ─────────────────────────────────────────────────────────────────────────
     // Lifecycle
@@ -186,23 +236,30 @@ public partial class OlapManager : Node
             return;
         }
 
-        _etlRunning      = true;
-        _historyLoaded   = false;
+        _etlRunning        = true;
+        _historyLoaded     = false;
         _leaderboardLoaded = false;
+        _runsLoaded        = false;
 
         EmitSignal(SignalName.StatusUpdated, "ETL: Extracting OLTP data from Firebase...");
 
-        // Extract Step 1: read marketplace price history (trade facts source)
+        // Extract Step 1: marketplace price history → trade facts
         var histRef = (Node)_database.Call("get_once_database_reference", "marketplace/priceHistory");
         SafeConnect(histRef, "once_successful", nameof(OnOltpHistoryLoaded));
         SafeConnect(histRef, "once_failed",     nameof(OnOltpHistoryFailed));
         histRef.Call("once", "");
 
-        // Extract Step 2: read leaderboard (score facts source)
+        // Extract Step 2: leaderboard best scores → used for ranking / leaderboard display
         var lbRef = (Node)_database.Call("get_once_database_reference", "leaderboards/global");
         SafeConnect(lbRef, "once_successful", nameof(OnOltpLeaderboardLoaded));
         SafeConnect(lbRef, "once_failed",     nameof(OnOltpLeaderboardFailed));
         lbRef.Call("once", "");
+
+        // Extract Step 3: run history → every individual session (powers daily avg chart)
+        var runsRef = (Node)_database.Call("get_once_database_reference", "leaderboards/runs");
+        SafeConnect(runsRef, "once_successful", nameof(OnOltpRunsLoaded));
+        SafeConnect(runsRef, "once_failed",     nameof(OnOltpRunsFailed));
+        runsRef.Call("once", "");
     }
 
     // ── ETL: Extract callbacks ────────────────────────────────────────────────
@@ -237,11 +294,26 @@ public partial class OlapManager : Node
         TryRunTransform();
     }
 
+    private void OnOltpRunsLoaded(Godot.Collections.Dictionary snapshot)
+    {
+        _oltpRuns   = snapshot;
+        _runsLoaded = true;
+        TryRunTransform();
+    }
+
+    private void OnOltpRunsFailed()
+    {
+        _oltpRuns   = null;
+        _runsLoaded = true;
+        EmitSignal(SignalName.StatusUpdated, "ETL Note: No run history yet (leaderboards/runs empty).");
+        TryRunTransform();
+    }
+
     // ── ETL: Transform + Load ─────────────────────────────────────────────────
 
     private void TryRunTransform()
     {
-        if (!_historyLoaded || !_leaderboardLoaded) return;
+        if (!_historyLoaded || !_leaderboardLoaded || !_runsLoaded) return;
 
         EmitSignal(SignalName.StatusUpdated, "ETL: Transforming into Star Schema...");
 
@@ -251,21 +323,17 @@ public partial class OlapManager : Node
         DimTimes.Clear();
         DimPlayers.Clear();
 
-        // ── Transform trade facts ─────────────────────────────────────────────
+        // ── Transform: trade facts ────────────────────────────────────────────
         if (_oltpHistory != null)
         {
             foreach (var itemKey in _oltpHistory.Keys)
             {
-                string itemId   = itemKey.ToString();
-                var    itemVar  = (Variant)_oltpHistory[itemKey];
+                string itemId  = itemKey.ToString();
+                var    itemVar = (Variant)_oltpHistory[itemKey];
                 if (itemVar.VariantType != Variant.Type.Dictionary) continue;
                 var itemDict = itemVar.AsGodotDictionary();
 
-                // Upsert dim_items dimension
-                string itemName = CosmeticManager.Instance != null
-                    ? GetItemName(itemId)
-                    : itemId;
-
+                string itemName = GetItemName(itemId);
                 if (!DimItems.ContainsKey(itemId))
                     DimItems[itemId] = new DimItem { ItemKey = itemId, ItemName = itemName, Category = "cosmetic" };
 
@@ -280,19 +348,14 @@ public partial class OlapManager : Node
                     if (tv.VariantType != Variant.Type.Dictionary) continue;
                     var td = tv.AsGodotDictionary();
 
-                    int    price = ParseInt(td, "price", 0);
-                    double ts    = ParseDouble(td, "ts", 0);
-
-                    // Build time dimension key from Unix timestamp
-                    string timeKey = TimestampToDateKey(ts);
+                    int    price    = ParseInt(td, "price", 0);
+                    double ts       = ParseDouble(td, "ts", 0);
+                    string timeKey  = TimestampToDateKey(ts);
                     EnsureDimTime(timeKey, ts);
-
-                    // Build unique trade key
-                    string tradeKey = $"{itemId}_{(long)ts}_{tradeIndex++}";
 
                     FactTrades.Add(new FactTrade
                     {
-                        TradeKey   = tradeKey,
+                        TradeKey   = $"{itemId}_{(long)ts}_{tradeIndex++}",
                         ItemKey    = itemId,
                         TimeKey    = timeKey,
                         PlayerKey  = "",
@@ -305,9 +368,47 @@ public partial class OlapManager : Node
             }
         }
 
-        // ── Transform score facts ─────────────────────────────────────────────
-        if (_oltpLeaderboard != null)
+        // ── Transform: score facts ────────────────────────────────────────────
+        // Prefer leaderboards/runs (per-session records) for richer daily chart data.
+        // Fall back to leaderboards/global (best-score per player) when no runs exist yet.
+        bool hasRuns = _oltpRuns != null && _oltpRuns.Count > 0;
+
+        if (hasRuns)
         {
+            double nowTs = DateTimeToUnix(DateTime.UtcNow);
+            foreach (var runId in _oltpRuns.Keys)
+            {
+                string key    = runId.ToString();
+                var    runVar = (Variant)_oltpRuns[runId];
+                if (runVar.VariantType != Variant.Type.Dictionary) continue;
+                var run = runVar.AsGodotDictionary();
+
+                string email      = run.ContainsKey("email")     ? ((Variant)run["email"]).AsString()             : "anonymous";
+                int    score      = run.ContainsKey("score")     ? ParseIntV((Variant)run["score"], 0)            : 0;
+                double ts         = run.ContainsKey("timestamp") ? ParseDoubleV((Variant)run["timestamp"], nowTs) : nowTs;
+                // Derive a stable player key from the run id (format: {uid}_{unixTs})
+                string playerKey  = key.Contains('_') ? key[..key.LastIndexOf('_')] : key;
+
+                if (!DimPlayers.ContainsKey(playerKey))
+                    DimPlayers[playerKey] = new DimPlayer { PlayerKey = playerKey, DisplayName = email };
+
+                string timeKey = TimestampToDateKey(ts);
+                EnsureDimTime(timeKey, ts);
+
+                FactScores.Add(new FactScore
+                {
+                    ScoreKey  = key,        // unique per run
+                    PlayerKey = playerKey,
+                    TimeKey   = timeKey,
+                    Email     = email,
+                    Score     = score,
+                    Timestamp = ts
+                });
+            }
+        }
+        else if (_oltpLeaderboard != null)
+        {
+            // Fallback: one best-score entry per player from leaderboards/global
             double nowTs = DateTimeToUnix(DateTime.UtcNow);
             foreach (var uid in _oltpLeaderboard.Keys)
             {
@@ -316,17 +417,10 @@ public partial class OlapManager : Node
                 if (entryVar.VariantType != Variant.Type.Dictionary) continue;
                 var entry = entryVar.AsGodotDictionary();
 
-                string email = entry.ContainsKey("email")
-                    ? ((Variant)entry["email"]).AsString()
-                    : "anonymous";
-                int    score = entry.ContainsKey("score")
-                    ? ParseIntV((Variant)entry["score"], 0)
-                    : 0;
-                double ts    = entry.ContainsKey("updatedAt")
-                    ? ParseDoubleV((Variant)entry["updatedAt"], nowTs)
-                    : nowTs;
+                string email   = entry.ContainsKey("email")     ? ((Variant)entry["email"]).AsString()             : "anonymous";
+                int    score   = entry.ContainsKey("score")     ? ParseIntV((Variant)entry["score"], 0)            : 0;
+                double ts      = entry.ContainsKey("updatedAt") ? ParseDoubleV((Variant)entry["updatedAt"], nowTs) : nowTs;
 
-                // Upsert dim_players
                 if (!DimPlayers.ContainsKey(playerKey))
                     DimPlayers[playerKey] = new DimPlayer { PlayerKey = playerKey, DisplayName = email };
 
@@ -346,19 +440,17 @@ public partial class OlapManager : Node
         }
 
         EmitSignal(SignalName.StatusUpdated,
-            $"ETL: Transformed {FactTrades.Count} trade facts, {FactScores.Count} score facts. Loading to Firebase...");
+            $"ETL: Transformed {FactTrades.Count} trade facts, {FactScores.Count} score facts. Pushing to Firebase...");
 
-        // ── Load Step: push OLAP schema to Firebase ───────────────────────────
         PushOlapToFirebase();
     }
 
-    // ── ETL: Load — push OLAP to Firebase ────────────────────────────────────
+    // ── ETL: Load — push to Firebase ─────────────────────────────────────────
 
     private void PushOlapToFirebase()
     {
         if (_database == null) { FinishEtl(); return; }
 
-        // Push dim_items
         foreach (var kv in DimItems)
         {
             var r = (Node)_database.Call("get_once_database_reference", DimItemsPath + "/" + kv.Key);
@@ -370,23 +462,21 @@ public partial class OlapManager : Node
             });
         }
 
-        // Push dim_time
         foreach (var kv in DimTimes)
         {
             var r = (Node)_database.Call("get_once_database_reference", DimTimePath + "/" + kv.Key);
             r.Call("update", "", new Godot.Collections.Dictionary
             {
-                { "time_key",    kv.Value.TimeKey    },
-                { "year",        kv.Value.Year       },
-                { "month",       kv.Value.Month      },
-                { "day",         kv.Value.Day        },
-                { "quarter",     kv.Value.Quarter    },
-                { "week",        kv.Value.WeekOfYear },
-                { "month_name",  kv.Value.MonthName  }
+                { "time_key",   kv.Value.TimeKey    },
+                { "year",       kv.Value.Year       },
+                { "month",      kv.Value.Month      },
+                { "day",        kv.Value.Day        },
+                { "quarter",    kv.Value.Quarter    },
+                { "week",       kv.Value.WeekOfYear },
+                { "month_name", kv.Value.MonthName  }
             });
         }
 
-        // Push dim_players
         foreach (var kv in DimPlayers)
         {
             var r = (Node)_database.Call("get_once_database_reference", DimPlayersPath + "/" + kv.Key);
@@ -397,7 +487,6 @@ public partial class OlapManager : Node
             });
         }
 
-        // Push fact_trades
         foreach (var ft in FactTrades)
         {
             var r = (Node)_database.Call("get_once_database_reference", FactTradesPath + "/" + ft.TradeKey);
@@ -414,7 +503,6 @@ public partial class OlapManager : Node
             });
         }
 
-        // Push fact_scores
         foreach (var fs in FactScores)
         {
             var r = (Node)_database.Call("get_once_database_reference", FactScoresPath + "/" + fs.ScoreKey);
@@ -429,19 +517,17 @@ public partial class OlapManager : Node
             });
         }
 
-        // Push aggregates (materialized roll-ups)
         PushAggregates();
 
-        // Push ETL metadata
         var metaRef = (Node)_database.Call("get_once_database_reference", MetaPath);
         metaRef.Call("update", "", new Godot.Collections.Dictionary
         {
-            { "last_etl_ts",      Time.GetUnixTimeFromSystem()  },
-            { "trade_fact_count", FactTrades.Count              },
-            { "score_fact_count", FactScores.Count              },
-            { "dim_item_count",   DimItems.Count                },
-            { "dim_time_count",   DimTimes.Count                },
-            { "dim_player_count", DimPlayers.Count              }
+            { "last_etl_ts",      Time.GetUnixTimeFromSystem() },
+            { "trade_fact_count", FactTrades.Count             },
+            { "score_fact_count", FactScores.Count             },
+            { "dim_item_count",   DimItems.Count               },
+            { "dim_time_count",   DimTimes.Count               },
+            { "dim_player_count", DimPlayers.Count             }
         });
 
         FinishEtl();
@@ -449,35 +535,31 @@ public partial class OlapManager : Node
 
     private void PushAggregates()
     {
-        // Roll-up by item → aggregates/by_item
-        var byItem = RollUpByItem();
-        foreach (var agg in byItem)
+        foreach (var agg in RollUpByItem())
         {
             var r = (Node)_database.Call("get_once_database_reference", AggByItemPath + "/" + agg.Key);
             r.Call("update", "", new Godot.Collections.Dictionary
             {
-                { "item_key",     agg.Key          },
-                { "item_name",    agg.Label         },
-                { "total_trades", agg.TotalTrades   },
-                { "total_volume", agg.TotalVolume   },
-                { "avg_price",    agg.AvgPrice       },
-                { "min_price",    agg.MinPrice       },
-                { "max_price",    agg.MaxPrice       }
+                { "item_key",     agg.Key        },
+                { "item_name",    agg.Label       },
+                { "total_trades", agg.TotalTrades },
+                { "total_volume", agg.TotalVolume },
+                { "avg_price",    agg.AvgPrice    },
+                { "min_price",    agg.MinPrice    },
+                { "max_price",    agg.MaxPrice    }
             });
         }
 
-        // Roll-up by day → aggregates/by_day
-        var byDay = RollUpByDay();
-        foreach (var agg in byDay)
+        foreach (var agg in RollUpByDay())
         {
             string safeKey = agg.Key.Replace("-", "");
             var r = (Node)_database.Call("get_once_database_reference", AggByDayPath + "/" + safeKey);
             r.Call("update", "", new Godot.Collections.Dictionary
             {
-                { "date_key",     agg.Key          },
-                { "total_trades", agg.TotalTrades   },
-                { "total_volume", agg.TotalVolume   },
-                { "avg_price",    agg.AvgPrice       }
+                { "date_key",     agg.Key        },
+                { "total_trades", agg.TotalTrades },
+                { "total_volume", agg.TotalVolume },
+                { "avg_price",    agg.AvgPrice    }
             });
         }
     }
@@ -501,23 +583,134 @@ public partial class OlapManager : Node
 
         EmitSignal(SignalName.StatusUpdated, "Loading OLAP store from Firebase...");
 
+        // Reset merge-score state for this load cycle
+        _cachedScoresDone  = false;
+        _globalScoresDone  = false;
+        _cachedScoresSnap  = null;
+        _globalScoresSnap  = null;
+
+        // Trades + dimensions from OLAP cache
         var ftRef = (Node)_database.Call("get_once_database_reference", FactTradesPath);
         SafeConnect(ftRef, "once_successful", nameof(OnFactTradesLoaded));
         SafeConnect(ftRef, "once_failed",     nameof(OnFactTradesFailed));
         ftRef.Call("once", "");
 
-        var fsRef = (Node)_database.Call("get_once_database_reference", FactScoresPath);
-        SafeConnect(fsRef, "once_successful", nameof(OnFactScoresLoaded));
-        SafeConnect(fsRef, "once_failed",     nameof(OnFactScoresFailed));
-        fsRef.Call("once", "");
-
         var diRef = (Node)_database.Call("get_once_database_reference", DimItemsPath);
         SafeConnect(diRef, "once_successful", nameof(OnDimItemsLoaded));
         SafeConnect(diRef, "once_failed",     nameof(OnDimItemsFailed));
         diRef.Call("once", "");
+
+        // Scores: load OLAP cache AND live leaderboard so all players appear
+        // even if ETL hasn't been re-run since they joined.
+        var fsRef = (Node)_database.Call("get_once_database_reference", FactScoresPath);
+        SafeConnect(fsRef, "once_successful", nameof(OnCachedScoresLoaded));
+        SafeConnect(fsRef, "once_failed",     nameof(OnCachedScoresFailed));
+        fsRef.Call("once", "");
+
+        var lbRef = (Node)_database.Call("get_once_database_reference", "leaderboards/global");
+        SafeConnect(lbRef, "once_successful", nameof(OnGlobalScoresLoaded));
+        SafeConnect(lbRef, "once_failed",     nameof(OnGlobalScoresFailed));
+        lbRef.Call("once", "");
     }
 
-    private int _loadPending = 3;
+    private int _loadPending = 3;   // fact_trades + dim_items + TryMergeScores (handles cache + global)
+
+    // Score merge state
+    private Godot.Collections.Dictionary _cachedScoresSnap;
+    private Godot.Collections.Dictionary _globalScoresSnap;
+    private bool _cachedScoresDone;
+    private bool _globalScoresDone;
+
+    private void OnCachedScoresLoaded(Godot.Collections.Dictionary snap)
+    {
+        _cachedScoresSnap = snap;
+        _cachedScoresDone = true;
+        TryMergeScores();
+    }
+
+    private void OnCachedScoresFailed()
+    {
+        _cachedScoresSnap = null;
+        _cachedScoresDone = true;
+        TryMergeScores();
+    }
+
+    private void OnGlobalScoresLoaded(Godot.Collections.Dictionary snap)
+    {
+        _globalScoresSnap = snap;
+        _globalScoresDone = true;
+        TryMergeScores();
+    }
+
+    private void OnGlobalScoresFailed()
+    {
+        _globalScoresSnap = null;
+        _globalScoresDone = true;
+        TryMergeScores();
+    }
+
+    // Merges OLAP-cached scores with live leaderboard so all players
+    // appear even without a fresh ETL sync.
+    private void TryMergeScores()
+    {
+        if (!_cachedScoresDone || !_globalScoresDone) return;
+
+        FactScores.Clear();
+        double nowTs = DateTimeToUnix(DateTime.UtcNow);
+
+        // Step 1: load what's already in the OLAP cache
+        if (_cachedScoresSnap != null)
+        {
+            foreach (var k in _cachedScoresSnap.Keys)
+            {
+                var v = (Variant)_cachedScoresSnap[k];
+                if (v.VariantType != Variant.Type.Dictionary) continue;
+                var d = v.AsGodotDictionary();
+                FactScores.Add(new FactScore
+                {
+                    ScoreKey  = d.ContainsKey("score_key")  ? ((Variant)d["score_key"]).AsString()    : k.ToString(),
+                    PlayerKey = d.ContainsKey("player_key") ? ((Variant)d["player_key"]).AsString()   : k.ToString(),
+                    TimeKey   = d.ContainsKey("time_key")   ? ((Variant)d["time_key"]).AsString()     : "",
+                    Email     = d.ContainsKey("email")      ? ((Variant)d["email"]).AsString()         : "",
+                    Score     = d.ContainsKey("score")      ? ParseIntV((Variant)d["score"], 0)       : 0,
+                    Timestamp = d.ContainsKey("timestamp")  ? ParseDoubleV((Variant)d["timestamp"],0) : 0,
+                });
+            }
+        }
+
+        // Step 2: merge in any players from leaderboards/global not yet cached
+        if (_globalScoresSnap != null)
+        {
+            var cachedPlayers = new HashSet<string>(FactScores.Select(fs => fs.PlayerKey));
+            foreach (var uid in _globalScoresSnap.Keys)
+            {
+                string playerKey = uid.ToString();
+                if (cachedPlayers.Contains(playerKey)) continue;   // already have this player
+
+                var entryVar = (Variant)_globalScoresSnap[uid];
+                if (entryVar.VariantType != Variant.Type.Dictionary) continue;
+                var entry = entryVar.AsGodotDictionary();
+
+                string email   = entry.ContainsKey("email")     ? ((Variant)entry["email"]).AsString()             : "anonymous";
+                int    score   = entry.ContainsKey("score")     ? ParseIntV((Variant)entry["score"], 0)            : 0;
+                double ts      = entry.ContainsKey("updatedAt") ? ParseDoubleV((Variant)entry["updatedAt"], nowTs) : nowTs;
+                string timeKey = TimestampToDateKey(ts);
+                EnsureDimTime(timeKey, ts);
+
+                FactScores.Add(new FactScore
+                {
+                    ScoreKey  = playerKey,
+                    PlayerKey = playerKey,
+                    TimeKey   = timeKey,
+                    Email     = email,
+                    Score     = score,
+                    Timestamp = ts
+                });
+            }
+        }
+
+        CheckAllLoaded();
+    }
 
     private void OnFactTradesLoaded(Godot.Collections.Dictionary snap)
     {
@@ -531,14 +724,14 @@ public partial class OlapManager : Node
                 var d = v.AsGodotDictionary();
                 FactTrades.Add(new FactTrade
                 {
-                    TradeKey   = d.ContainsKey("trade_key")   ? ((Variant)d["trade_key"]).AsString()  : k.ToString(),
-                    ItemKey    = d.ContainsKey("item_key")    ? ((Variant)d["item_key"]).AsString()    : "",
-                    TimeKey    = d.ContainsKey("time_key")    ? ((Variant)d["time_key"]).AsString()    : "",
-                    PlayerKey  = d.ContainsKey("player_key")  ? ((Variant)d["player_key"]).AsString()  : "",
-                    Price      = d.ContainsKey("price")       ? ParseIntV((Variant)d["price"], 0)      : 0,
-                    Quantity   = d.ContainsKey("quantity")    ? ParseIntV((Variant)d["quantity"], 1)   : 1,
-                    TotalValue = d.ContainsKey("total_value") ? ParseIntV((Variant)d["total_value"], 0): 0,
-                    Timestamp  = d.ContainsKey("timestamp")   ? ParseDoubleV((Variant)d["timestamp"],0): 0,
+                    TradeKey   = d.ContainsKey("trade_key")   ? ((Variant)d["trade_key"]).AsString()    : k.ToString(),
+                    ItemKey    = d.ContainsKey("item_key")    ? ((Variant)d["item_key"]).AsString()      : "",
+                    TimeKey    = d.ContainsKey("time_key")    ? ((Variant)d["time_key"]).AsString()      : "",
+                    PlayerKey  = d.ContainsKey("player_key")  ? ((Variant)d["player_key"]).AsString()    : "",
+                    Price      = d.ContainsKey("price")       ? ParseIntV((Variant)d["price"], 0)        : 0,
+                    Quantity   = d.ContainsKey("quantity")    ? ParseIntV((Variant)d["quantity"], 1)     : 1,
+                    TotalValue = d.ContainsKey("total_value") ? ParseIntV((Variant)d["total_value"], 0)  : 0,
+                    Timestamp  = d.ContainsKey("timestamp")   ? ParseDoubleV((Variant)d["timestamp"], 0) : 0,
                 });
             }
         }
@@ -559,12 +752,12 @@ public partial class OlapManager : Node
                 var d = v.AsGodotDictionary();
                 FactScores.Add(new FactScore
                 {
-                    ScoreKey  = d.ContainsKey("score_key")  ? ((Variant)d["score_key"]).AsString()  : k.ToString(),
-                    PlayerKey = d.ContainsKey("player_key") ? ((Variant)d["player_key"]).AsString()  : "",
-                    TimeKey   = d.ContainsKey("time_key")   ? ((Variant)d["time_key"]).AsString()    : "",
-                    Email     = d.ContainsKey("email")      ? ((Variant)d["email"]).AsString()        : "",
-                    Score     = d.ContainsKey("score")      ? ParseIntV((Variant)d["score"], 0)      : 0,
-                    Timestamp = d.ContainsKey("timestamp")  ? ParseDoubleV((Variant)d["timestamp"],0): 0,
+                    ScoreKey  = d.ContainsKey("score_key")  ? ((Variant)d["score_key"]).AsString()    : k.ToString(),
+                    PlayerKey = d.ContainsKey("player_key") ? ((Variant)d["player_key"]).AsString()    : "",
+                    TimeKey   = d.ContainsKey("time_key")   ? ((Variant)d["time_key"]).AsString()      : "",
+                    Email     = d.ContainsKey("email")      ? ((Variant)d["email"]).AsString()          : "",
+                    Score     = d.ContainsKey("score")      ? ParseIntV((Variant)d["score"], 0)        : 0,
+                    Timestamp = d.ContainsKey("timestamp")  ? ParseDoubleV((Variant)d["timestamp"], 0) : 0,
                 });
             }
         }
@@ -580,9 +773,9 @@ public partial class OlapManager : Node
         {
             foreach (var k in snap.Keys)
             {
-                var v = (Variant)snap[k];
+                var    v   = (Variant)snap[k];
                 if (v.VariantType != Variant.Type.Dictionary) continue;
-                var d  = v.AsGodotDictionary();
+                var    d   = v.AsGodotDictionary();
                 string key = k.ToString();
                 DimItems[key] = new DimItem
                 {
@@ -601,17 +794,17 @@ public partial class OlapManager : Node
     {
         _loadPending--;
         if (_loadPending > 0) return;
-        _loadPending = 3;
+        _loadPending = 3;   // fact_trades, dim_items, TryBuildLiveScores
         EmitSignal(SignalName.StatusUpdated,
             $"OLAP store loaded: {FactTrades.Count} trade facts, {FactScores.Count} score facts.");
         EmitSignal(SignalName.OlapDataLoaded);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // OLAP Operations
+    // OLAP Operations — Roll-Up (full time hierarchy: Year → Quarter → Month → Day)
     // ─────────────────────────────────────────────────────────────────────────
 
-    // Roll-Up: aggregate fact_trades GROUP BY item — collapses detail into summary
+    // Roll-Up: GROUP BY item  (collapses all time detail into per-item totals)
     public List<TradeAggregate> RollUpByItem()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -620,7 +813,6 @@ public partial class OlapManager : Node
             if (!groups.ContainsKey(ft.ItemKey)) groups[ft.ItemKey] = new List<FactTrade>();
             groups[ft.ItemKey].Add(ft);
         }
-
         var result = new List<TradeAggregate>();
         foreach (var kv in groups)
         {
@@ -631,7 +823,7 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // Roll-Up: aggregate fact_trades GROUP BY day — collapses detail into daily summary
+    // Roll-Up: GROUP BY day  (finest time grain — YYYY-MM-DD)
     public List<TradeAggregate> RollUpByDay()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -641,77 +833,127 @@ public partial class OlapManager : Node
             if (!groups.ContainsKey(key)) groups[key] = new List<FactTrade>();
             groups[key].Add(ft);
         }
-
         var result = new List<TradeAggregate>();
         foreach (var kv in groups)
             result.Add(BuildAggregate(kv.Key, kv.Key, kv.Value));
-
         result.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
         return result;
     }
 
-    // Drill-Down: from a rolled-up item key, expand to individual trade facts
+    // Roll-Up: GROUP BY month  (YYYY-MM — one level above day)
+    public List<TradeAggregate> RollUpByMonth()
+    {
+        var groups = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            string key = string.IsNullOrEmpty(ft.TimeKey) || ft.TimeKey.Length < 7
+                ? "unknown"
+                : ft.TimeKey.Substring(0, 7);
+            if (!groups.ContainsKey(key)) groups[key] = new List<FactTrade>();
+            groups[key].Add(ft);
+        }
+        var result = new List<TradeAggregate>();
+        foreach (var kv in groups)
+        {
+            string label = kv.Key == "unknown" ? "unknown" : FormatMonthLabel(kv.Key);
+            result.Add(BuildAggregate(kv.Key, label, kv.Value));
+        }
+        result.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+        return result;
+    }
+
+    // Roll-Up: GROUP BY quarter  (YYYY-Q# — one level above month)
+    public List<TradeAggregate> RollUpByQuarter()
+    {
+        var groups = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            string qKey = "unknown";
+            if (!string.IsNullOrEmpty(ft.TimeKey) && DimTimes.ContainsKey(ft.TimeKey))
+            {
+                var dt = DimTimes[ft.TimeKey];
+                qKey = $"{dt.Year}-Q{dt.Quarter}";
+            }
+            if (!groups.ContainsKey(qKey)) groups[qKey] = new List<FactTrade>();
+            groups[qKey].Add(ft);
+        }
+        var result = new List<TradeAggregate>();
+        foreach (var kv in groups)
+            result.Add(BuildAggregate(kv.Key, kv.Key, kv.Value));
+        result.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+        return result;
+    }
+
+    // Roll-Up: GROUP BY year  (coarsest time grain — top of hierarchy)
+    public List<TradeAggregate> RollUpByYear()
+    {
+        var groups = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            string yKey = string.IsNullOrEmpty(ft.TimeKey) || ft.TimeKey.Length < 4
+                ? "unknown"
+                : ft.TimeKey.Substring(0, 4);
+            if (!groups.ContainsKey(yKey)) groups[yKey] = new List<FactTrade>();
+            groups[yKey].Add(ft);
+        }
+        var result = new List<TradeAggregate>();
+        foreach (var kv in groups)
+            result.Add(BuildAggregate(kv.Key, kv.Key, kv.Value));
+        result.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+        return result;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // OLAP Operations — Drill-Down
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Drill-Down: item aggregate → individual trade facts
     public List<FactTrade> DrillDownByItem(string itemKey)
-    {
-        return FactTrades
-            .Where(ft => ft.ItemKey == itemKey)
-            .OrderByDescending(ft => ft.Timestamp)
-            .ToList();
-    }
+        => FactTrades.Where(ft => ft.ItemKey == itemKey).OrderByDescending(ft => ft.Timestamp).ToList();
 
-    // Drill-Down: from a rolled-up day key, expand to individual trade facts
+    // Drill-Down: day aggregate → individual trade facts
     public List<FactTrade> DrillDownByDay(string timeKey)
-    {
-        return FactTrades
-            .Where(ft => ft.TimeKey == timeKey)
-            .OrderByDescending(ft => ft.Timestamp)
-            .ToList();
-    }
+        => FactTrades.Where(ft => ft.TimeKey == timeKey).OrderByDescending(ft => ft.Timestamp).ToList();
 
-    // Slice: filter fact_trades on ONE dimension — item (WHERE item_key = x)
+    // ─────────────────────────────────────────────────────────────────────────
+    // OLAP Operations — Slice (filter on ONE dimension)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Slice: WHERE item_key = x
     public List<FactTrade> SliceByItem(string itemKey)
     {
         if (itemKey == "all" || string.IsNullOrEmpty(itemKey))
             return FactTrades.OrderByDescending(ft => ft.Timestamp).ToList();
-
-        return FactTrades
-            .Where(ft => ft.ItemKey == itemKey)
-            .OrderByDescending(ft => ft.Timestamp)
-            .ToList();
+        return FactTrades.Where(ft => ft.ItemKey == itemKey).OrderByDescending(ft => ft.Timestamp).ToList();
     }
 
-    // Slice: filter fact_trades on ONE dimension — date range
+    // Slice: WHERE timestamp BETWEEN startTs AND endTs
     public List<FactTrade> SliceByDate(double startTs, double endTs)
-    {
-        return FactTrades
-            .Where(ft => ft.Timestamp >= startTs && ft.Timestamp <= endTs)
-            .OrderByDescending(ft => ft.Timestamp)
-            .ToList();
-    }
+        => FactTrades.Where(ft => ft.Timestamp >= startTs && ft.Timestamp <= endTs)
+                     .OrderByDescending(ft => ft.Timestamp).ToList();
 
-    // Dice: filter fact_trades on MULTIPLE dimensions — item AND date range
+    // ─────────────────────────────────────────────────────────────────────────
+    // OLAP Operations — Dice (filter on MULTIPLE dimensions)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    // Dice: WHERE item_key = x AND timestamp BETWEEN startTs AND endTs
     public List<FactTrade> DiceByItemAndDate(string itemKey, double startTs, double endTs)
     {
-        var query = FactTrades.AsEnumerable();
-
-        if (!string.IsNullOrEmpty(itemKey) && itemKey != "all")
-            query = query.Where(ft => ft.ItemKey == itemKey);
-
-        if (startTs > 0)
-            query = query.Where(ft => ft.Timestamp >= startTs);
-
-        if (endTs > 0)
-            query = query.Where(ft => ft.Timestamp <= endTs);
-
-        return query.OrderByDescending(ft => ft.Timestamp).ToList();
+        var q = FactTrades.AsEnumerable();
+        if (!string.IsNullOrEmpty(itemKey) && itemKey != "all") q = q.Where(ft => ft.ItemKey == itemKey);
+        if (startTs > 0)                                         q = q.Where(ft => ft.Timestamp >= startTs);
+        if (endTs > 0 && endTs < double.MaxValue)               q = q.Where(ft => ft.Timestamp <= endTs);
+        return q.OrderByDescending(ft => ft.Timestamp).ToList();
     }
 
-    // Score summary — aggregate over all fact_scores
+    // ─────────────────────────────────────────────────────────────────────────
+    // Analytics — Score Summary
+    // ─────────────────────────────────────────────────────────────────────────
+
     public ScoreAggregate GetScoreSummary()
     {
         if (FactScores.Count == 0)
             return new ScoreAggregate { TotalRuns = 0, AvgScore = 0, MaxScore = 0, MinScore = 0 };
-
         return new ScoreAggregate
         {
             TotalRuns = FactScores.Count,
@@ -722,27 +964,165 @@ public partial class OlapManager : Node
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // CSV Export
+    // Analytics — Price Volatility (Coefficient of Variation per item)
+    // CV = StdDev / AvgPrice — higher means prices swing more between trades
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public List<VolatilityRecord> GetVolatilityMetrics()
+    {
+        var result = new List<VolatilityRecord>();
+        var groups = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            if (!groups.ContainsKey(ft.ItemKey)) groups[ft.ItemKey] = new List<FactTrade>();
+            groups[ft.ItemKey].Add(ft);
+        }
+        foreach (var kv in groups)
+        {
+            if (kv.Value.Count < 2) continue;
+            string name = DimItems.ContainsKey(kv.Key) ? DimItems[kv.Key].ItemName : kv.Key;
+            float  avg  = (float)kv.Value.Average(t => t.Price);
+            float  var2 = (float)kv.Value.Average(t => Math.Pow(t.Price - avg, 2));
+            float  sd   = (float)Math.Sqrt(var2);
+            result.Add(new VolatilityRecord
+            {
+                ItemKey        = kv.Key,
+                ItemName       = name,
+                AvgPrice       = avg,
+                StdDev         = sd,
+                CoeffVariation = avg > 0 ? sd / avg : 0f,
+                TotalTrades    = kv.Value.Count,
+                MinPrice       = kv.Value.Min(t => t.Price),
+                MaxPrice       = kv.Value.Max(t => t.Price),
+            });
+        }
+        result.Sort((a, b) => b.CoeffVariation.CompareTo(a.CoeffVariation));
+        return result;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Analytics — Price Anomaly Detection
+    // Flags trades whose price is >= threshold × or <= 1/threshold × the
+    // per-item median.  Default threshold = 2.0 (2× above or below median).
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public List<AnomalyRecord> DetectPriceAnomalies(float threshold = 2.0f)
+    {
+        var anomalies = new List<AnomalyRecord>();
+        var groups    = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            if (!groups.ContainsKey(ft.ItemKey)) groups[ft.ItemKey] = new List<FactTrade>();
+            groups[ft.ItemKey].Add(ft);
+        }
+        foreach (var kv in groups)
+        {
+            if (kv.Value.Count < 3) continue;
+            var   sorted = kv.Value.Select(t => t.Price).OrderBy(p => p).ToList();
+            float median = sorted.Count % 2 == 0
+                ? (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2f
+                : sorted[sorted.Count / 2];
+            if (median <= 0) continue;
+            string name = DimItems.ContainsKey(kv.Key) ? DimItems[kv.Key].ItemName : kv.Key;
+            foreach (var ft in kv.Value)
+            {
+                float ratio = ft.Price / median;
+                if (ratio >= threshold || ratio <= (1f / threshold))
+                {
+                    anomalies.Add(new AnomalyRecord
+                    {
+                        ItemKey    = kv.Key,
+                        ItemName   = name,
+                        TradePrice = ft.Price,
+                        MedianPrice= median,
+                        Ratio      = ratio,
+                        DateKey    = ft.TimeKey,
+                    });
+                }
+            }
+        }
+        anomalies.Sort((a, b) => b.Ratio.CompareTo(a.Ratio));
+        return anomalies.Take(50).ToList();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Analytics — OLAP Star Schema Statistics (ETL Monitor tab)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public SchemaStats GetSchemaStats()
+    {
+        int activeListings = 0;
+        var sellerSet      = new HashSet<string>();
+        if (MarketplaceManager.Instance != null)
+        {
+            activeListings = MarketplaceManager.Instance.Listings.Count;
+            foreach (var l in MarketplaceManager.Instance.Listings)
+                if (!string.IsNullOrEmpty(l.SellerUid)) sellerSet.Add(l.SellerUid);
+        }
+        return new SchemaStats
+        {
+            FactTradeCount    = FactTrades.Count,
+            FactScoreCount    = FactScores.Count,
+            DimItemCount      = DimItems.Count,
+            DimTimeCount      = DimTimes.Count,
+            DimPlayerCount    = DimPlayers.Count,
+            UniqueItemsTraded = FactTrades.Select(t => t.ItemKey).Distinct().Count(),
+            UniqueDaysTraded  = FactTrades.Select(t => t.TimeKey).Distinct().Count(),
+            ActiveListings    = activeListings,
+            UniqueSellers     = sellerSet.Count,
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Analytics — Seller Leaderboard (live OLTP marketplace data)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public List<SellerRecord> GetSellerLeaderboard()
+    {
+        if (MarketplaceManager.Instance == null) return new List<SellerRecord>();
+        var groups = new Dictionary<string, (string email, int count, int volume, List<int> prices)>();
+        foreach (var l in MarketplaceManager.Instance.Listings)
+        {
+            string key   = string.IsNullOrEmpty(l.SellerUid) ? "unknown" : l.SellerUid;
+            string email = l.SellerEmail ?? "unknown";
+            if (!groups.ContainsKey(key)) groups[key] = (email, 0, 0, new List<int>());
+            var g = groups[key];
+            g.prices.Add(l.Price);
+            groups[key] = (email, g.count + 1, g.volume + l.Price * l.Quantity, g.prices);
+        }
+        var result = new List<SellerRecord>();
+        foreach (var kv in groups)
+        {
+            result.Add(new SellerRecord
+            {
+                SellerEmail  = kv.Value.email,
+                ListingCount = kv.Value.count,
+                TotalVolume  = kv.Value.volume,
+                AvgPrice     = kv.Value.prices.Count > 0 ? (float)kv.Value.prices.Average() : 0f,
+            });
+        }
+        result.Sort((a, b) => b.TotalVolume.CompareTo(a.TotalVolume));
+        return result;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CSV Export — with professional metadata headers
     // ─────────────────────────────────────────────────────────────────────────
 
     public string ExportTradesToCsv(List<FactTrade> trades = null)
     {
         var rows = trades ?? FactTrades;
         var sb   = new StringBuilder();
-
         sb.AppendLine("trade_key,item_key,item_name,date,price,quantity,total_value,timestamp");
-
         foreach (var ft in rows)
         {
             string itemName = DimItems.ContainsKey(ft.ItemKey) ? DimItems[ft.ItemKey].ItemName : ft.ItemKey;
             string date     = ft.Timestamp > 0
                 ? DateTimeOffset.FromUnixTimeSeconds((long)ft.Timestamp).ToString("yyyy-MM-dd")
                 : ft.TimeKey;
-
             sb.AppendLine($"{Escape(ft.TradeKey)},{Escape(ft.ItemKey)},{Escape(itemName)}" +
                           $",{date},{ft.Price},{ft.Quantity},{ft.TotalValue},{ft.Timestamp}");
         }
-
         return sb.ToString();
     }
 
@@ -750,7 +1130,6 @@ public partial class OlapManager : Node
     {
         var sb = new StringBuilder();
         sb.AppendLine("score_key,email,date,score");
-
         foreach (var fs in FactScores.OrderByDescending(s => s.Score))
         {
             string date = fs.Timestamp > 0
@@ -758,7 +1137,37 @@ public partial class OlapManager : Node
                 : fs.TimeKey;
             sb.AppendLine($"{Escape(fs.ScoreKey)},{Escape(fs.Email)},{date},{fs.Score}");
         }
+        return sb.ToString();
+    }
 
+    // Full analytical report: metadata header + trades section + scores section
+    public string ExportFullReportCsv(string reportTitle, string filterDesc)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("# SBOLK OLAP Analytics Report");
+        sb.AppendLine($"# Report     : {reportTitle}");
+        sb.AppendLine($"# Filters    : {filterDesc}");
+        sb.AppendLine($"# Generated  : {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine($"# Fact Trades: {FactTrades.Count}   Fact Scores: {FactScores.Count}");
+        sb.AppendLine($"# Dim Items  : {DimItems.Count}   Dim Time: {DimTimes.Count}   Dim Players: {DimPlayers.Count}");
+        sb.AppendLine("#");
+        sb.AppendLine("# SECTION: TRADE FACTS");
+        sb.Append(ExportTradesToCsv());
+        sb.AppendLine("#");
+        sb.AppendLine("# SECTION: SCORE FACTS");
+        sb.Append(ExportScoresToCsv());
+        return sb.ToString();
+    }
+
+    // Scores-only analytical report
+    public string ExportScoresReportCsv()
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("# SBOLK Score Analytics Report");
+        sb.AppendLine($"# Generated  : {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        sb.AppendLine($"# Total Players: {FactScores.Count}");
+        sb.AppendLine("#");
+        sb.Append(ExportScoresToCsv());
         return sb.ToString();
     }
 
@@ -772,7 +1181,7 @@ public partial class OlapManager : Node
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Helpers — feed in-memory data from MarketplaceManager without ETL
+    // Seed in-memory OLAP from MarketplaceManager (no Firebase round-trip)
     // ─────────────────────────────────────────────────────────────────────────
 
     public void SeedFromMarketplaceManager()
@@ -787,7 +1196,6 @@ public partial class OlapManager : Node
         {
             string itemId   = kv.Key;
             string itemName = GetItemName(itemId);
-
             if (!DimItems.ContainsKey(itemId))
                 DimItems[itemId] = new DimItem { ItemKey = itemId, ItemName = itemName, Category = "cosmetic" };
 
@@ -796,11 +1204,9 @@ public partial class OlapManager : Node
             {
                 string timeKey = TimestampToDateKey(record.Timestamp);
                 EnsureDimTime(timeKey, record.Timestamp);
-
-                string tradeKey = $"{itemId}_{(long)record.Timestamp}_{idx++}";
                 FactTrades.Add(new FactTrade
                 {
-                    TradeKey   = tradeKey,
+                    TradeKey   = $"{itemId}_{(long)record.Timestamp}_{idx++}",
                     ItemKey    = itemId,
                     TimeKey    = timeKey,
                     PlayerKey  = "",
@@ -819,20 +1225,19 @@ public partial class OlapManager : Node
 
     private static TradeAggregate BuildAggregate(string key, string label, List<FactTrade> trades)
     {
-        int total   = trades.Sum(t => t.TotalValue);
+        int   total = trades.Sum(t => t.TotalValue);
         float avg   = trades.Count > 0 ? (float)trades.Average(t => t.Price) : 0f;
-        int minP    = trades.Count > 0 ? trades.Min(t => t.Price) : 0;
-        int maxP    = trades.Count > 0 ? trades.Max(t => t.Price) : 0;
-
+        int   minP  = trades.Count > 0 ? trades.Min(t => t.Price) : 0;
+        int   maxP  = trades.Count > 0 ? trades.Max(t => t.Price) : 0;
         return new TradeAggregate
         {
-            Key          = key,
-            Label        = label,
-            TotalTrades  = trades.Count,
-            TotalVolume  = total,
-            AvgPrice     = avg,
-            MinPrice     = minP,
-            MaxPrice     = maxP,
+            Key         = key,
+            Label       = label,
+            TotalTrades = trades.Count,
+            TotalVolume = total,
+            AvgPrice    = avg,
+            MinPrice    = minP,
+            MaxPrice    = maxP,
         };
     }
 
@@ -842,7 +1247,6 @@ public partial class OlapManager : Node
         var dt = ts > 0
             ? DateTimeOffset.FromUnixTimeSeconds((long)ts).UtcDateTime
             : DateTime.UtcNow;
-
         DimTimes[timeKey] = new DimTime
         {
             TimeKey    = timeKey,
@@ -856,13 +1260,14 @@ public partial class OlapManager : Node
     }
 
     private static string TimestampToDateKey(double ts)
-    {
-        if (ts <= 0) return DateTime.UtcNow.ToString("yyyy-MM-dd");
-        return DateTimeOffset.FromUnixTimeSeconds((long)ts).ToString("yyyy-MM-dd");
-    }
+        => ts <= 0 ? DateTime.UtcNow.ToString("yyyy-MM-dd")
+                   : DateTimeOffset.FromUnixTimeSeconds((long)ts).ToString("yyyy-MM-dd");
 
     private static double DateTimeToUnix(DateTime dt)
         => (dt.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+
+    private static string FormatMonthLabel(string yyyyMM)
+        => DateTime.TryParse(yyyyMM + "-01", out var dt) ? dt.ToString("MMM yyyy") : yyyyMM;
 
     private static string GetItemName(string itemId)
     {
@@ -872,8 +1277,8 @@ public partial class OlapManager : Node
         return itemId;
     }
 
-    private static string Escape(string s) =>
-        s.Contains(',') || s.Contains('"') ? $"\"{s.Replace("\"", "\"\"")}\"" : s;
+    private static string Escape(string s)
+        => s.Contains(',') || s.Contains('"') ? $"\"{s.Replace("\"", "\"\"")}\"" : s;
 
     private void SafeConnect(Node node, string signal, string method)
     {
@@ -889,17 +1294,17 @@ public partial class OlapManager : Node
 
     private static int ParseIntV(Variant v, int def) => v.VariantType switch
     {
-        Variant.Type.Int   => (int)v.AsInt64(),
-        Variant.Type.Float => (int)v.AsDouble(),
+        Variant.Type.Int    => (int)v.AsInt64(),
+        Variant.Type.Float  => (int)v.AsDouble(),
         Variant.Type.String => int.TryParse(v.AsString(), out var p) ? p : def,
-        _ => def
+        _                   => def
     };
 
     private static double ParseDoubleV(Variant v, double def) => v.VariantType switch
     {
-        Variant.Type.Int   => (double)v.AsInt64(),
-        Variant.Type.Float => v.AsDouble(),
+        Variant.Type.Int    => (double)v.AsInt64(),
+        Variant.Type.Float  => v.AsDouble(),
         Variant.Type.String => double.TryParse(v.AsString(), out var p) ? p : def,
-        _ => def
+        _                   => def
     };
 }

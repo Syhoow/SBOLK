@@ -23,7 +23,7 @@ public partial class Shop : Control
     public override void _Process(double delta)
     {
         timerLabel.Text = $"Refreshes in: {CosmeticManager.Instance.GetTimeRemainingText()}";
-        coinsLabel.Text = $"Coins: {CosmeticManager.Instance.Coins}";
+        coinsLabel.Text = $"Money: {CosmeticManager.Instance.Coins}";
 
         if (CosmeticManager.Instance.OfferTimeRemaining <= 0)
             Refresh();

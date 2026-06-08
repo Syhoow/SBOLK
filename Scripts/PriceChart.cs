@@ -37,8 +37,17 @@ public partial class PriceChart : Control
         }
         else
         {
-            int start = Mathf.Max(0, prices.Count - MaxRecords);
-            _prices = prices.GetRange(start, prices.Count - start);
+            // Remove consecutive duplicates so identical prices show as one dot,
+            // not a flat horizontal line across the chart.
+            var deduped = new List<float>();
+            foreach (var p in prices)
+            {
+                if (deduped.Count == 0 || !Mathf.IsEqualApprox(p, deduped[deduped.Count - 1]))
+                    deduped.Add(p);
+            }
+
+            int start = Mathf.Max(0, deduped.Count - MaxRecords);
+            _prices = deduped.GetRange(start, deduped.Count - start);
         }
         _hoverIndex = -1;
         QueueRedraw();

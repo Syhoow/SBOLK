@@ -23,7 +23,11 @@ public partial class MarketplaceManager : Node
     {
         public int    Price;
         public double Timestamp;
+        public string BuyerUid;
+        public string SellerUid;
     }
+
+    public string MyUid => _myUid;
 
     public event Action DataChanged;
 
@@ -240,8 +244,10 @@ public partial class MarketplaceManager : Node
                 var td = tv.AsGodotDictionary();
                 trades.Add(new TradeRecord
                 {
-                    Price     = td.ContainsKey("price") ? ParseInt((Variant)td["price"], 0) : 0,
-                    Timestamp = td.ContainsKey("ts")    ? ParseDouble((Variant)td["ts"], 0) : 0,
+                    Price     = td.ContainsKey("price")      ? ParseInt((Variant)td["price"], 0)            : 0,
+                    Timestamp = td.ContainsKey("ts")         ? ParseDouble((Variant)td["ts"], 0)            : 0,
+                    BuyerUid  = td.ContainsKey("buyer_uid")  ? ((Variant)td["buyer_uid"]).AsString()        : "",
+                    SellerUid = td.ContainsKey("seller_uid") ? ((Variant)td["seller_uid"]).AsString()       : "",
                 });
             }
             PriceHistory[itemId] = trades;
@@ -363,7 +369,7 @@ public partial class MarketplaceManager : Node
         if (newQty <= 0)
             Listings.Remove(listing);
 
-        RecordTrade(listing.ItemId, listing.Price);
+        RecordTrade(listing.ItemId, listing.Price, uid, listing.SellerUid);
         SaveCache();
         DataChanged?.Invoke();
 
@@ -481,15 +487,17 @@ public partial class MarketplaceManager : Node
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
 
-    private void RecordTrade(string itemId, int price)
+    private void RecordTrade(string itemId, int price, string buyerUid = "", string sellerUid = "")
     {
         if (!PriceHistory.ContainsKey(itemId))
             PriceHistory[itemId] = new List<TradeRecord>();
 
         PriceHistory[itemId].Add(new TradeRecord
         {
-            Price     = price,
-            Timestamp = Time.GetUnixTimeFromSystem()
+            Price      = price,
+            Timestamp  = Time.GetUnixTimeFromSystem(),
+            BuyerUid   = buyerUid,
+            SellerUid  = sellerUid
         });
 
         if (PriceHistory[itemId].Count > 50)
@@ -505,8 +513,10 @@ public partial class MarketplaceManager : Node
         {
             trades.Add(new Godot.Collections.Dictionary
             {
-                { "price", record.Price      },
-                { "ts",    record.Timestamp  }
+                { "price",       record.Price      },
+                { "ts",          record.Timestamp  },
+                { "buyer_uid",   record.BuyerUid  ?? "" },
+                { "seller_uid",  record.SellerUid ?? "" }
             });
         }
         var refNode = (Node)_database.Call("get_once_database_reference",
@@ -540,7 +550,12 @@ public partial class MarketplaceManager : Node
             var tradesArr = new Godot.Collections.Array();
             foreach (var t in kv.Value)
                 tradesArr.Add(new Godot.Collections.Dictionary
-                    { { "price", t.Price }, { "ts", t.Timestamp } });
+                {
+                    { "price",      t.Price          },
+                    { "ts",         t.Timestamp      },
+                    { "buyer_uid",  t.BuyerUid  ?? "" },
+                    { "seller_uid", t.SellerUid ?? "" }
+                });
             histDict[kv.Key] = new Godot.Collections.Dictionary { { "trades", tradesArr } };
         }
 
@@ -604,8 +619,10 @@ public partial class MarketplaceManager : Node
                     var td = tvar.AsGodotDictionary();
                     trades.Add(new TradeRecord
                     {
-                        Price     = td.ContainsKey("price") ? ParseInt((Variant)td["price"], 0) : 0,
-                        Timestamp = td.ContainsKey("ts")    ? ParseDouble((Variant)td["ts"], 0) : 0,
+                        Price     = td.ContainsKey("price")      ? ParseInt((Variant)td["price"], 0)      : 0,
+                        Timestamp = td.ContainsKey("ts")         ? ParseDouble((Variant)td["ts"], 0)      : 0,
+                        BuyerUid  = td.ContainsKey("buyer_uid")  ? ((Variant)td["buyer_uid"]).AsString()  : "",
+                        SellerUid = td.ContainsKey("seller_uid") ? ((Variant)td["seller_uid"]).AsString() : "",
                     });
                 }
                 PriceHistory[itemId] = trades;
