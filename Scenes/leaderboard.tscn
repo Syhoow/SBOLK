@@ -1,14 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://cvhjwb37yox6d"]
+[gd_scene load_steps=8 format=3 uid="uid://cvhjwb37yox6d"]
 
 [ext_resource type="Script" uid="uid://c60j7fujkuu43" path="res://Scripts/Leaderboard.cs" id="1_leaderboard"]
 [ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="2_font"]
+[ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="3_fjik7"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bg"]
+bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
 bg_color = Color(1, 1, 0, 1)
@@ -17,10 +14,39 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bg"]
-bg_color = Color(0, 0, 0, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pobhu"]
+shader = ExtResource("3_fjik7")
+shader_parameter/overlay = true
+shader_parameter/resolution = Vector2(640, 480)
+shader_parameter/brightness = 1.4
+shader_parameter/scanlines_opacity = 0.034
+shader_parameter/scanlines_width = 0.5
+shader_parameter/grille_opacity = 0.0
+shader_parameter/roll = false
+shader_parameter/roll_speed = 8.0
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 0.1
+shader_parameter/distort_intensity = 0.05
+shader_parameter/aberration = 0.00800005
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.06
+shader_parameter/pixelate = false
+shader_parameter/discolor = false
+shader_parameter/warp_amount = 0.326
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.5
 
 [node name="Leaderboard" type="Node2D"]
+position = Vector2(218, 70)
 script = ExtResource("1_leaderboard")
 
 [node name="Background" type="ColorRect" parent="."]
@@ -78,12 +104,21 @@ theme_override_constants/separation = 6
 
 [node name="BackButton" type="Button" parent="MarginContainer/RootVBox"]
 texture_filter = 1
-layout_mode = 2
 custom_minimum_size = Vector2(0, 48)
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+layout_mode = 2
 theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 28
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
 text = "BACK"
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+visible = false
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_pobhu")
+offset_right = 960.0
+offset_bottom = 540.0
+mouse_filter = 2
