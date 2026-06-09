@@ -5,19 +5,35 @@ public partial class InventoryItem : PanelContainer
 {
     public Action OnEquipped;
     private string cosmeticId;
+    private bool isEquipped;
 
     public void Setup(string id, int count)
     {
         cosmeticId = id;
-        GetNode<Label>("VBoxContainer/Label").Text = $"{id} x{count}";
+        isEquipped = CosmeticManager.Instance.EquippedHat == id;
+
+        string displayName = id;
+        foreach (var c in CosmeticManager.Instance.AllCosmetics)
+        {
+            if (c.Id == id) { displayName = c.Name; break; }
+        }
+        GetNode<Label>("VBoxContainer/Label").Text = $"{displayName} x{count}";
+
+        var icon = GetNodeOrNull<TextureRect>("VBoxContainer/TextureRect");
+        if (icon != null)
+            icon.Texture = CosmeticManager.LoadItemIcon(id);
 
         var btn = GetNode<Button>("VBoxContainer/Button");
-        btn.Text = CosmeticManager.Instance.EquippedHat == id ? "Equipped" : "Equip";
+        btn.Text = isEquipped ? "Unequip" : "Equip";
     }
 
     private void _on_button_pressed()
     {
-        CosmeticManager.Instance.Equip(cosmeticId);
+        if (isEquipped)
+            CosmeticManager.Instance.Unequip(cosmeticId);
+        else
+            CosmeticManager.Instance.Equip(cosmeticId);
+
         OnEquipped?.Invoke();
     }
 }

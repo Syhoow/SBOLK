@@ -375,5 +375,7 @@ public partial class Endrun : Control
         }
         UpdateButtons();
         Visible = true;
+
+        TutorialManager.Instance?.OnShopOpened();
     }
 }

@@ -19,6 +19,7 @@ config/icon="res://Assets/icon.svg"
 
 Firebase="*res://addons/godot-firebase/firebase/firebase.tscn"
 CosmeticManager="*res://Scripts/CosmeticManager.cs"
+MarketplaceManager="*res://Scripts/MarketplaceManager.cs"
 
 [display]
 

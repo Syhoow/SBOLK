@@ -1,0 +1,424 @@
+[gd_scene load_steps=17 format=3 uid="uid://clv2sf0m1u1q7"]
+
+[ext_resource type="Script" uid="uid://ilbvhhgjbiqg" path="res://Scripts/Marketplace.cs" id="1_mktpl"]
+[ext_resource type="PackedScene" uid="uid://vgetn8xjhfue" path="res://Scenes/marketplacelisting.tscn" id="2_mlst"]
+[ext_resource type="Script" uid="uid://b3x3fj1vgvn77" path="res://Scripts/PriceChart.cs" id="3_pchart"]
+[ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="4_font"]
+[ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="4_m22oc"]
+[ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="5_1ru16"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_title_bg"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_m22oc"]
+bg_color = Color(0.745098, 0, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1q5ya"]
+bg_color = Color(0.0470588, 0.0470588, 0.0470588, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_haeuc"]
+bg_color = Color(0, 0.509804, 1, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xupi8"]
+bg_color = Color(0, 1, 0.509804, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j3873"]
+bg_color = Color(1, 0, 0.254902, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.2, 0.2, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(1, 1, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_red_normal"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0, 0.254902, 0.5)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_m22oc"]
+shader = ExtResource("5_1ru16")
+shader_parameter/overlay = true
+shader_parameter/resolution = Vector2(640, 480)
+shader_parameter/brightness = 1.4
+shader_parameter/scanlines_opacity = 0.034
+shader_parameter/scanlines_width = 0.5
+shader_parameter/grille_opacity = 0.0
+shader_parameter/roll = false
+shader_parameter/roll_speed = 8.0
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 0.1
+shader_parameter/distort_intensity = 0.05
+shader_parameter/aberration = 0.00800005
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.06
+shader_parameter/pixelate = false
+shader_parameter/discolor = false
+shader_parameter/warp_amount = 0.326
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.5
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_mktpl")
+ListingItemScene = ExtResource("2_mlst")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_title_bg")
+text = "MARKETPLACE"
+
+[node name="CoinsLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_title_bg")
+text = "Coins: 0"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0.509804, 1, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxFlat_title_bg")
+
+[node name="HistoryButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/hover = SubResource("StyleBoxFlat_m22oc")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
+text = "HISTORY"
+script = ExtResource("4_m22oc")
+
+[node name="RefreshButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/hover = SubResource("StyleBoxFlat_haeuc")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
+text = "REFRESH"
+script = ExtResource("4_m22oc")
+
+[node name="PostButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/hover = SubResource("StyleBoxFlat_xupi8")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
+text = "POST ITEM"
+script = ExtResource("4_m22oc")
+
+[node name="CloseButton" type="Button" parent="MarginContainer/VBoxContainer/TopBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/hover = SubResource("StyleBoxFlat_j3873")
+theme_override_styles/normal = SubResource("StyleBoxFlat_1q5ya")
+text = "CLOSE"
+script = ExtResource("4_m22oc")
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ListingsContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="PostPanel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 240.0
+offset_top = 69.0
+offset_right = 740.0
+offset_bottom = 473.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PostPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+
+[node name="PostTitleLabel" type="Label" parent="PostPanel/VBoxContainer"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 30
+text = "POST ITEM FOR SALE"
+horizontal_alignment = 1
+
+[node name="ItemLabel" type="Label" parent="PostPanel/VBoxContainer"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+text = "Select Item:"
+
+[node name="ItemSelectorRow" type="HBoxContainer" parent="PostPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PostItemIcon" type="TextureRect" parent="PostPanel/VBoxContainer/ItemSelectorRow"]
+texture_filter = 1
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemSelector" type="OptionButton" parent="PostPanel/VBoxContainer/ItemSelectorRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 18
+
+[node name="PostPriceChart" type="Control" parent="PostPanel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("3_pchart")
+
+[node name="ChartHintLabel" type="Label" parent="PostPanel/VBoxContainer"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.6, 0.8, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 14
+text = "Recent trade prices for this item (last 20 trades, avg in blue)"
+horizontal_alignment = 1
+
+[node name="PriceRow" type="HBoxContainer" parent="PostPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="PriceLbl" type="Label" parent="PostPanel/VBoxContainer/PriceRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+text = "Price (coins):"
+
+[node name="PriceInput" type="SpinBox" parent="PostPanel/VBoxContainer/PriceRow"]
+layout_mode = 2
+min_value = 1.0
+max_value = 99999.0
+value = 100.0
+
+[node name="QtyRow" type="HBoxContainer" parent="PostPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="QtyLbl" type="Label" parent="PostPanel/VBoxContainer/QtyRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+text = "Quantity:"
+
+[node name="QtyInput" type="SpinBox" parent="PostPanel/VBoxContainer/QtyRow"]
+layout_mode = 2
+min_value = 1.0
+max_value = 10.0
+value = 1.0
+
+[node name="ButtonRow" type="HBoxContainer" parent="PostPanel/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ConfirmPostButton" type="Button" parent="PostPanel/VBoxContainer/ButtonRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(0, 1, 0.509804, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "POST"
+
+[node name="CancelPostButton" type="Button" parent="PostPanel/VBoxContainer/ButtonRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 22
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+text = "CANCEL"
+
+[node name="HistoryPanel" type="Panel" parent="."]
+visible = false
+layout_mode = 0
+offset_left = 240.0
+offset_top = 69.0
+offset_right = 740.0
+offset_bottom = 473.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HistoryPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="TitleRow" type="HBoxContainer" parent="HistoryPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="HistoryTitleLabel" type="Label" parent="HistoryPanel/VBoxContainer/TitleRow"]
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 32
+text = "TRADE HISTORY"
+
+[node name="HistoryCloseButton" type="Button" parent="HistoryPanel/VBoxContainer/TitleRow"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_fonts/font = ExtResource("4_font")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_red_normal")
+text = "CLOSE"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HistoryPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HistoryContainer" type="VBoxContainer" parent="HistoryPanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_m22oc")
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(23.9898, 13.4991)
+mouse_filter = 2
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopBar/HistoryButton" to="." method="_on_HistoryButton_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopBar/RefreshButton" to="." method="_on_RefreshButton_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopBar/PostButton" to="." method="_on_PostButton_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/TopBar/CloseButton" to="." method="_on_CloseButton_pressed"]
+[connection signal="pressed" from="PostPanel/VBoxContainer/ButtonRow/ConfirmPostButton" to="." method="_on_ConfirmPostButton_pressed"]
+[connection signal="pressed" from="PostPanel/VBoxContainer/ButtonRow/CancelPostButton" to="." method="_on_CancelPostButton_pressed"]
+[connection signal="pressed" from="HistoryPanel/VBoxContainer/TitleRow/HistoryCloseButton" to="." method="_on_HistoryCloseButton_pressed"]
