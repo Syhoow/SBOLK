@@ -26,6 +26,7 @@ public partial class GameControl : Node2D
     public CanvasLayer arenaLayer;
     public CanvasLayer markerLayer;
     public CanvasLayer hudLayer;
+    public CanvasLayer paused;
     public ColorRect gameover;
     public Button record;
     public Label CoinsEarnedLabel;
@@ -65,6 +66,7 @@ public partial class GameControl : Node2D
         enemyLayer = GetNode<CanvasLayer>("/root/Main/EnemyLayer");
         arenaLayer = GetNode<CanvasLayer>("/root/Main/ArenaLayer");
         markerLayer = GetNode<CanvasLayer>("/root/Main/MarkerLayer");
+        paused = GetNode<CanvasLayer>("/root/Main/Paused");
         hudLayer = GetNode<CanvasLayer>("/root/Main/HUD");
         GoalLabel = GetNode<Label>("HUD/Label");
         HealthLabel = GetNode<Label>("HUD/Label2");
@@ -139,6 +141,13 @@ public partial class GameControl : Node2D
         {
             healingPotTimer = 0f;
             SpawnHealingPot();
+        }
+
+        if(Input.IsActionJustPressed("pause") && isPlaying)
+        {
+            Engine.TimeScale = 0f;
+            paused.Visible = true;
+            FreezeLayers();
         }
 
     }
@@ -639,5 +648,18 @@ public partial class GameControl : Node2D
         {
             SubmitScoreToLeaderboard();
         }
+    }
+
+    public void _on_ressume_pressed()
+    {
+        Engine.TimeScale = 1f;
+        paused.Visible = false;
+        UnfreezeLayers();
+    }
+
+    public void _on_exit_pressed()
+    {
+        Engine.TimeScale = 1f;
+        GetTree().ChangeSceneToFile("res://Scenes/titlescreen.tscn");
     }
 }

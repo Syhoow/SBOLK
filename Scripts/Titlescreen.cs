@@ -299,6 +299,11 @@ public partial class Titlescreen : Node2D
         GetTree().ChangeSceneToFile("res://Scenes/analytics.tscn");
     }
 
+    private void _on_Exit_pressed()
+    {
+        GetTree().Quit();
+    }
+
     private bool IsCurrentUserAdmin()
     {
         return string.Equals(GameControl.CurrentUserEmail, AdminEmail, StringComparison.OrdinalIgnoreCase);

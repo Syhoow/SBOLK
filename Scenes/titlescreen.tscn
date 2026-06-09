@@ -54,10 +54,12 @@ bg_color = Color(0, 0, 0, 1)
 corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sn34e"]
-bg_color = Color(0, 0, 0, 0.905882)
+bg_color = Color(1, 0, 0.254902, 1)
+corner_radius_top_right = 20
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_47k5g"]
 bg_color = Color(0, 0, 0, 1)
+corner_radius_top_right = 20
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ghb0b"]
 bg_color = Color(0, 0, 0, 1)
@@ -196,6 +198,19 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_47k5g")
 text = "INVENTORY"
 script = ExtResource("6_w7bgp")
 
+[node name="Exit" type="Button" parent="."]
+texture_filter = 1
+offset_left = 865.0
+offset_top = 16.0
+offset_right = 937.0
+offset_bottom = 72.0
+theme_override_fonts/font = ExtResource("5_up5sg")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/hover = SubResource("StyleBoxFlat_sn34e")
+theme_override_styles/normal = SubResource("StyleBoxFlat_47k5g")
+text = "QUIT"
+script = ExtResource("6_w7bgp")
+
 [node name="Label" type="Label" parent="."]
 texture_filter = 1
 offset_left = 18.0
@@ -267,5 +282,6 @@ mouse_filter = 2
 [connection signal="pressed" from="ShopButton" to="." method="_on_shop_button_pressed"]
 [connection signal="pressed" from="ShopButton" to="." method="_on_ShopButton_pressed"]
 [connection signal="pressed" from="InventoryButton" to="." method="_on_InventoryButton_pressed"]
+[connection signal="pressed" from="Exit" to="." method="_on_Exit_pressed"]
 [connection signal="pressed" from="MarketplaceButton" to="." method="_on_MarketplaceButton_pressed"]
 [connection signal="pressed" from="AnalyticsButton" to="." method="_on_AnalyticsButton_pressed"]
