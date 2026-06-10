@@ -1,0 +1,34 @@
+[gd_scene load_steps=6 format=3 uid="uid://bkasbhdfwgb8c"]
+
+[ext_resource type="Script" uid="uid://djl42tnk870k8" path="res://Scripts/Weapons/MeleeSwing.cs" id="1_swing"]
+[ext_resource type="PackedScene" uid="uid://ocp108hacego" path="res://Scenes/Attacks/slice2d.tscn" id="2_1nyt4"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_melee_swing"]
+radius = 92.228
+
+[sub_resource type="Animation" id="1_slash_effect"]
+length = 0.25
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_1nyt4"]
+_data = {
+&"SlashEffect": SubResource("1_slash_effect")
+}
+
+[node name="MeleeSwing" type="Node2D"]
+script = ExtResource("1_swing")
+
+[node name="Area2D" type="Area2D" parent="." groups=["melee_hit"]]
+collision_mask = 7
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(1, 0)
+shape = SubResource("CircleShape2D_melee_swing")
+
+[node name="AnimatedSprite2D" parent="Area2D" instance=ExtResource("2_1nyt4")]
+position = Vector2(1, -0.999999)
+scale = Vector2(2.29167, 2.4375)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+libraries = {
+&"": SubResource("AnimationLibrary_1nyt4")
+}

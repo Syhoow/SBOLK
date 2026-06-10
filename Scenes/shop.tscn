@@ -1,0 +1,163 @@
+[gd_scene load_steps=11 format=3 uid="uid://cogcqyin0t3t0"]
+
+[ext_resource type="Script" uid="uid://bwuam7dcl2q66" path="res://Scripts/Shop.cs" id="1_a0mxf"]
+[ext_resource type="PackedScene" uid="uid://xrkuj27s4p1" path="res://Scenes/shopitem.tscn" id="2_2shtd"]
+[ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="3_font"]
+[ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="4_fdj0q"]
+[ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="5_k6jq0"]
+
+[sub_resource type="Curve" id="Curve_k6jq0"]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lbl_bg"]
+bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(1, 1, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3ps1r"]
+shader = ExtResource("5_k6jq0")
+shader_parameter/overlay = true
+shader_parameter/resolution = Vector2(640, 480)
+shader_parameter/brightness = 1.4
+shader_parameter/scanlines_opacity = 0.034
+shader_parameter/scanlines_width = 0.5
+shader_parameter/grille_opacity = 0.0
+shader_parameter/roll = false
+shader_parameter/roll_speed = 8.0
+shader_parameter/roll_size = 0.0
+shader_parameter/roll_variation = 0.1
+shader_parameter/distort_intensity = 0.05
+shader_parameter/aberration = 0.00800005
+shader_parameter/noise_opacity = 0.4
+shader_parameter/noise_speed = 5.0
+shader_parameter/static_noise_intensity = 0.06
+shader_parameter/pixelate = false
+shader_parameter/discolor = false
+shader_parameter/warp_amount = 0.326
+shader_parameter/clip_warp = false
+shader_parameter/vignette_intensity = 0.4
+shader_parameter/vignette_opacity = 0.5
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_a0mxf")
+ShopItemScene = ExtResource("2_2shtd")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="CPUParticles2D" type="CPUParticles2D" parent="."]
+position = Vector2(480, 288)
+preprocess = 1.2
+explosiveness = 0.44
+emission_shape = 3
+emission_rect_extents = Vector2(400, 400)
+spread = 128.64
+gravity = Vector2(0, 0)
+angular_velocity_max = 160.0
+radial_accel_min = 90.91
+radial_accel_max = 90.91
+scale_amount_min = 5.0
+scale_amount_max = 10.0
+scale_amount_curve = SubResource("Curve_k6jq0")
+
+[node name="shop" type="Label" parent="."]
+layout_mode = 0
+offset_left = 376.0
+offset_top = 64.0
+offset_right = 596.0
+offset_bottom = 114.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_lbl_bg")
+text = "SHOP"
+horizontal_alignment = 1
+
+[node name="TimerLabel" type="Label" parent="."]
+texture_filter = 1
+layout_mode = 0
+offset_left = 384.0
+offset_top = 104.0
+offset_right = 584.0
+offset_bottom = 132.0
+theme_override_colors/font_color = Color(0, 0.509804, 1, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_lbl_bg")
+text = "timer"
+
+[node name="CoinsLabel" type="Label" parent="."]
+texture_filter = 1
+layout_mode = 0
+offset_left = 432.0
+offset_top = 392.0
+offset_right = 652.0
+offset_bottom = 420.0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/normal = SubResource("StyleBoxFlat_lbl_bg")
+text = "money:"
+
+[node name="ItemGrid" type="GridContainer" parent="."]
+layout_direction = 2
+layout_mode = 0
+offset_left = 384.0
+offset_top = 160.0
+offset_right = 480.0
+offset_bottom = 288.0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 3
+
+[node name="Button" type="Button" parent="."]
+texture_filter = 1
+layout_mode = 0
+offset_left = 394.0
+offset_top = 424.0
+offset_right = 570.0
+offset_bottom = 464.0
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "CLOSE"
+script = ExtResource("4_fdj0q")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
+material = SubResource("ShaderMaterial_3ps1r")
+offset_right = 40.0
+offset_bottom = 40.0
+scale = Vector2(23.9915, 13.5037)
+mouse_filter = 2
+
+[connection signal="pressed" from="Button" to="." method="_on_button_pressed"]

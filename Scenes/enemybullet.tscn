@@ -1,0 +1,30 @@
+[gd_scene load_steps=4 format=3 uid="uid://cboog2r0pnu1h"]
+
+[ext_resource type="Script" uid="uid://cmg5u5nuy3381" path="res://Scripts/Weapons/EnemyBullet.cs" id="1_yhite"]
+[ext_resource type="Texture2D" uid="uid://cygac4nlqyi82" path="res://Assets/SBOLKenemybullet.png" id="2_0y01j"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_oduel"]
+radius = 4.0
+height = 22.0
+
+[node name="bullet" type="Node2D"]
+script = ExtResource("1_yhite")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+scale = Vector2(2, 2)
+texture = ExtResource("2_0y01j")
+hframes = 5
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+position = Vector2(2.86102e-06, 4.76837e-07)
+scale = Vector2(6.4, 6.4)
+
+[node name="Area2D" type="Area2D" parent="." groups=["enemy_bullet"]]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+rotation = 1.5708
+shape = SubResource("CapsuleShape2D_oduel")
+
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]
+[connection signal="area_entered" from="Area2D" to="." method="_on_area_2d_area_entered"]

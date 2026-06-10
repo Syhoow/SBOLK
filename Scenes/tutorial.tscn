@@ -1,0 +1,91 @@
+[gd_scene load_steps=4 format=3 uid="uid://duhv4fn7e6yb4"]
+
+[ext_resource type="Script" uid="uid://c7tlbs40yu1d" path="res://Scripts/TutorialManager.cs" id="1_tutmgr"]
+[ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="2_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 18.0
+content_margin_top = 14.0
+content_margin_right = 18.0
+content_margin_bottom = 14.0
+bg_color = Color(0, 0, 0, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="TutorialManager" type="CanvasLayer"]
+layer = 128
+script = ExtResource("1_tutmgr")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -170.0
+offset_right = 230.0
+offset_bottom = -10.0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TopRow" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="StepCounter" type="Label" parent="Panel/VBox/TopRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.75, 1, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 14
+text = "TUTORIAL  •  Step 1 of 10"
+
+[node name="TopSpacer" type="Control" parent="Panel/VBox/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Sep" type="HSeparator" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.25, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 24
+text = "Welcome, Rookie!"
+
+[node name="BodyLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(0.88, 0.88, 0.88, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 17
+text = "Body text goes here."
+autowrap_mode = 3
+
+[node name="ActionHintLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.4, 1, 0.55, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 16
+
+[node name="BottomRow" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="BottomSpacer" type="Control" parent="Panel/VBox/BottomRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NextButton" type="Button" parent="Panel/VBox/BottomRow"]
+custom_minimum_size = Vector2(130, 32)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 17
+text = "NEXT  →"

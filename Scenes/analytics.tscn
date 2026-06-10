@@ -1,0 +1,696 @@
+[gd_scene load_steps=7 format=3 uid="uid://dvh1d703lycx"]
+
+[ext_resource type="Script" uid="uid://b4ygfbk8uxtwb" path="res://Scripts/Analytics/AnalyticsDashboard.cs" id="1_dash"]
+[ext_resource type="Script" uid="uid://b3x3fj1vgvn77" path="res://Scripts/PriceChart.cs" id="2_chart"]
+[ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="3_font"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+bg_color = Color(1, 1, 0, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.25, 0.25, 0.25, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.18, 0.18, 0.18, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Analytics" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dash")
+
+[node name="Background" type="ColorRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 8
+
+[node name="RootVBox" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="TopBar" type="HBoxContainer" parent="MarginContainer/RootVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/RootVBox/TopBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 28
+text = "SBOLK Analytics  —  OLAP Dashboard"
+
+[node name="TopBarSpacer" type="Control" parent="MarginContainer/RootVBox/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SyncButton" type="Button" parent="MarginContainer/RootVBox/TopBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+tooltip_text = "Extract → Transform → Load OLTP data into OLAP Star Schema"
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(0, 0.509804, 1, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Sync ETL"
+
+[node name="ExportButton" type="Button" parent="MarginContainer/RootVBox/TopBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+tooltip_text = "Export current query result to CSV (with metadata header)"
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(0, 1, 0.509804, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Export CSV"
+
+[node name="ExportScoresButton" type="Button" parent="MarginContainer/RootVBox/TopBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+tooltip_text = "Export full leaderboard scores to CSV with metadata header"
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 0.6, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Export Scores"
+
+[node name="BackButton" type="Button" parent="MarginContainer/RootVBox/TopBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 0.2, 0.2, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Back"
+
+[node name="FilterBar" type="HBoxContainer" parent="MarginContainer/RootVBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FilterItemLabel" type="Label" parent="MarginContainer/RootVBox/FilterBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Item:"
+
+[node name="ItemSelector" type="OptionButton" parent="MarginContainer/RootVBox/FilterBar"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(130, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+
+[node name="FilterPeriodLabel" type="Label" parent="MarginContainer/RootVBox/FilterBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Period:"
+
+[node name="DateSelector" type="OptionButton" parent="MarginContainer/RootVBox/FilterBar"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(108, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+
+[node name="FilterOpLabel" type="Label" parent="MarginContainer/RootVBox/FilterBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Op:"
+
+[node name="OlapSelector" type="OptionButton" parent="MarginContainer/RootVBox/FilterBar"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(158, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+
+[node name="ApplyButton" type="Button" parent="MarginContainer/RootVBox/FilterBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Apply"
+
+[node name="StatusLabel" type="Label" parent="MarginContainer/RootVBox"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.7, 1, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Initialising analytics..."
+
+[node name="TabContainer" type="TabContainer" parent="MarginContainer/RootVBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/side_margin = 6
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+current_tab = 0
+
+[node name="Trade OLAP" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+metadata/_tab_index = 0
+
+[node name="TradeSplit" type="HSplitContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragger_visibility = 2
+
+[node name="TradeLeft" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="TradeSummaryPanel" type="PanelContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="TradeSummaryVBox" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="TradeSummaryTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+text = "Trade Summary"
+
+[node name="TradeSummaryGrid" type="GridContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 1
+columns = 2
+
+[node name="SumTradesKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Total Trades:"
+
+[node name="SumTradesVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="SumVolumeKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Total Volume:"
+
+[node name="SumVolumeVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="SumAvgPriceKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Avg Price:"
+
+[node name="SumAvgPriceVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="SumTopItemKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Top Item:"
+
+[node name="SumTopItemVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft/TradeSummaryPanel/TradeSummaryVBox/TradeSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="TradeChartTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Price History"
+
+[node name="TradeChart" type="Control" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeLeft"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2_chart")
+
+[node name="TradeRight" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="TradeTableTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeRight"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Query Results"
+
+[node name="TradeTableScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeRight"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="TradeTableContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Trade OLAP/TradeSplit/TradeRight/TradeTableScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Score Trends" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+metadata/_tab_index = 1
+
+[node name="ScoreSplit" type="HSplitContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragger_visibility = 2
+
+[node name="ScoreLeft" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="ScoreSummaryPanel" type="PanelContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="ScoreSummaryVBox" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="ScoreSummaryTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+text = "Score Summary (All Players)"
+
+[node name="ScoreSummaryGrid" type="GridContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 1
+columns = 2
+
+[node name="ScTotalRunsKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Total Runs:"
+
+[node name="ScTotalRunsVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="ScMaxScoreKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Top Score:"
+
+[node name="ScMaxScoreVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="ScAvgScoreKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Avg Score:"
+
+[node name="ScAvgScoreVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="ScMinScoreKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Min Score:"
+
+[node name="ScMinScoreVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="ScTop1NameKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Top Player:"
+
+[node name="ScTop1NameVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="ScTop1ScoreKey" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "Their Score:"
+
+[node name="ScTop1ScoreVal" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft/ScoreSummaryPanel/ScoreSummaryVBox/ScoreSummaryGrid"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+text = "—"
+
+[node name="ScoreChartTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Score Trend — All Runs (Chronological)"
+
+[node name="ScoreChart" type="Control" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 95)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2_chart")
+
+[node name="ScoreDailyTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Daily Avg Score — Roll-Up by Day"
+
+[node name="ScoreDailyChart" type="Control" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreLeft"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 95)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2_chart")
+
+[node name="ScoreRight" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="ScoreRightTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreRight"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Top-10 Leaderboard  +  Daily Avg Score"
+
+[node name="ScoreTableScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreRight"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="ScoreTableContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Score Trends/ScoreSplit/ScoreRight/ScoreTableScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Marketplace Health" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+metadata/_tab_index = 2
+
+[node name="MktSplit" type="HSplitContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragger_visibility = 2
+
+[node name="MktLeft" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit"]
+custom_minimum_size = Vector2(270, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="MktSummaryPanel" type="PanelContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MktSummaryVBox" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktSummaryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MktSummaryTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktSummaryPanel/MktSummaryVBox"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+text = "Marketplace Summary"
+
+[node name="MktSummaryGrid" type="GridContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktSummaryPanel/MktSummaryVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 1
+columns = 2
+
+[node name="MktOpBar" type="HBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MktOpLabel" type="Label" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktOpBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "View:"
+
+[node name="MktOlapSelector" type="OptionButton" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktOpBar"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+
+[node name="MktApplyBtn" type="Button" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktOpBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Apply"
+
+[node name="MktRight" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="MktTableTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktRight"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Marketplace Data"
+
+[node name="MktTableScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktRight"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MktHealthContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktRight/MktTableScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="ETL Monitor" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 0
+metadata/_tab_index = 3
+
+[node name="EtlMonitorScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/ETL Monitor"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="EtlMonitorContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/ETL Monitor/EtlMonitorScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
