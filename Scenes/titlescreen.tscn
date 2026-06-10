@@ -1,4 +1,4 @@
-[gd_scene load_steps=24 format=3 uid="uid://dnsmi28y1ja2h"]
+[gd_scene load_steps=28 format=3 uid="uid://dnsmi28y1ja2h"]
 
 [ext_resource type="Texture2D" uid="uid://blmfetrce4yiu" path="res://Assets/SBOLKTitle.png" id="1_3lblr"]
 [ext_resource type="Shader" uid="uid://daog02l8yu3gp" path="res://Assets/Shader/swirl.gdshader" id="1_u4xby"]
@@ -53,6 +53,12 @@ corner_radius_bottom_left = 20
 bg_color = Color(0, 0, 0, 1)
 corner_radius_bottom_left = 20
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lonod"]
+bg_color = Color(0, 0, 0, 0.905882)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ca13h"]
+bg_color = Color(0, 0, 0, 1)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_sn34e"]
 bg_color = Color(1, 0, 0.254902, 1)
 corner_radius_top_right = 20
@@ -74,6 +80,12 @@ corner_radius_top_right = 20
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rsi7w"]
 bg_color = Color(0, 0, 0, 1)
 corner_radius_top_right = 20
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_do0x0"]
+bg_color = Color(0, 0, 0, 0.905882)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ubjdt"]
+bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_up5sg"]
 shader = ExtResource("5_qf0g6")
@@ -193,8 +205,8 @@ offset_right = 936.0
 offset_bottom = 450.0
 theme_override_fonts/font = ExtResource("5_up5sg")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/hover = SubResource("StyleBoxFlat_sn34e")
-theme_override_styles/normal = SubResource("StyleBoxFlat_47k5g")
+theme_override_styles/hover = SubResource("StyleBoxFlat_lonod")
+theme_override_styles/normal = SubResource("StyleBoxFlat_ca13h")
 text = "INVENTORY"
 script = ExtResource("6_w7bgp")
 
@@ -262,12 +274,13 @@ offset_right = 178.0
 offset_bottom = 450.0
 theme_override_fonts/font = ExtResource("5_up5sg")
 theme_override_font_sizes/font_size = 30
-theme_override_styles/hover = SubResource("StyleBoxFlat_sn34e")
-theme_override_styles/normal = SubResource("StyleBoxFlat_47k5g")
+theme_override_styles/hover = SubResource("StyleBoxFlat_do0x0")
+theme_override_styles/normal = SubResource("StyleBoxFlat_ubjdt")
 text = "ANALYTICS"
 script = ExtResource("6_w7bgp")
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
+visible = false
 
 [node name="ColorRect" type="ColorRect" parent="CanvasLayer"]
 material = SubResource("ShaderMaterial_up5sg")
