@@ -104,7 +104,7 @@ public partial class PriceChart : Control
         {
             if (font != null)
                 DrawString(font, new Vector2(left + chartW * 0.5f - 24f, top + chartH * 0.5f + 4f),
-                    "No trades yet", HorizontalAlignment.Left, -1, 10, NoDataColor);
+                    "No trades yet", HorizontalAlignment.Left, -1, 16, NoDataColor);
             _points = Array.Empty<Vector2>();
             return;
         }
@@ -146,7 +146,7 @@ public partial class PriceChart : Control
 
         if (font != null)
             DrawString(font, new Vector2(right + 2f, avgY + 4f),
-                "avg", HorizontalAlignment.Left, -1, 8, AvgLineColor);
+                "avg", HorizontalAlignment.Left, -1, 13, AvgLineColor);
 
         DrawPolyline(_points, LineColor, 1.5f, true);
 
@@ -158,14 +158,14 @@ public partial class PriceChart : Control
         if (font != null)
         {
             DrawString(font, new Vector2(2f, top + 8f),
-                ((int)maxPrice).ToString(), HorizontalAlignment.Left, -1, 9, AxisColor);
+                ((int)maxPrice).ToString(), HorizontalAlignment.Left, -1, 14, AxisColor);
             DrawString(font, new Vector2(2f, bottom - 1f),
-                ((int)minPrice).ToString(), HorizontalAlignment.Left, -1, 9, AxisColor);
+                ((int)minPrice).ToString(), HorizontalAlignment.Left, -1, 14, AxisColor);
             DrawString(font, new Vector2(2f, avgY + 4f),
-                ((int)avg).ToString(), HorizontalAlignment.Left, -1, 9, AvgLineColor);
+                ((int)avg).ToString(), HorizontalAlignment.Left, -1, 14, AvgLineColor);
 
             DrawString(font, new Vector2(left, bottom + 10f),
-                $"({_prices.Count} trades)", HorizontalAlignment.Left, -1, 8, AxisColor);
+                $"({_prices.Count} trades)", HorizontalAlignment.Left, -1, 13, AxisColor);
         }
 
         if (_hoverIndex >= 0 && _hoverIndex < _prices.Count && font != null)
@@ -173,15 +173,15 @@ public partial class PriceChart : Control
             var pt      = _points[_hoverIndex];
             string text = $"{(int)_prices[_hoverIndex]}c  #{_hoverIndex + 1}";
 
-            float textW = font.GetStringSize(text, HorizontalAlignment.Left, -1, 11).X + 8f;
-            float textH = 18f;
+            float textW = font.GetStringSize(text, HorizontalAlignment.Left, -1, 15).X + 8f;
+            float textH = 22f;
             float tx    = Mathf.Clamp(pt.X - textW * 0.5f, left, right - textW);
             float ty    = pt.Y - textH - 6f;
             if (ty < top) ty = pt.Y + 8f;
 
             DrawRect(new Rect2(tx - 2f, ty - 2f, textW + 4f, textH + 2f), TooltipBg);
-            DrawString(font, new Vector2(tx + 2f, ty + 12f),
-                text, HorizontalAlignment.Left, -1, 11, TooltipTextColor);
+            DrawString(font, new Vector2(tx + 2f, ty + 15f),
+                text, HorizontalAlignment.Left, -1, 15, TooltipTextColor);
         }
     }
 }

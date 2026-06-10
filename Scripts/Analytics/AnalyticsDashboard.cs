@@ -516,11 +516,11 @@ public partial class AnalyticsDashboard : Control
         {
             var kLbl = new Label { Text = k };
             kLbl.AddThemeFontOverride("font", MonoFont);
-            kLbl.AddThemeFontSizeOverride("font_size", 10);
+            kLbl.AddThemeFontSizeOverride("font_size", 14);
             kLbl.AddThemeColorOverride("font_color", new Color(0.6f, 0.7f, 0.8f));
             var vLbl = new Label { Text = v };
             vLbl.AddThemeFontOverride("font", MonoFont);
-            vLbl.AddThemeFontSizeOverride("font_size", 10);
+            vLbl.AddThemeFontSizeOverride("font_size", 14);
             vLbl.AddThemeColorOverride("font_color", new Color(1f, 1f, 0.65f));
             _mktSummaryGrid.AddChild(kLbl);
             _mktSummaryGrid.AddChild(vLbl);
@@ -553,7 +553,7 @@ public partial class AnalyticsDashboard : Control
         searchRow.AddThemeConstantOverride("separation", 6);
         var searchLbl  = new Label { Text = "Search seller:" };
         searchLbl.AddThemeFontOverride("font", MonoFont);
-        searchLbl.AddThemeFontSizeOverride("font_size", 11);
+        searchLbl.AddThemeFontSizeOverride("font_size", 15);
         searchLbl.AddThemeColorOverride("font_color", new Color(0.6f, 0.7f, 0.8f));
         searchLbl.VerticalAlignment = VerticalAlignment.Center;
         var searchEdit = new LineEdit
@@ -563,9 +563,9 @@ public partial class AnalyticsDashboard : Control
             SizeFlagsHorizontal   = Control.SizeFlags.ExpandFill,
             CustomMinimumSize     = new Vector2(0, 28),
         };
-        searchEdit.AddThemeFontSizeOverride("font_size", 11);
+        searchEdit.AddThemeFontSizeOverride("font_size", 15);
         var clearBtn = new Button { Text = "✕", CustomMinimumSize = new Vector2(28, 28), TooltipText = "Clear search" };
-        clearBtn.AddThemeFontSizeOverride("font_size", 11);
+        clearBtn.AddThemeFontSizeOverride("font_size", 15);
         searchRow.AddChild(searchLbl);
         searchRow.AddChild(searchEdit);
         searchRow.AddChild(clearBtn);
@@ -1209,7 +1209,7 @@ public partial class AnalyticsDashboard : Control
             var lbl = new Label { Text = cell };
             lbl.SizeFlagsHorizontal = SizeFlags.ExpandFill;
             lbl.AddThemeFontOverride("font", MonoFont);
-            lbl.AddThemeFontSizeOverride("font_size", isHeader ? 10 : 9);
+            lbl.AddThemeFontSizeOverride("font_size", isHeader ? 14 : 13);
             if (isHeader) lbl.AddThemeColorOverride("font_color", new Color(0.55f, 0.85f, 1f));
             row.AddChild(lbl);
         }
@@ -1226,11 +1226,11 @@ public partial class AnalyticsDashboard : Control
         {
             var kLbl = new Label { Text = k };
             kLbl.AddThemeFontOverride("font", MonoFont);
-            kLbl.AddThemeFontSizeOverride("font_size", 10);
+            kLbl.AddThemeFontSizeOverride("font_size", 14);
             kLbl.AddThemeColorOverride("font_color", new Color(0.6f, 0.7f, 0.8f));
             var vLbl = new Label { Text = v };
             vLbl.AddThemeFontOverride("font", MonoFont);
-            vLbl.AddThemeFontSizeOverride("font_size", 10);
+            vLbl.AddThemeFontSizeOverride("font_size", 14);
             vLbl.AddThemeColorOverride("font_color", new Color(1f, 1f, 0.65f));
             grid.AddChild(kLbl);
             grid.AddChild(vLbl);
@@ -1242,7 +1242,7 @@ public partial class AnalyticsDashboard : Control
     {
         var lbl = new Label { Text = text };
         lbl.AddThemeFontOverride("font", MonoFont);
-        lbl.AddThemeFontSizeOverride("font_size", 11);
+        lbl.AddThemeFontSizeOverride("font_size", 15);
         lbl.AddThemeColorOverride("font_color", new Color(0.45f, 1f, 0.65f));
         return lbl;
     }
@@ -1251,7 +1251,7 @@ public partial class AnalyticsDashboard : Control
     {
         var lbl = new Label { Text = message };
         lbl.AddThemeFontOverride("font", MonoFont);
-        lbl.AddThemeFontSizeOverride("font_size", 9);
+        lbl.AddThemeFontSizeOverride("font_size", 13);
         lbl.AddThemeColorOverride("font_color", new Color(0.6f, 0.6f, 0.6f));
         return lbl;
     }

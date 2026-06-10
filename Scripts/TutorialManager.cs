@@ -34,7 +34,7 @@ public partial class TutorialManager : CanvasLayer
     private Button _nextButton;
 
     private static readonly string[] StepTitles = {
-        "Welcome, Rookie!",
+        "The Game Is Simple",
         "Movement",
         "Aim & Shoot",
         "Dash",
@@ -47,16 +47,16 @@ public partial class TutorialManager : CanvasLayer
     };
 
     private static readonly string[] StepBodies = {
-        "This is a top-down arena shooter.\n\nEnemies spawn from all directions and chase you down. Your goal is to defeat them, collect drops to fill the Goal Bar, and survive the portal runs to get stronger each wave.",
-        "Use  W A S D  (or arrow keys) to move around the arena.\n\nStay mobile — standing still makes you a very easy target!",
-        "Your weapon always aims toward your mouse cursor.",
-        "Right-click to DASH in your movement direction.\n\nWhile dashing you are briefly invisible and invincible — perfect for dodging attacks or closing in on enemies.\n\nWarning: Each dash costs Goal Points from your progress bar, so don't spam it carelessly!",
-        "Enemies are now spawning! Defeat them and collect their drops.\n\nEach drop gives you points toward filling the Goal Bar, and your score increases with every drop collected.",
-        "See the progress bar at the top of the screen? That is the Goal Bar.\n\nFill it by collecting enemy drops. Once it is completely full, a glowing Portal will appear somewhere inside the arena.\n\n↑  Watch the Goal Bar at the top of the screen",
-        "When the Goal Bar is full, a Portal spawns on the map.\n\nWalk into it to end the wave and open the Upgrade Shop. The portal disappears as soon as you enter — don't miss it!\n\nFill the Goal Bar and step through the Portal to continue...",
-        "Spend your Gold ($) here to power up for the next wave!\n\nAvailable upgrades:\n  •  Max Health — survive more hits\n  •  Heal — restore HP right now\n  •  Bullet Damage — kill enemies faster\n  •  Arena Size X / Y — expand your play area\n  •  Potions — extra heal drops on the map\n  •  New Weapon — Pistol  →  Rifle  →  SMG\n\nPress REROLL for different offers (costs Gold).\nPress CONTINUE when you are ready for the next wave.",
-        "Each new wave is harder than the last.\n\nEnemies gain more HP, deal more damage, and the Goal Bar target increases. You must keep upgrading every wave to stay competitive.\n\nYour score grows with every drop collected — compete for the top spot on the global leaderboard!",
-        "When you die your run ends and your score converts to permanent Coins:\n\n  100 points  =  10 coins\n\nCoins carry across all runs. Spend them in the SHOP on the Title Screen to unlock cosmetic hats for your character.\n\nGood luck out there — stay mobile, aim true, and survive!"
+        "Survive waves of enemies, fill the Goal Bar, and enter the Portal to get stronger each wave.",
+        "Use  W A S D  to move around the arena.\nKeep moving, standing still is deadly!",
+        "Your weapon always aims at your mouse cursor.",
+        "Right-click to DASH (you can't with 0 Goal Bar) and get brief invincibility.\nWarning: each dash costs Goal Bar progress. So don't spam it",
+        "Enemies are spawning! Defeat them and collect their drops to fill the Goal Bar and grow your score.",
+        "The bar at the top is the Goal Bar.\nFill it with enemy drops and a portal appears when it's full.",
+        "Walk into the Portal to end the wave and open the Upgrade Shop.",
+        "Spend some money ($) to upgrade before the next wave.\nUpgrades: Health, Damage, Heal, Weapons & more.\nREROLL for new offers. CONTINUE when ready.",
+        "Each wave is harder so more HP, more damage, bigger Goal Bar.\nKeep upgrading to survive and compete for the leaderboard.",
+        "Score converts to Coins when you die.\nSpend Coins in the SHOP for cosmetic hats. Good luck!"
     };
 
     private static readonly string[] StepActionHints = {
@@ -111,6 +111,8 @@ public partial class TutorialManager : CanvasLayer
         if (Instance == this) Instance = null;
     }
 
+    private static readonly TutStep[] PauseOnShowSteps = { TutStep.GoalBar };
+
     private void ShowStep(TutStep step)
     {
         _stepDone = false;
@@ -118,6 +120,7 @@ public partial class TutorialManager : CanvasLayer
         if (step == TutStep.Done)
         {
             _panel.Visible = false;
+            Engine.TimeScale = 1f;
             return;
         }
 
@@ -134,6 +137,9 @@ public partial class TutorialManager : CanvasLayer
         string btnText = StepButtonTexts[i];
         _nextButton.Text    = btnText;
         _nextButton.Visible = !string.IsNullOrEmpty(btnText);
+
+        if (System.Array.IndexOf(PauseOnShowSteps, step) >= 0)
+            Engine.TimeScale = 0f;
     }
 
     private void CheckAutoAdvance()
@@ -175,6 +181,8 @@ public partial class TutorialManager : CanvasLayer
     {
         if (_stepDone) return;
         _stepDone = true;
+        if (System.Array.IndexOf(PauseOnShowSteps, _step) >= 0)
+            Engine.TimeScale = 1f;
         _step += 1;
         ShowStep(_step);
     }
