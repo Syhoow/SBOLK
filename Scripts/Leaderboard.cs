@@ -149,17 +149,21 @@ public partial class Leaderboard : Node2D
         {
             var row = new HBoxContainer();
 
+            var _lbFont = GD.Load<FontFile>("res://Assets/Font/monogram-extended.ttf");
+
             var rankLabel = new Label
             {
                 Text = $"{rank}."
             };
             rankLabel.CustomMinimumSize = new Vector2(40, 0);
+            rankLabel.AddThemeFontOverride("font", _lbFont);
 
             var emailLabel = new Label
             {
                 Text = entry.Email
             };
             emailLabel.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
+            emailLabel.AddThemeFontOverride("font", _lbFont);
 
             var scoreLabel = new Label
             {
@@ -167,6 +171,7 @@ public partial class Leaderboard : Node2D
             };
             scoreLabel.CustomMinimumSize = new Vector2(80, 0);
             scoreLabel.HorizontalAlignment = HorizontalAlignment.Right;
+            scoreLabel.AddThemeFontOverride("font", _lbFont);
 
             row.AddChild(rankLabel);
             row.AddChild(emailLabel);

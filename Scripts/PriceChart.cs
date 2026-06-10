@@ -17,7 +17,7 @@ public partial class PriceChart : Control
     private static readonly Color HoverDotColor    = new Color(1.0f,  0.4f,  0.2f, 1f);
     private static readonly Color AvgLineColor     = new Color(0.4f,  0.6f,  1.0f, 0.7f);
     private static readonly Color TooltipBg        = new Color(0.1f,  0.1f,  0.2f, 0.92f);
-    private static readonly Color TooltipText      = new Color(1.0f,  1.0f,  1.0f, 1f);
+    private static readonly Color TooltipTextColor      = new Color(1.0f,  1.0f,  1.0f, 1f);
     private static readonly Color NoDataColor      = new Color(0.4f,  0.4f,  0.5f, 1f);
 
     private const float Padding     = 14f;
@@ -37,8 +37,6 @@ public partial class PriceChart : Control
         }
         else
         {
-            // Remove consecutive duplicates so identical prices show as one dot,
-            // not a flat horizontal line across the chart.
             var deduped = new List<float>();
             foreach (var p in prices)
             {
@@ -66,7 +64,6 @@ public partial class PriceChart : Control
         }
         else if (@event is InputEventMouseButton)
         {
-            // absorb clicks so they don't fall through
         }
     }
 
@@ -123,7 +120,6 @@ public partial class PriceChart : Control
         if (Mathf.IsEqualApprox(minPrice, maxPrice)) { minPrice -= 1f; maxPrice += 1f; }
         float priceRange = maxPrice - minPrice;
 
-        // Build point positions
         _points = new Vector2[_prices.Count];
         for (int i = 0; i < _prices.Count; i++)
         {
@@ -132,14 +128,12 @@ public partial class PriceChart : Control
             _points[i] = new Vector2(left + xRatio * chartW, top + yRatio * chartH);
         }
 
-        // Average value
         float sum = 0f;
         foreach (var p in _prices) sum += p;
         float avg = sum / _prices.Count;
         float avgYRatio = 1f - (avg - minPrice) / priceRange;
         float avgY = top + avgYRatio * chartH;
 
-        // Draw dashed average line
         float dashLen = 5f;
         float gapLen  = 4f;
         float x = left;
@@ -154,17 +148,13 @@ public partial class PriceChart : Control
             DrawString(font, new Vector2(right + 2f, avgY + 4f),
                 "avg", HorizontalAlignment.Left, -1, 8, AvgLineColor);
 
-        // Draw line
         DrawPolyline(_points, LineColor, 1.5f, true);
 
-        // Draw dots
         for (int i = 0; i < _points.Length; i++)
         {
             bool isHover = i == _hoverIndex;
             DrawCircle(_points[i], isHover ? 5f : 2.5f, isHover ? HoverDotColor : DotColor);
         }
-
-        // Y-axis labels
         if (font != null)
         {
             DrawString(font, new Vector2(2f, top + 8f),
@@ -174,12 +164,10 @@ public partial class PriceChart : Control
             DrawString(font, new Vector2(2f, avgY + 4f),
                 ((int)avg).ToString(), HorizontalAlignment.Left, -1, 9, AvgLineColor);
 
-            // X-axis count label
             DrawString(font, new Vector2(left, bottom + 10f),
                 $"({_prices.Count} trades)", HorizontalAlignment.Left, -1, 8, AxisColor);
         }
 
-        // Draw hover tooltip
         if (_hoverIndex >= 0 && _hoverIndex < _prices.Count && font != null)
         {
             var pt      = _points[_hoverIndex];
@@ -193,7 +181,7 @@ public partial class PriceChart : Control
 
             DrawRect(new Rect2(tx - 2f, ty - 2f, textW + 4f, textH + 2f), TooltipBg);
             DrawString(font, new Vector2(tx + 2f, ty + 12f),
-                text, HorizontalAlignment.Left, -1, 11, TooltipText);
+                text, HorizontalAlignment.Left, -1, 11, TooltipTextColor);
         }
     }
 }

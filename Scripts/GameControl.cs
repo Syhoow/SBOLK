@@ -583,6 +583,19 @@ public partial class GameControl : Node2D
             existingScore = ParseScoreVariant((Variant)snapshot["score"]);
         }
 
+        if (_pendingBestDatabase != null && !string.IsNullOrEmpty(_pendingBestUid))
+        {
+            string runId = $"{_pendingBestUid}_{(long)Time.GetUnixTimeFromSystem()}";
+            var runPayload = new Godot.Collections.Dictionary
+            {
+                { "email",     _pendingBestEmail              },
+                { "score",     _pendingBestScore              },
+                { "timestamp", Time.GetUnixTimeFromSystem()   }
+            };
+            var runRef = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/runs");
+            runRef.Call("update", runId, runPayload);
+        }
+
         if (_pendingBestScore <= existingScore)
         {
             _scoreSubmitted = true;
@@ -603,17 +616,6 @@ public partial class GameControl : Node2D
 
         var reference = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/global");
         reference.Call("update", _pendingBestUid, payload);
-
-
-        string runId = $"{_pendingBestUid}_{(long)Time.GetUnixTimeFromSystem()}";
-        var runPayload = new Godot.Collections.Dictionary
-        {
-            { "email",     _pendingBestEmail              },
-            { "score",     _pendingBestScore              },
-            { "timestamp", Time.GetUnixTimeFromSystem()   }
-        };
-        var runRef = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/runs");
-        runRef.Call("update", runId, runPayload);
 
         _scoreSubmitted = true;
     }

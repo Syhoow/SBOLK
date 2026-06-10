@@ -110,7 +110,6 @@ public partial class Player : CharacterBody2D
                         _Movements(dt);
                 }
 
-                // dash input always checked, even during knockback
                 _CheckDash(dt);
 
                 if (!isDashing)
@@ -131,7 +130,6 @@ public partial class Player : CharacterBody2D
 
                 if (isInvincible)
                 {
-                        // Remove the SetDeferred and CallDeferred lines — they don't belong here
                         invincibilityTimer -= dt;
                         Modulate = (int)(invincibilityTimer * 10) % 2 == 0 
                                 ? new Color(1, 1, 1, 0.3f) 
@@ -229,7 +227,6 @@ public partial class Player : CharacterBody2D
                 {       
                         if (Input.IsActionJustPressed("dash"))
                         {
-                                // use last movement direction or default right
                                 var Direction = new Vector2();
                                 if (Input.IsActionPressed("ui_up")) Direction.Y -= 1;
                                 if (Input.IsActionPressed("ui_down")) Direction.Y += 1;
@@ -249,7 +246,6 @@ public partial class Player : CharacterBody2D
                                         GameControl.Instance.currentGoal -= 20;
                                 GameControl.Instance.goalBar.Value = GameControl.Instance.currentGoal;
 
-                                // cancel knockback when dashing
                                 kbtimer = 0f;
                                 knockback = Vector2.Zero;
                         }
@@ -280,7 +276,7 @@ public partial class Player : CharacterBody2D
                                                 dashDisabledTimer = dashDisabledDuration;
                                                 dashCooldownTimer = dashCooldown;
                                                 dashDirection = Direction == Vector2.Zero ? Vector2.Right : Direction;
-                                                CollisionMask &= ~(1u << 2); // disable only layer 3
+                                                CollisionMask &= ~(1u << 2);
                                                 CollisionMask &= ~(1u << 0);
                                                 if (GameControl.Instance != null)
                                                 GameControl.Instance.currentGoal -= 10;
@@ -319,7 +315,7 @@ public partial class Player : CharacterBody2D
                         Cam.Instance?.ScreenShake(10, 0.2f);
                         isInvincible = true;
                         hitbox.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
-                        CallDeferred(nameof(DisableEnemyLayer)); // ← this was missing
+                        CallDeferred(nameof(DisableEnemyLayer)); 
                         invincibilityTimer = invincibilityDuration;
                 }
 
@@ -333,7 +329,7 @@ public partial class Player : CharacterBody2D
                         Cam.Instance?.ScreenShake(10, 0.2f);
                         isInvincible = true;
                         hitbox.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
-                        CallDeferred(nameof(DisableEnemyLayer)); // ← this was missing
+                        CallDeferred(nameof(DisableEnemyLayer));
                         invincibilityTimer = invincibilityDuration;
                 }
                 if(area.IsInGroup("portal"))
@@ -355,7 +351,7 @@ public partial class Player : CharacterBody2D
                         GameControl.Instance.goal = GameControl.Instance.WaveGoal;
                 GameControl.Instance.goalBar.MaxValue = GameControl.Instance.goal;
                         GameControl.Instance.CallDeferred(nameof(GameControl.FreezeLayers));
-                        endrunUI.GetNode<Endrun>(".").OpenShop(); // call OpenShop instead
+                        endrunUI.GetNode<Endrun>(".").OpenShop(); 
                 }
                 
         }

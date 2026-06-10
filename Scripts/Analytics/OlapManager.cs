@@ -4,43 +4,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OlapManager — Star-Schema ETL Engine & OLAP Query Layer
-//
-// Firebase OLAP Schema (mirrors a Star Schema in NoSQL):
-//
-//   OLTP Sources (read-only):
-//     leaderboards/global/{uid}           → {email, score, updatedAt}
-//     marketplace/priceHistory/{itemId}   → {trades:[{price,ts}]}
-//     marketplace/listings/{id}           → {itemId, price, qty, ...}
-//
-//   OLAP Targets (written by ETL):
-//     olap/dim_items/{itemId}             → Dimension: item metadata
-//     olap/dim_time/{dateKey}             → Dimension: date hierarchy (Y→Q→M→D)
-//     olap/dim_players/{uid}              → Dimension: player info
-//     olap/fact_trades/{tradeId}          → Fact: one row per trade event
-//     olap/fact_scores/{uid}              → Fact: one row per player best score
-//     olap/aggregates/by_item/{itemId}    → Roll-up: aggregated per item
-//     olap/aggregates/by_day/{dateKey}    → Roll-up: aggregated per day
-//     olap/meta/last_etl                  → ETL run metadata
-//
-// OLAP Operations implemented:
-//   Roll-up   : GROUP BY item / day / month / quarter / year (full hierarchy)
-//   Drill-down: expand aggregated row → individual trade facts
-//   Slice     : filter on ONE dimension (item OR date range)
-//   Dice      : filter on MULTIPLE dimensions (item AND date range)
-// ─────────────────────────────────────────────────────────────────────────────
 
 public partial class OlapManager : Node
 {
     public static OlapManager Instance { get; private set; }
 
-    // ── Signals ──────────────────────────────────────────────────────────────
     [Signal] public delegate void EtlCompletedEventHandler(int tradesFact, int scoresFact);
     [Signal] public delegate void OlapDataLoadedEventHandler();
     [Signal] public delegate void StatusUpdatedEventHandler(string message);
 
-    // ── OLAP Schema: Dimension Tables ────────────────────────────────────────
 
     public class DimItem
     {
@@ -51,7 +23,7 @@ public partial class OlapManager : Node
 
     public class DimTime
     {
-        public string TimeKey;    // "YYYY-MM-DD"
+        public string TimeKey;   
         public int    Year;
         public int    Month;
         public int    Day;
@@ -66,31 +38,30 @@ public partial class OlapManager : Node
         public string DisplayName;
     }
 
-    // ── OLAP Schema: Fact Tables ─────────────────────────────────────────────
 
     public class FactTrade
     {
         public string TradeKey;
-        public string ItemKey;     // FK → dim_items
-        public string TimeKey;     // FK → dim_time
-        public string PlayerKey;   // FK → dim_players
+        public string ItemKey;     
+        public string TimeKey;     
+        public string PlayerKey;   
+        public string BuyerKey;    
+        public string SellerKey;   
         public int    Price;
         public int    Quantity;
-        public int    TotalValue;  // Price × Quantity
+        public int    TotalValue;  
         public double Timestamp;
     }
 
     public class FactScore
     {
         public string ScoreKey;
-        public string PlayerKey;   // FK → dim_players
-        public string TimeKey;     // FK → dim_time
+        public string PlayerKey;   
+        public string TimeKey;     
         public string Email;
         public int    Score;
         public double Timestamp;
     }
-
-    // ── OLAP Schema: Aggregates (materialized Roll-ups) ──────────────────────
 
     public class TradeAggregate
     {
@@ -111,33 +82,75 @@ public partial class OlapManager : Node
         public int   MinScore;
     }
 
-    // ── Analytics Models ─────────────────────────────────────────────────────
-
-    // Price volatility: Coefficient of Variation (StdDev / AvgPrice) per item
+    
     public class VolatilityRecord
     {
         public string ItemKey;
         public string ItemName;
         public float  AvgPrice;
         public float  StdDev;
-        public float  CoeffVariation; // Higher = more volatile pricing
+        public float  CoeffVariation; 
         public int    TotalTrades;
         public int    MinPrice;
         public int    MaxPrice;
     }
 
-    // Anomalous trade: price deviates from median by ≥ threshold factor
     public class AnomalyRecord
     {
         public string ItemKey;
         public string ItemName;
         public int    TradePrice;
         public float  MedianPrice;
-        public float  Ratio;      // TradePrice / MedianPrice
+        public float  Ratio;        
+        public string DateKey;
+        public double Timestamp;
+        public string ActorUid;      
+        public string ActorDisplay; 
+    }
+
+    public class DuplicateListingRecord
+    {
+        public string SellerUid;
+        public string SellerDisplay;
+        public string ItemKey;
+        public string ItemName;
+        public int    TradeCount;
+        public double FirstTs;
+        public double LastTs;
+        public double WindowSeconds;
+        public int    MinPrice;
+        public int    MaxPrice;
+    }
+
+   
+    public class WashTradeRecord
+    {
+        public string ItemKey;
+        public string ItemName;
+        public string BuyerUid;
+        public string BuyerDisplay;
+        public string SellerUid;
+        public string SellerDisplay;
+        public int    TradeCount;
+        public int    TotalValue;
+        public double FirstTs;
+        public double LastTs;
+    }
+
+    public class FullTradeRecord
+    {
+        public string TradeKey;
+        public string ItemKey;
+        public string ItemName;
+        public int    Price;
+        public double Timestamp;
+        public string BuyerUid;
+        public string BuyerDisplay;
+        public string SellerUid;
+        public string SellerDisplay;
         public string DateKey;
     }
 
-    // OLAP schema row counts — displayed in ETL Monitor tab
     public class SchemaStats
     {
         public int FactTradeCount;
@@ -149,9 +162,9 @@ public partial class OlapManager : Node
         public int UniqueDaysTraded;
         public int ActiveListings;
         public int UniqueSellers;
+        public int TotalAccounts;
     }
 
-    // Per-seller listing stats from live OLTP data
     public class SellerRecord
     {
         public string SellerEmail;
@@ -160,31 +173,41 @@ public partial class OlapManager : Node
         public float  AvgPrice;
     }
 
-    // ── In-Memory OLAP Store ─────────────────────────────────────────────────
+    public class ItemCirculationRecord
+    {
+        public string ItemKey;
+        public string ItemName;
+        public string Rarity;
+        public int    InInventories;    
+        public int    InMarketplace;    
+        public int    TotalCirculating; 
+        public int    UniqueHolders;    
+        public int    TotalTraded;      
+    }
 
-    public List<FactTrade>               FactTrades  { get; private set; } = new();
-    public List<FactScore>               FactScores  { get; private set; } = new();
-    public Dictionary<string, DimItem>   DimItems    { get; private set; } = new();
-    public Dictionary<string, DimTime>   DimTimes    { get; private set; } = new();
-    public Dictionary<string, DimPlayer> DimPlayers  { get; private set; } = new();
 
-    // ── Firebase references ──────────────────────────────────────────────────
+    public List<FactTrade>               FactTrades       { get; private set; } = new();
+    public List<FactScore>               FactScores       { get; private set; } = new();
+    public Dictionary<string, DimItem>   DimItems         { get; private set; } = new();
+    public Dictionary<string, DimTime>   DimTimes         { get; private set; } = new();
+    public Dictionary<string, DimPlayer> DimPlayers       { get; private set; } = new();
+    public Dictionary<string, Dictionary<string, int>> PlayerInventories { get; private set; } = new();
+
 
     private Node _firebase;
     private Node _auth;
     private Node _database;
     private bool _etlRunning;
 
-    // ── ETL state ────────────────────────────────────────────────────────────
 
     private Godot.Collections.Dictionary _oltpHistory;
     private Godot.Collections.Dictionary _oltpLeaderboard;
     private Godot.Collections.Dictionary _oltpRuns;
+    private Godot.Collections.Dictionary _oltpPlayers;
     private bool _historyLoaded;
     private bool _leaderboardLoaded;
     private bool _runsLoaded;
-
-    // ── Firebase OLAP paths ──────────────────────────────────────────────────
+    private bool _playersLoaded;
 
     private const string DimItemsPath   = "olap/dim_items";
     private const string DimTimePath    = "olap/dim_time";
@@ -195,9 +218,6 @@ public partial class OlapManager : Node
     private const string AggByDayPath   = "olap/aggregates/by_day";
     private const string MetaPath       = "olap/meta";
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Lifecycle
-    // ─────────────────────────────────────────────────────────────────────────
 
     public override void _Ready()
     {
@@ -219,11 +239,6 @@ public partial class OlapManager : Node
         return v.VariantType == Variant.Type.Bool && v.AsBool();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // ETL — Extract, Transform, Load
-    // Reads OLTP Firebase paths → transforms into Star Schema facts/dims →
-    // writes back to olap/ Firebase paths + updates in-memory OLAP store.
-    // ─────────────────────────────────────────────────────────────────────────
 
     public void RunEtl()
     {
@@ -240,29 +255,31 @@ public partial class OlapManager : Node
         _historyLoaded     = false;
         _leaderboardLoaded = false;
         _runsLoaded        = false;
+        _playersLoaded     = false;
 
         EmitSignal(SignalName.StatusUpdated, "ETL: Extracting OLTP data from Firebase...");
 
-        // Extract Step 1: marketplace price history → trade facts
         var histRef = (Node)_database.Call("get_once_database_reference", "marketplace/priceHistory");
         SafeConnect(histRef, "once_successful", nameof(OnOltpHistoryLoaded));
         SafeConnect(histRef, "once_failed",     nameof(OnOltpHistoryFailed));
         histRef.Call("once", "");
 
-        // Extract Step 2: leaderboard best scores → used for ranking / leaderboard display
         var lbRef = (Node)_database.Call("get_once_database_reference", "leaderboards/global");
         SafeConnect(lbRef, "once_successful", nameof(OnOltpLeaderboardLoaded));
         SafeConnect(lbRef, "once_failed",     nameof(OnOltpLeaderboardFailed));
         lbRef.Call("once", "");
 
-        // Extract Step 3: run history → every individual session (powers daily avg chart)
         var runsRef = (Node)_database.Call("get_once_database_reference", "leaderboards/runs");
         SafeConnect(runsRef, "once_successful", nameof(OnOltpRunsLoaded));
         SafeConnect(runsRef, "once_failed",     nameof(OnOltpRunsFailed));
         runsRef.Call("once", "");
+
+        var playersRef = (Node)_database.Call("get_once_database_reference", "players");
+        SafeConnect(playersRef, "once_successful", nameof(OnOltpPlayersLoaded));
+        SafeConnect(playersRef, "once_failed",     nameof(OnOltpPlayersFailed));
+        playersRef.Call("once", "");
     }
 
-    // ── ETL: Extract callbacks ────────────────────────────────────────────────
 
     private void OnOltpHistoryLoaded(Godot.Collections.Dictionary snapshot)
     {
@@ -309,11 +326,25 @@ public partial class OlapManager : Node
         TryRunTransform();
     }
 
-    // ── ETL: Transform + Load ─────────────────────────────────────────────────
+    private void OnOltpPlayersLoaded(Godot.Collections.Dictionary snapshot)
+    {
+        _oltpPlayers   = snapshot;
+        _playersLoaded = true;
+        TryRunTransform();
+    }
+
+    private void OnOltpPlayersFailed()
+    {
+        _oltpPlayers   = null;
+        _playersLoaded = true;
+        EmitSignal(SignalName.StatusUpdated, "ETL Warning: Could not read player inventories.");
+        TryRunTransform();
+    }
+
 
     private void TryRunTransform()
     {
-        if (!_historyLoaded || !_leaderboardLoaded || !_runsLoaded) return;
+        if (!_historyLoaded || !_leaderboardLoaded || !_runsLoaded || !_playersLoaded) return;
 
         EmitSignal(SignalName.StatusUpdated, "ETL: Transforming into Star Schema...");
 
@@ -322,8 +353,8 @@ public partial class OlapManager : Node
         DimItems.Clear();
         DimTimes.Clear();
         DimPlayers.Clear();
+        PlayerInventories.Clear();
 
-        // ── Transform: trade facts ────────────────────────────────────────────
         if (_oltpHistory != null)
         {
             foreach (var itemKey in _oltpHistory.Keys)
@@ -353,12 +384,16 @@ public partial class OlapManager : Node
                     string timeKey  = TimestampToDateKey(ts);
                     EnsureDimTime(timeKey, ts);
 
+                    string buyerUid  = ParseString(td, "buyer_uid",  "");
+                    string sellerUid = ParseString(td, "seller_uid", "");
                     FactTrades.Add(new FactTrade
                     {
                         TradeKey   = $"{itemId}_{(long)ts}_{tradeIndex++}",
                         ItemKey    = itemId,
                         TimeKey    = timeKey,
-                        PlayerKey  = "",
+                        PlayerKey  = sellerUid,
+                        BuyerKey   = buyerUid,
+                        SellerKey  = sellerUid,
                         Price      = price,
                         Quantity   = 1,
                         TotalValue = price,
@@ -368,9 +403,6 @@ public partial class OlapManager : Node
             }
         }
 
-        // ── Transform: score facts ────────────────────────────────────────────
-        // Prefer leaderboards/runs (per-session records) for richer daily chart data.
-        // Fall back to leaderboards/global (best-score per player) when no runs exist yet.
         bool hasRuns = _oltpRuns != null && _oltpRuns.Count > 0;
 
         if (hasRuns)
@@ -386,7 +418,6 @@ public partial class OlapManager : Node
                 string email      = run.ContainsKey("email")     ? ((Variant)run["email"]).AsString()             : "anonymous";
                 int    score      = run.ContainsKey("score")     ? ParseIntV((Variant)run["score"], 0)            : 0;
                 double ts         = run.ContainsKey("timestamp") ? ParseDoubleV((Variant)run["timestamp"], nowTs) : nowTs;
-                // Derive a stable player key from the run id (format: {uid}_{unixTs})
                 string playerKey  = key.Contains('_') ? key[..key.LastIndexOf('_')] : key;
 
                 if (!DimPlayers.ContainsKey(playerKey))
@@ -397,7 +428,7 @@ public partial class OlapManager : Node
 
                 FactScores.Add(new FactScore
                 {
-                    ScoreKey  = key,        // unique per run
+                    ScoreKey  = key,        
                     PlayerKey = playerKey,
                     TimeKey   = timeKey,
                     Email     = email,
@@ -408,7 +439,6 @@ public partial class OlapManager : Node
         }
         else if (_oltpLeaderboard != null)
         {
-            // Fallback: one best-score entry per player from leaderboards/global
             double nowTs = DateTimeToUnix(DateTime.UtcNow);
             foreach (var uid in _oltpLeaderboard.Keys)
             {
@@ -439,13 +469,40 @@ public partial class OlapManager : Node
             }
         }
 
+        if (_oltpPlayers != null)
+        {
+            foreach (var uid in _oltpPlayers.Keys)
+            {
+                string playerKey = uid.ToString();
+                var playerVar = (Variant)_oltpPlayers[uid];
+                if (playerVar.VariantType != Variant.Type.Dictionary) continue;
+                var playerDict = playerVar.AsGodotDictionary();
+                if (!playerDict.ContainsKey("shop")) continue;
+                var shopVar = (Variant)playerDict["shop"];
+                if (shopVar.VariantType != Variant.Type.Dictionary) continue;
+                var shopDict = shopVar.AsGodotDictionary();
+                if (!shopDict.ContainsKey("ownedCounts")) continue;
+                var ownedVar = (Variant)shopDict["ownedCounts"];
+                if (ownedVar.VariantType != Variant.Type.Dictionary) continue;
+                var ownedDict = ownedVar.AsGodotDictionary();
+                var inv = new Dictionary<string, int>();
+                foreach (var itemKey in ownedDict.Keys)
+                {
+                    int count = ParseIntV((Variant)ownedDict[itemKey], 0);
+                    if (count > 0) inv[itemKey.ToString()] = count;
+                }
+                if (inv.Count > 0) PlayerInventories[playerKey] = inv;
+                // Ensure player is in dim_players
+                if (!DimPlayers.ContainsKey(playerKey))
+                    DimPlayers[playerKey] = new DimPlayer { PlayerKey = playerKey, DisplayName = playerKey };
+            }
+        }
+
         EmitSignal(SignalName.StatusUpdated,
-            $"ETL: Transformed {FactTrades.Count} trade facts, {FactScores.Count} score facts. Pushing to Firebase...");
+            $"ETL: Transformed {FactTrades.Count} trade facts, {FactScores.Count} score facts, {PlayerInventories.Count} accounts. Pushing to Firebase...");
 
         PushOlapToFirebase();
     }
-
-    // ── ETL: Load — push to Firebase ─────────────────────────────────────────
 
     private void PushOlapToFirebase()
     {
@@ -496,6 +553,8 @@ public partial class OlapManager : Node
                 { "item_key",    ft.ItemKey    },
                 { "time_key",    ft.TimeKey    },
                 { "player_key",  ft.PlayerKey  },
+                { "buyer_key",   ft.BuyerKey   },
+                { "seller_key",  ft.SellerKey  },
                 { "price",       ft.Price      },
                 { "quantity",    ft.Quantity   },
                 { "total_value", ft.TotalValue },
@@ -572,10 +631,6 @@ public partial class OlapManager : Node
         EmitSignal(SignalName.EtlCompleted, FactTrades.Count, FactScores.Count);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Load OLAP data from Firebase (read already-computed OLAP store)
-    // ─────────────────────────────────────────────────────────────────────────
-
     public void LoadFromOlapStore()
     {
         EnsureFirebase();
@@ -583,13 +638,11 @@ public partial class OlapManager : Node
 
         EmitSignal(SignalName.StatusUpdated, "Loading OLAP store from Firebase...");
 
-        // Reset merge-score state for this load cycle
         _cachedScoresDone  = false;
         _globalScoresDone  = false;
         _cachedScoresSnap  = null;
         _globalScoresSnap  = null;
 
-        // Trades + dimensions from OLAP cache
         var ftRef = (Node)_database.Call("get_once_database_reference", FactTradesPath);
         SafeConnect(ftRef, "once_successful", nameof(OnFactTradesLoaded));
         SafeConnect(ftRef, "once_failed",     nameof(OnFactTradesFailed));
@@ -600,8 +653,6 @@ public partial class OlapManager : Node
         SafeConnect(diRef, "once_failed",     nameof(OnDimItemsFailed));
         diRef.Call("once", "");
 
-        // Scores: load OLAP cache AND live leaderboard so all players appear
-        // even if ETL hasn't been re-run since they joined.
         var fsRef = (Node)_database.Call("get_once_database_reference", FactScoresPath);
         SafeConnect(fsRef, "once_successful", nameof(OnCachedScoresLoaded));
         SafeConnect(fsRef, "once_failed",     nameof(OnCachedScoresFailed));
@@ -613,9 +664,7 @@ public partial class OlapManager : Node
         lbRef.Call("once", "");
     }
 
-    private int _loadPending = 3;   // fact_trades + dim_items + TryMergeScores (handles cache + global)
-
-    // Score merge state
+    private int _loadPending = 3;   
     private Godot.Collections.Dictionary _cachedScoresSnap;
     private Godot.Collections.Dictionary _globalScoresSnap;
     private bool _cachedScoresDone;
@@ -649,16 +698,12 @@ public partial class OlapManager : Node
         TryMergeScores();
     }
 
-    // Merges OLAP-cached scores with live leaderboard so all players
-    // appear even without a fresh ETL sync.
     private void TryMergeScores()
     {
         if (!_cachedScoresDone || !_globalScoresDone) return;
 
         FactScores.Clear();
         double nowTs = DateTimeToUnix(DateTime.UtcNow);
-
-        // Step 1: load what's already in the OLAP cache
         if (_cachedScoresSnap != null)
         {
             foreach (var k in _cachedScoresSnap.Keys)
@@ -678,14 +723,13 @@ public partial class OlapManager : Node
             }
         }
 
-        // Step 2: merge in any players from leaderboards/global not yet cached
         if (_globalScoresSnap != null)
         {
             var cachedPlayers = new HashSet<string>(FactScores.Select(fs => fs.PlayerKey));
             foreach (var uid in _globalScoresSnap.Keys)
             {
                 string playerKey = uid.ToString();
-                if (cachedPlayers.Contains(playerKey)) continue;   // already have this player
+                if (cachedPlayers.Contains(playerKey)) continue;   
 
                 var entryVar = (Variant)_globalScoresSnap[uid];
                 if (entryVar.VariantType != Variant.Type.Dictionary) continue;
@@ -728,6 +772,8 @@ public partial class OlapManager : Node
                     ItemKey    = d.ContainsKey("item_key")    ? ((Variant)d["item_key"]).AsString()      : "",
                     TimeKey    = d.ContainsKey("time_key")    ? ((Variant)d["time_key"]).AsString()      : "",
                     PlayerKey  = d.ContainsKey("player_key")  ? ((Variant)d["player_key"]).AsString()    : "",
+                    BuyerKey   = d.ContainsKey("buyer_key")   ? ((Variant)d["buyer_key"]).AsString()     : "",
+                    SellerKey  = d.ContainsKey("seller_key")  ? ((Variant)d["seller_key"]).AsString()    : "",
                     Price      = d.ContainsKey("price")       ? ParseIntV((Variant)d["price"], 0)        : 0,
                     Quantity   = d.ContainsKey("quantity")    ? ParseIntV((Variant)d["quantity"], 1)     : 1,
                     TotalValue = d.ContainsKey("total_value") ? ParseIntV((Variant)d["total_value"], 0)  : 0,
@@ -794,17 +840,12 @@ public partial class OlapManager : Node
     {
         _loadPending--;
         if (_loadPending > 0) return;
-        _loadPending = 3;   // fact_trades, dim_items, TryBuildLiveScores
+        _loadPending = 3;   
         EmitSignal(SignalName.StatusUpdated,
             $"OLAP store loaded: {FactTrades.Count} trade facts, {FactScores.Count} score facts.");
         EmitSignal(SignalName.OlapDataLoaded);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // OLAP Operations — Roll-Up (full time hierarchy: Year → Quarter → Month → Day)
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // Roll-Up: GROUP BY item  (collapses all time detail into per-item totals)
     public List<TradeAggregate> RollUpByItem()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -823,7 +864,6 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // Roll-Up: GROUP BY day  (finest time grain — YYYY-MM-DD)
     public List<TradeAggregate> RollUpByDay()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -840,7 +880,6 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // Roll-Up: GROUP BY month  (YYYY-MM — one level above day)
     public List<TradeAggregate> RollUpByMonth()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -861,8 +900,6 @@ public partial class OlapManager : Node
         result.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
         return result;
     }
-
-    // Roll-Up: GROUP BY quarter  (YYYY-Q# — one level above month)
     public List<TradeAggregate> RollUpByQuarter()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -884,7 +921,6 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // Roll-Up: GROUP BY year  (coarsest time grain — top of hierarchy)
     public List<TradeAggregate> RollUpByYear()
     {
         var groups = new Dictionary<string, List<FactTrade>>();
@@ -903,23 +939,13 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // OLAP Operations — Drill-Down
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // Drill-Down: item aggregate → individual trade facts
     public List<FactTrade> DrillDownByItem(string itemKey)
         => FactTrades.Where(ft => ft.ItemKey == itemKey).OrderByDescending(ft => ft.Timestamp).ToList();
 
-    // Drill-Down: day aggregate → individual trade facts
     public List<FactTrade> DrillDownByDay(string timeKey)
         => FactTrades.Where(ft => ft.TimeKey == timeKey).OrderByDescending(ft => ft.Timestamp).ToList();
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // OLAP Operations — Slice (filter on ONE dimension)
-    // ─────────────────────────────────────────────────────────────────────────
 
-    // Slice: WHERE item_key = x
     public List<FactTrade> SliceByItem(string itemKey)
     {
         if (itemKey == "all" || string.IsNullOrEmpty(itemKey))
@@ -927,16 +953,11 @@ public partial class OlapManager : Node
         return FactTrades.Where(ft => ft.ItemKey == itemKey).OrderByDescending(ft => ft.Timestamp).ToList();
     }
 
-    // Slice: WHERE timestamp BETWEEN startTs AND endTs
     public List<FactTrade> SliceByDate(double startTs, double endTs)
         => FactTrades.Where(ft => ft.Timestamp >= startTs && ft.Timestamp <= endTs)
                      .OrderByDescending(ft => ft.Timestamp).ToList();
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // OLAP Operations — Dice (filter on MULTIPLE dimensions)
-    // ─────────────────────────────────────────────────────────────────────────
 
-    // Dice: WHERE item_key = x AND timestamp BETWEEN startTs AND endTs
     public List<FactTrade> DiceByItemAndDate(string itemKey, double startTs, double endTs)
     {
         var q = FactTrades.AsEnumerable();
@@ -946,9 +967,6 @@ public partial class OlapManager : Node
         return q.OrderByDescending(ft => ft.Timestamp).ToList();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Analytics — Score Summary
-    // ─────────────────────────────────────────────────────────────────────────
 
     public ScoreAggregate GetScoreSummary()
     {
@@ -962,11 +980,6 @@ public partial class OlapManager : Node
             MinScore  = FactScores.Min(fs => fs.Score),
         };
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Analytics — Price Volatility (Coefficient of Variation per item)
-    // CV = StdDev / AvgPrice — higher means prices swing more between trades
-    // ─────────────────────────────────────────────────────────────────────────
 
     public List<VolatilityRecord> GetVolatilityMetrics()
     {
@@ -1000,11 +1013,6 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Analytics — Price Anomaly Detection
-    // Flags trades whose price is >= threshold × or <= 1/threshold × the
-    // per-item median.  Default threshold = 2.0 (2× above or below median).
-    // ─────────────────────────────────────────────────────────────────────────
 
     public List<AnomalyRecord> DetectPriceAnomalies(float threshold = 2.0f)
     {
@@ -1029,14 +1037,19 @@ public partial class OlapManager : Node
                 float ratio = ft.Price / median;
                 if (ratio >= threshold || ratio <= (1f / threshold))
                 {
+                    string actorUid  = ratio >= threshold ? ft.SellerKey : ft.BuyerKey;
+                    string actorDisp = ResolveDisplay(actorUid);
                     anomalies.Add(new AnomalyRecord
                     {
-                        ItemKey    = kv.Key,
-                        ItemName   = name,
-                        TradePrice = ft.Price,
-                        MedianPrice= median,
-                        Ratio      = ratio,
-                        DateKey    = ft.TimeKey,
+                        ItemKey     = kv.Key,
+                        ItemName    = name,
+                        TradePrice  = ft.Price,
+                        MedianPrice = median,
+                        Ratio       = ratio,
+                        DateKey     = ft.TimeKey,
+                        Timestamp   = ft.Timestamp,
+                        ActorUid    = actorUid,
+                        ActorDisplay= actorDisp,
                     });
                 }
             }
@@ -1045,9 +1058,199 @@ public partial class OlapManager : Node
         return anomalies.Take(50).ToList();
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Analytics — OLAP Star Schema Statistics (ETL Monitor tab)
-    // ─────────────────────────────────────────────────────────────────────────
+
+    public List<DuplicateListingRecord> DetectDuplicateListings(double windowSeconds = 3600.0)
+    {
+        var result = new List<DuplicateListingRecord>();
+        var groups = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            if (string.IsNullOrEmpty(ft.SellerKey)) continue;
+            string key = $"{ft.SellerKey}|{ft.ItemKey}";
+            if (!groups.ContainsKey(key)) groups[key] = new List<FactTrade>();
+            groups[key].Add(ft);
+        }
+        foreach (var kv in groups)
+        {
+            var trades = kv.Value.OrderBy(t => t.Timestamp).ToList();
+            if (trades.Count < 2) continue;
+            double firstTs = trades.First().Timestamp;
+            double lastTs  = trades.Last().Timestamp;
+            double window  = lastTs - firstTs;
+            if (window > windowSeconds) continue;   
+            string sellerUid = trades.First().SellerKey;
+            string itemKey   = trades.First().ItemKey;
+            result.Add(new DuplicateListingRecord
+            {
+                SellerUid    = sellerUid,
+                SellerDisplay= ResolveDisplay(sellerUid),
+                ItemKey      = itemKey,
+                ItemName     = DimItems.ContainsKey(itemKey) ? DimItems[itemKey].ItemName : itemKey,
+                TradeCount   = trades.Count,
+                FirstTs      = firstTs,
+                LastTs       = lastTs,
+                WindowSeconds= window,
+                MinPrice     = trades.Min(t => t.Price),
+                MaxPrice     = trades.Max(t => t.Price),
+            });
+        }
+        result.Sort((a, b) => b.TradeCount.CompareTo(a.TradeCount));
+        return result;
+    }
+
+    public List<WashTradeRecord> DetectWashTrades()
+    {
+        var result = new List<WashTradeRecord>();
+        var directGroups = new Dictionary<string, List<FactTrade>>();
+        foreach (var ft in FactTrades)
+        {
+            if (string.IsNullOrEmpty(ft.BuyerKey) || string.IsNullOrEmpty(ft.SellerKey)) continue;
+            if (ft.BuyerKey == ft.SellerKey) continue;  
+            string key = $"{ft.BuyerKey}|{ft.SellerKey}|{ft.ItemKey}";
+            if (!directGroups.ContainsKey(key)) directGroups[key] = new List<FactTrade>();
+            directGroups[key].Add(ft);
+        }
+        foreach (var kv in directGroups)
+        {
+            if (kv.Value.Count < 2) continue;
+            var trades = kv.Value.OrderBy(t => t.Timestamp).ToList();
+            result.Add(new WashTradeRecord
+            {
+                ItemKey      = trades[0].ItemKey,
+                ItemName     = DimItems.ContainsKey(trades[0].ItemKey) ? DimItems[trades[0].ItemKey].ItemName : trades[0].ItemKey,
+                BuyerUid     = trades[0].BuyerKey,
+                BuyerDisplay = ResolveDisplay(trades[0].BuyerKey),
+                SellerUid    = trades[0].SellerKey,
+                SellerDisplay= ResolveDisplay(trades[0].SellerKey),
+                TradeCount   = trades.Count,
+                TotalValue   = trades.Sum(t => t.TotalValue),
+                FirstTs      = trades.First().Timestamp,
+                LastTs       = trades.Last().Timestamp,
+            });
+        }
+
+        var byItem = FactTrades.GroupBy(ft => ft.ItemKey);
+        foreach (var itemGroup in byItem)
+        {
+            var trades = itemGroup.ToList();
+            for (int i = 0; i < trades.Count; i++)
+            {
+                for (int j = i + 1; j < trades.Count; j++)
+                {
+                    var t1 = trades[i];
+                    var t2 = trades[j];
+                    if (string.IsNullOrEmpty(t1.BuyerKey) || string.IsNullOrEmpty(t1.SellerKey)) continue;
+                    if (string.IsNullOrEmpty(t2.BuyerKey) || string.IsNullOrEmpty(t2.SellerKey)) continue;
+
+                    bool isRoundTrip = t1.BuyerKey == t2.SellerKey && t1.SellerKey == t2.BuyerKey;
+                    if (!isRoundTrip) continue;
+
+                    string dedupKey = $"RT|{t1.ItemKey}|{t1.SellerKey}|{t1.BuyerKey}";
+                    if (result.Any(r => r.ItemKey == t1.ItemKey && r.SellerUid == t1.SellerKey && r.BuyerUid == t1.BuyerKey)) continue;
+                    result.Add(new WashTradeRecord
+                    {
+                        ItemKey      = t1.ItemKey,
+                        ItemName     = DimItems.ContainsKey(t1.ItemKey) ? DimItems[t1.ItemKey].ItemName : t1.ItemKey,
+                        BuyerUid     = t1.BuyerKey,
+                        BuyerDisplay = $"{ResolveDisplay(t1.BuyerKey)} ⇄ {ResolveDisplay(t1.SellerKey)} (round-trip)",
+                        SellerUid    = t1.SellerKey,
+                        SellerDisplay= ResolveDisplay(t1.SellerKey),
+                        TradeCount   = 2,
+                        TotalValue   = t1.TotalValue + t2.TotalValue,
+                        FirstTs      = Math.Min(t1.Timestamp, t2.Timestamp),
+                        LastTs       = Math.Max(t1.Timestamp, t2.Timestamp),
+                    });
+                }
+            }
+        }
+
+        result.Sort((a, b) => b.TradeCount.CompareTo(a.TradeCount));
+        return result;
+    }
+
+    public List<FullTradeRecord> GetFullTradeHistory(
+        string itemKey  = "",
+        double startTs  = 0,
+        double endTs    = 0,
+        string actorUid = "")
+    {
+        var query = FactTrades.AsEnumerable();
+
+        if (!string.IsNullOrEmpty(itemKey) && itemKey != "all")
+            query = query.Where(ft => ft.ItemKey == itemKey);
+        if (startTs > 0)
+            query = query.Where(ft => ft.Timestamp >= startTs);
+        if (endTs > 0)
+            query = query.Where(ft => ft.Timestamp <= endTs);
+        if (!string.IsNullOrEmpty(actorUid))
+            query = query.Where(ft => ft.BuyerKey == actorUid || ft.SellerKey == actorUid);
+
+        var result = new List<FullTradeRecord>();
+        foreach (var ft in query.OrderByDescending(t => t.Timestamp))
+        {
+            string iName = DimItems.ContainsKey(ft.ItemKey) ? DimItems[ft.ItemKey].ItemName : ft.ItemKey;
+            result.Add(new FullTradeRecord
+            {
+                TradeKey     = ft.TradeKey,
+                ItemKey      = ft.ItemKey,
+                ItemName     = iName,
+                Price        = ft.Price,
+                Timestamp    = ft.Timestamp,
+                BuyerUid     = ft.BuyerKey,
+                BuyerDisplay = ResolveDisplay(ft.BuyerKey),
+                SellerUid    = ft.SellerKey,
+                SellerDisplay= ResolveDisplay(ft.SellerKey),
+                DateKey      = ft.TimeKey,
+            });
+        }
+        return result;
+    }
+
+    public List<FullTradeRecord> TradeHistorySliceByActor(string actorUid)
+        => GetFullTradeHistory(actorUid: actorUid);
+
+    public List<FullTradeRecord> TradeHistoryDice(string itemKey, double startTs, double endTs, string actorUid)
+        => GetFullTradeHistory(itemKey, startTs, endTs, actorUid);
+
+    public List<(string Uid, string Display, int AsBuyer, int AsSeller, int TotalValue)> RollUpByActor()
+    {
+        var buyers  = FactTrades.Where(ft => !string.IsNullOrEmpty(ft.BuyerKey))
+                                .GroupBy(ft => ft.BuyerKey)
+                                .ToDictionary(g => g.Key, g => g.Count());
+        var sellers = FactTrades.Where(ft => !string.IsNullOrEmpty(ft.SellerKey))
+                                .GroupBy(ft => ft.SellerKey)
+                                .ToDictionary(g => g.Key, g => g.Count());
+        var allActors = new HashSet<string>(buyers.Keys.Concat(sellers.Keys));
+        var result = new List<(string Uid, string Display, int AsBuyer, int AsSeller, int TotalValue)>();
+        foreach (var uid in allActors)
+        {
+            int asBuyer  = buyers.ContainsKey(uid)  ? buyers[uid]  : 0;
+            int asSeller = sellers.ContainsKey(uid) ? sellers[uid] : 0;
+            int tv = FactTrades.Where(ft => ft.BuyerKey == uid || ft.SellerKey == uid)
+                               .Sum(ft => ft.TotalValue);
+            result.Add((uid, ResolveDisplay(uid), asBuyer, asSeller, tv));
+        }
+        result.Sort((a, b) => (b.AsBuyer + b.AsSeller).CompareTo(a.AsBuyer + a.AsSeller));
+        return result;
+    }
+
+
+    private string ResolveDisplay(string uid)
+    {
+        if (string.IsNullOrEmpty(uid)) return "—";
+        if (DimPlayers.ContainsKey(uid) && !string.IsNullOrEmpty(DimPlayers[uid].DisplayName))
+            return DimPlayers[uid].DisplayName;
+        if (MarketplaceManager.Instance != null)
+        {
+            foreach (var l in MarketplaceManager.Instance.Listings)
+            {
+                if (l.SellerUid == uid && !string.IsNullOrEmpty(l.SellerEmail))
+                    return l.SellerEmail;
+            }
+        }
+        return uid.Length > 8 ? uid.Substring(0, 8) + "…" : uid;
+    }
+
 
     public SchemaStats GetSchemaStats()
     {
@@ -1070,12 +1273,9 @@ public partial class OlapManager : Node
             UniqueDaysTraded  = FactTrades.Select(t => t.TimeKey).Distinct().Count(),
             ActiveListings    = activeListings,
             UniqueSellers     = sellerSet.Count,
+            TotalAccounts     = PlayerInventories.Count > 0 ? PlayerInventories.Count : DimPlayers.Count,
         };
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // Analytics — Seller Leaderboard (live OLTP marketplace data)
-    // ─────────────────────────────────────────────────────────────────────────
 
     public List<SellerRecord> GetSellerLeaderboard()
     {
@@ -1105,10 +1305,76 @@ public partial class OlapManager : Node
         return result;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // CSV Export — with professional metadata headers
-    // ─────────────────────────────────────────────────────────────────────────
 
+    public List<ItemCirculationRecord> GetItemCirculation()
+    {
+        var result = new Dictionary<string, ItemCirculationRecord>();
+
+        if (CosmeticManager.Instance != null)
+        {
+            foreach (var c in CosmeticManager.Instance.AllCosmetics)
+            {
+                result[c.Id] = new ItemCirculationRecord
+                {
+                    ItemKey  = c.Id,
+                    ItemName = c.Name,
+                    Rarity   = c.Rarity.ToString(),
+                };
+            }
+        }
+
+        foreach (var kv in DimItems)
+        {
+            if (!result.ContainsKey(kv.Key))
+                result[kv.Key] = new ItemCirculationRecord
+                {
+                    ItemKey  = kv.Key,
+                    ItemName = kv.Value.ItemName,
+                    Rarity   = "cosmetic",
+                };
+        }
+
+        foreach (var kv in PlayerInventories)
+        {
+            foreach (var item in kv.Value)
+            {
+                if (!result.ContainsKey(item.Key))
+                    result[item.Key] = new ItemCirculationRecord { ItemKey = item.Key, ItemName = item.Key, Rarity = "cosmetic" };
+                result[item.Key].InInventories += item.Value;
+                if (item.Value > 0) result[item.Key].UniqueHolders++;
+            }
+        }
+
+        if (MarketplaceManager.Instance != null)
+        {
+            foreach (var l in MarketplaceManager.Instance.Listings)
+            {
+                if (!result.ContainsKey(l.ItemId))
+                    result[l.ItemId] = new ItemCirculationRecord
+                    {
+                        ItemKey  = l.ItemId,
+                        ItemName = l.ItemName ?? l.ItemId,
+                        Rarity   = "cosmetic",
+                    };
+                result[l.ItemId].InMarketplace += l.Quantity;
+            }
+        }
+
+        foreach (var ft in FactTrades)
+        {
+            if (result.ContainsKey(ft.ItemKey))
+                result[ft.ItemKey].TotalTraded++;
+        }
+
+        var list = new List<ItemCirculationRecord>(result.Values);
+        foreach (var r in list)
+            r.TotalCirculating = r.InInventories + r.InMarketplace;
+
+        list.Sort((a, b) => b.TotalCirculating.CompareTo(a.TotalCirculating));
+        return list;
+    }
+
+ 
     public string ExportTradesToCsv(List<FactTrade> trades = null)
     {
         var rows = trades ?? FactTrades;
@@ -1139,8 +1405,6 @@ public partial class OlapManager : Node
         }
         return sb.ToString();
     }
-
-    // Full analytical report: metadata header + trades section + scores section
     public string ExportFullReportCsv(string reportTitle, string filterDesc)
     {
         var sb = new StringBuilder();
@@ -1159,7 +1423,6 @@ public partial class OlapManager : Node
         return sb.ToString();
     }
 
-    // Scores-only analytical report
     public string ExportScoresReportCsv()
     {
         var sb = new StringBuilder();
@@ -1180,9 +1443,6 @@ public partial class OlapManager : Node
         GD.Print($"OlapManager: CSV saved to {path}");
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Seed in-memory OLAP from MarketplaceManager (no Firebase round-trip)
-    // ─────────────────────────────────────────────────────────────────────────
 
     public void SeedFromMarketplaceManager()
     {
@@ -1204,12 +1464,20 @@ public partial class OlapManager : Node
             {
                 string timeKey = TimestampToDateKey(record.Timestamp);
                 EnsureDimTime(timeKey, record.Timestamp);
+                string buyerUid  = record.BuyerUid  ?? "";
+                string sellerUid = record.SellerUid ?? "";
+                if (!string.IsNullOrEmpty(buyerUid)  && !DimPlayers.ContainsKey(buyerUid))
+                    DimPlayers[buyerUid]  = new DimPlayer { PlayerKey = buyerUid,  DisplayName = buyerUid  };
+                if (!string.IsNullOrEmpty(sellerUid) && !DimPlayers.ContainsKey(sellerUid))
+                    DimPlayers[sellerUid] = new DimPlayer { PlayerKey = sellerUid, DisplayName = sellerUid };
                 FactTrades.Add(new FactTrade
                 {
                     TradeKey   = $"{itemId}_{(long)record.Timestamp}_{idx++}",
                     ItemKey    = itemId,
                     TimeKey    = timeKey,
-                    PlayerKey  = "",
+                    PlayerKey  = sellerUid,
+                    BuyerKey   = buyerUid,
+                    SellerKey  = sellerUid,
                     Price      = record.Price,
                     Quantity   = 1,
                     TotalValue = record.Price,
@@ -1219,9 +1487,6 @@ public partial class OlapManager : Node
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Private utilities
-    // ─────────────────────────────────────────────────────────────────────────
 
     private static TradeAggregate BuildAggregate(string key, string label, List<FactTrade> trades)
     {
@@ -1291,6 +1556,9 @@ public partial class OlapManager : Node
 
     private static double ParseDouble(Godot.Collections.Dictionary d, string k, double def)
         => d.ContainsKey(k) ? ParseDoubleV((Variant)d[k], def) : def;
+
+    private static string ParseString(Godot.Collections.Dictionary d, string k, string def)
+        => d.ContainsKey(k) ? ((Variant)d[k]).AsString() : def;
 
     private static int ParseIntV(Variant v, int def) => v.VariantType switch
     {

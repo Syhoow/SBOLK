@@ -11,7 +11,7 @@ public partial class Arena : TileMapLayer
     public bool isEliminated = false;
 
     private const int SourceId = 1;
-    private const float TileSize = 37.5f; // <-- change this to match your TileSet tile size
+    private const float TileSize = 37.5f; 
     private Vector2I FloorTile = new Vector2I(1, 1);
     public static Arena Instance;
     private CollisionShape2D killZoneCollision;
@@ -25,7 +25,6 @@ public partial class Arena : TileMapLayer
 
     public override void _Process(double delta)
     {
-        // Manual mouse bounds check
         Vector2 mouse = GetGlobalMousePosition();
         Vector2 arenaPixelSize = new Vector2(ArenaWidth * TileSize, (ArenaHeight - 1) * TileSize);
         ismouseInside = mouse.X >= GlobalPosition.X &&
@@ -44,15 +43,15 @@ public partial class Arena : TileMapLayer
                 player.GlobalPosition = GetGlobalMousePosition();
                 Player.Instance.damageOverlay.Visible = true;
                 var tween = CreateTween();
-                tween.TweenInterval(0.2f); // delay
+                tween.TweenInterval(0.2f); 
                 tween.TweenCallback(Callable.From(() => Player.Instance.damageOverlay.Visible = false));
-                Player.Instance.health -= 5; // Apply damage for dashing out of bounds
+                Player.Instance.health -= 5; 
             }
             
             if (isoutsideTimer <= 0f)
             {
                 isEliminated = true;
-                Player.Instance.health = 0; // Eliminate player after timer runs out
+                Player.Instance.health = 0; 
                 GD.Print("player out!");
             }
             
@@ -148,7 +147,7 @@ public partial class Arena : TileMapLayer
 
     public void Rebuild()
     {
-        Clear(); // clears all tiles
+        Clear();
         GenerateArena();
 
         Vector2 arenaPixelSize = new Vector2(ArenaWidth * TileSize, (ArenaHeight - 1) * TileSize);

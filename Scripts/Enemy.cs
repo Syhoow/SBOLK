@@ -26,13 +26,13 @@ public partial class Enemy : CharacterBody2D
     private float dashTimer = 0f;
     private float dashDuration = 0.2f;
     private float dashDurationTimer = 0f;
-    private float dashPauseDuration = 0.5f;  // pause after dash
+    private float dashPauseDuration = 0.5f;  
     private float dashPauseTimer = 0f;
     private bool isDashing = false;
     private bool isPaused = false;
     private Vector2 dashDirection;
 
-    private float dashWindupDuration = 0.4f;  // pause before dash
+    private float dashWindupDuration = 0.4f;
     private float dashWindupTimer = 0f;
     private bool isWindingUp = false;
 
@@ -169,18 +169,15 @@ public partial class Enemy : CharacterBody2D
                 
                 float dist = Position.DistanceTo(player.Position);
                 Vector2 toPlayer = (player.Position - Position).Normalized();
-                Vector2 perpendicular = new Vector2(-toPlayer.Y, toPlayer.X); // sideways direction
+                Vector2 perpendicular = new Vector2(-toPlayer.Y, toPlayer.X);
                 CollisionLayer = 3|4;
                 CollisionMask = 3|4;
-                // Change strafe direction every few seconds
+                
                 strafeChangeTimer += delta;
                 if (strafeChangeTimer >= strafeChangeCooldown)
                 {
-                    // Randomly strafe left or right
                     float randomChoice = (float)GD.RandRange(0, 1);
                     strafeDirection = randomChoice > 0.5f ? perpendicular : -perpendicular;
-
-                    // Randomize how long and how soon they change direction
                     strafeChangeCooldown = (float)GD.RandRange(1.0f, 3.0f);
                     strafeChangeTimer = 0f;
                 }
@@ -205,7 +202,6 @@ public partial class Enemy : CharacterBody2D
                 }
                 else if (isPaused || isWindingUp)
                 {
-                    // Stop moving - just apply friction
                     Velocity -= Velocity * enemyFriction * delta;
                 }
                 else
@@ -226,7 +222,6 @@ public partial class Enemy : CharacterBody2D
                         
                 if (isTeleportingWindup)
                 {
-                    // Stop moving during windup
                     Velocity = Velocity.MoveToward(Vector2.Zero, speed);
                     break;
                 }
@@ -269,7 +264,6 @@ public partial class Enemy : CharacterBody2D
                     dashWindupTimer -= delta;
                     if (dashWindupTimer <= 0f)
                     {
-                        // Windup done - now actually dash
                         isWindingUp = false;
                         isDashing = true;
                         dashDurationTimer = dashDuration;
@@ -303,7 +297,6 @@ public partial class Enemy : CharacterBody2D
                     teleportWindupTimer -= delta;
                     if (teleportWindupTimer <= 0f)
                     {
-                        // Windup done - teleport
                         isTeleportingWindup = false;
                         Vector2 behindPlayer = player.Position + (player.Position - Position).Normalized() * 400f;
                         GlobalPosition = behindPlayer;
@@ -315,7 +308,6 @@ public partial class Enemy : CharacterBody2D
                 teleportTimer += delta;
                 if (teleportTimer >= teleportCooldown)
                 {
-                    // Start windup instead of teleporting immediately
                     isTeleportingWindup = true;
                     teleportWindupTimer = teleportWindupDuration;
                 }
@@ -335,7 +327,7 @@ public partial class Enemy : CharacterBody2D
         float arenaSize = Arena.Instance.ArenaWidth + Arena.Instance.ArenaHeight;
         if (arenaSize >= 50f)
         {
-            float bonus = (arenaSize - 50f) * 0.5f; // 0.5 speed per tile over 50
+            float bonus = (arenaSize - 50f) * 0.5f;
             return speed + bonus;
         }
         return speed;
@@ -348,7 +340,7 @@ public partial class Enemy : CharacterBody2D
         var bullet = EnemyBulletScene.Instantiate<EnemyBullet>();
         var direction = (player.GlobalPosition - GlobalPosition).Normalized();
         bullet.GlobalPosition = GlobalPosition;
-        bullet.Initialize(400f, 3f, direction); // slower than player bullets
+        bullet.Initialize(400f, 3f, direction); 
         arenaLayer.AddChild(bullet);
     }
 

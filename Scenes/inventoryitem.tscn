@@ -1,31 +1,20 @@
-[gd_scene load_steps=6 format=3 uid="uid://cngm5tynpm3ej"]
+[gd_scene load_steps=7 format=3 uid="uid://cngm5tynpm3ej"]
 
-[ext_resource type="Script" uid="uid://w13wgp0foct2" path="res://Scripts/Inventoryitem.cs" id="1_faxgx"]
+[ext_resource type="Script" uid="uid://w13wgp0foct2" path="res://Scripts/InventoryItem.cs" id="1_faxgx"]
 [ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="2_font"]
+[ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="3_xrku1"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.2, 0.2, 0.2, 1)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
-bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-corner_radius_bottom_right = 8
-corner_radius_bottom_left = 8
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0, 1, 0.509804, 0.6)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
 bg_color = Color(1, 1, 0, 1)
@@ -33,6 +22,17 @@ corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vw7jl"]
+bg_color = Color(0.0475577, 0.0475576, 0.0475576, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
 
 [node name="PanelContainer" type="PanelContainer"]
 offset_right = 100.0
@@ -71,12 +71,13 @@ horizontal_alignment = 1
 [node name="Button" type="Button" parent="VBoxContainer"]
 texture_filter = 1
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 20
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
-theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+theme_override_styles/normal = SubResource("StyleBoxFlat_vw7jl")
 text = "EQUIP"
+script = ExtResource("3_xrku1")
 
 [connection signal="pressed" from="VBoxContainer/Button" to="." method="_on_button_pressed"]

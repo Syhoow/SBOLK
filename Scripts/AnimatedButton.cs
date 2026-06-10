@@ -8,7 +8,7 @@ public partial class AnimatedButton : Button
     [Export] public bool HoverAnimate = true;
     [Export] public bool ScaleWithWidth = true;
     [Export] public float WidthFullRot = 200f;
-    [Export] public bool Disabled = false;
+    [Export] public new  bool Disabled = false;
 
     private Tween tween;
 

@@ -16,7 +16,7 @@ public partial class MarketplaceManager : Node
         public int    Price;
         public int    Quantity;
         public double CreatedAt;
-        public double ExpiresAt;   // Unix UTC timestamp — set to CreatedAt + 86400 (24 h)
+        public double ExpiresAt;   
     }
 
     public class TradeRecord
@@ -30,6 +30,7 @@ public partial class MarketplaceManager : Node
     public string MyUid => _myUid;
 
     public event Action DataChanged;
+    public event Action<bool, string> BuyCompleted;
 
     public List<Listing>                          Listings     = new();
     public Dictionary<string, List<TradeRecord>>  PriceHistory = new();
@@ -49,7 +50,9 @@ public partial class MarketplaceManager : Node
     private float _pollTimer = 0f;
     private const float PollInterval = 30f;
 
-    // ─── Lifecycle ───────────────────────────────────────────────────────────
+    private bool   _buyInProgress      = false;
+    private string _pendingBuyListingId = "";
+
 
     public override void _Ready()
     {
@@ -61,7 +64,6 @@ public partial class MarketplaceManager : Node
 
     public override void _Process(double delta)
     {
-        // Auto-expire listings whose ExpiresAt has passed (uses computer clock)
         double nowUtc = DateTimeToUnix(DateTime.UtcNow);
         bool anyExpired = false;
         for (int i = Listings.Count - 1; i >= 0; i--)
@@ -78,7 +80,6 @@ public partial class MarketplaceManager : Node
             DataChanged?.Invoke();
         }
 
-        // Poll Firebase every 30 s while logged in
         if (!IsLoggedIn()) return;
         _pollTimer += (float)delta;
         if (_pollTimer >= PollInterval)
@@ -88,11 +89,9 @@ public partial class MarketplaceManager : Node
         }
     }
 
-    // Convert DateTime to Unix seconds for clock-based expiry
     public static double DateTimeToUnix(DateTime dt)
         => (dt.ToUniversalTime() - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
 
-    // ─── Firebase plumbing ───────────────────────────────────────────────────
 
     private void EnsureFirebaseNodes()
     {
@@ -162,12 +161,13 @@ public partial class MarketplaceManager : Node
     {
         _myUid = "";
         _claimingPayouts = false;
+        _buyInProgress = false;
+        _pendingBuyListingId = "";
         Listings.Clear();
         PriceHistory.Clear();
         DataChanged?.Invoke();
     }
 
-    // ─── Cloud load ──────────────────────────────────────────────────────────
 
     public void TryLoadFromCloud()
     {
@@ -178,24 +178,20 @@ public partial class MarketplaceManager : Node
 
         _myUid = GetCurrentUid();
 
-        // Load all listings
         var listRef = (Node)_database.Call("get_once_database_reference", ListingsPath);
         Connect(listRef, "once_successful", nameof(OnListingsLoaded));
         Connect(listRef, "once_failed",     nameof(OnListingsFailed));
         listRef.Call("once", "");
 
-        // Load price history
         var histRef = (Node)_database.Call("get_once_database_reference", HistoryPath);
         Connect(histRef, "once_successful", nameof(OnHistoryLoaded));
         Connect(histRef, "once_failed",     nameof(OnHistoryFailed));
         histRef.Call("once", "");
 
-        // Claim any pending payouts owed to me
         if (!string.IsNullOrEmpty(_myUid))
             ClaimPendingPayouts();
     }
 
-    // ─── Listings ────────────────────────────────────────────────────────────
 
     private void OnListingsLoaded(Godot.Collections.Dictionary snapshot)
     {
@@ -219,7 +215,6 @@ public partial class MarketplaceManager : Node
 
     private void OnListingsFailed() { }
 
-    // ─── Price history ───────────────────────────────────────────────────────
 
     private void OnHistoryLoaded(Godot.Collections.Dictionary snapshot)
     {
@@ -257,7 +252,6 @@ public partial class MarketplaceManager : Node
 
     private void OnHistoryFailed() { }
 
-    // ─── Post listing ────────────────────────────────────────────────────────
 
     public bool PostListing(string itemId, string itemName, int price, int quantity)
     {
@@ -280,10 +274,9 @@ public partial class MarketplaceManager : Node
             Price       = price,
             Quantity    = quantity,
             CreatedAt   = now,
-            ExpiresAt   = now + 86400   // 24 hours from now, timed by computer clock
+            ExpiresAt   = now + 86400   
         };
 
-        // Deduct item from seller inventory immediately and persist
         CosmeticManager.Instance.OwnedCounts[itemId] =
             CosmeticManager.Instance.GetOwnedCount(itemId) - quantity;
         CosmeticManager.Instance.QueueSave();
@@ -292,7 +285,6 @@ public partial class MarketplaceManager : Node
         SaveCache();
         DataChanged?.Invoke();
 
-        // Push listing to Firebase
         EnsureFirebaseNodes();
         if (_database != null && IsLoggedIn())
         {
@@ -303,8 +295,6 @@ public partial class MarketplaceManager : Node
         return true;
     }
 
-    // ─── Cancel listing (seller takes item back) ─────────────────────────────
-
     public bool CancelListing(string listingId)
     {
         if (CosmeticManager.Instance == null) return false;
@@ -314,9 +304,8 @@ public partial class MarketplaceManager : Node
 
         var uid = GetCurrentUid();
         if (string.IsNullOrEmpty(uid)) return false;
-        if (listing.SellerUid != uid) return false;   // only seller can cancel
+        if (listing.SellerUid != uid) return false;  
 
-        // Return item(s) to seller inventory
         CosmeticManager.Instance.OwnedCounts[listing.ItemId] =
             CosmeticManager.Instance.GetOwnedCount(listing.ItemId) + listing.Quantity;
         CosmeticManager.Instance.QueueSave();
@@ -325,7 +314,6 @@ public partial class MarketplaceManager : Node
         SaveCache();
         DataChanged?.Invoke();
 
-        // Mark cancelled in Firebase
         EnsureFirebaseNodes();
         if (_database != null && IsLoggedIn())
         {
@@ -342,10 +330,10 @@ public partial class MarketplaceManager : Node
         return true;
     }
 
-    // ─── Buy listing (real transaction) ──────────────────────────────────────
 
     public bool BuyListing(string listingId)
     {
+        if (_buyInProgress) return false;
         if (CosmeticManager.Instance == null) return false;
 
         var listing = Listings.Find(l => l.Id == listingId);
@@ -353,18 +341,101 @@ public partial class MarketplaceManager : Node
 
         var uid = GetCurrentUid();
         if (string.IsNullOrEmpty(uid)) return false;
-        if (listing.SellerUid == uid) return false;          // can't buy own listing
+        if (listing.SellerUid == uid) return false;
         if (CosmeticManager.Instance.Coins < listing.Price) return false;
         if (listing.Quantity <= 0) return false;
 
-        // ── Step 1: Deduct buyer coins & give item ──────────────────────────
+        EnsureFirebaseNodes();
+        if (_database == null || !IsLoggedIn()) return false;
+
+        _buyInProgress       = true;
+        _pendingBuyListingId = listingId;
+
+        var refNode = (Node)_database.Call("get_once_database_reference",
+            ListingsPath + "/" + listingId);
+        Connect(refNode, "once_successful", nameof(OnBuyListingVerified));
+        Connect(refNode, "once_failed",     nameof(OnBuyListingVerifyFailed));
+        refNode.Call("once", "");
+
+        return true;
+    }
+
+    private void OnBuyListingVerifyFailed()
+    {
+        _buyInProgress       = false;
+        _pendingBuyListingId = "";
+        BuyCompleted?.Invoke(false, "Could not verify listing — please refresh and try again.");
+    }
+
+    private void OnBuyListingVerified(Godot.Collections.Dictionary snapshot)
+    {
+        string listingId     = _pendingBuyListingId;
+        _pendingBuyListingId = "";
+        _buyInProgress       = false;
+
+        if (snapshot == null || snapshot.Count == 0)
+        {
+            RemoveStaleListingLocally(listingId);
+            BuyCompleted?.Invoke(false, "This listing no longer exists. The market has been refreshed.");
+            TryLoadFromCloud();
+            return;
+        }
+
+        bool sold = snapshot.ContainsKey("sold")
+            && ((Variant)snapshot["sold"]).VariantType == Variant.Type.Bool
+            && ((Variant)snapshot["sold"]).AsBool();
+
+        bool cancelled = snapshot.ContainsKey("cancelled")
+            && ((Variant)snapshot["cancelled"]).VariantType == Variant.Type.Bool
+            && ((Variant)snapshot["cancelled"]).AsBool();
+
+        int cloudQty = snapshot.ContainsKey("quantity")
+            ? ParseInt((Variant)snapshot["quantity"], 0)
+            : 0;
+
+        if (sold || cancelled || cloudQty <= 0)
+        {
+            RemoveStaleListingLocally(listingId);
+            BuyCompleted?.Invoke(false, "This listing was already cancelled or sold. The market has been refreshed.");
+            TryLoadFromCloud();
+            return;
+        }
+
+        var listing = Listings.Find(l => l.Id == listingId);
+        if (listing == null)
+        {
+            BuyCompleted?.Invoke(false, "Listing not found — please refresh.");
+            return;
+        }
+
+        var uid = GetCurrentUid();
+        if (string.IsNullOrEmpty(uid))          { BuyCompleted?.Invoke(false, "Not logged in.");           return; }
+        if (listing.SellerUid == uid)            { BuyCompleted?.Invoke(false, "Cannot buy your own listing."); return; }
+        if (CosmeticManager.Instance == null)   { BuyCompleted?.Invoke(false, "Inventory unavailable.");    return; }
+        if (CosmeticManager.Instance.Coins < listing.Price)
+        {
+            BuyCompleted?.Invoke(false, "Not enough coins.");
+            return;
+        }
+
+        int newQty = listing.Quantity - 1;
+        EnsureFirebaseNodes();
+        if (_database != null && IsLoggedIn())
+        {
+            var listRef = (Node)_database.Call("get_once_database_reference",
+                ListingsPath + "/" + listingId);
+            listRef.Call("update", "", new Godot.Collections.Dictionary
+            {
+                { "quantity", newQty          },
+                { "sold",     newQty <= 0     }
+            });
+        }
+
         CosmeticManager.Instance.Coins -= listing.Price;
         CosmeticManager.Instance.OwnedCounts[listing.ItemId] =
             CosmeticManager.Instance.GetOwnedCount(listing.ItemId) + 1;
-        CosmeticManager.Instance.QueueSave();   // persist coins + item to Firebase
+        CosmeticManager.Instance.QueueSave();
 
-        // ── Step 2: Remove listing locally ─────────────────────────────────
-        int newQty = listing.Quantity - 1;
         listing.Quantity = newQty;
         if (newQty <= 0)
             Listings.Remove(listing);
@@ -373,40 +444,34 @@ public partial class MarketplaceManager : Node
         SaveCache();
         DataChanged?.Invoke();
 
-        // ── Step 3: Push everything to Firebase ─────────────────────────────
-        EnsureFirebaseNodes();
         if (_database != null && IsLoggedIn())
         {
-            // 3a. Update or zero-out the listing so it never re-appears on refresh
-            var listRef = (Node)_database.Call("get_once_database_reference",
-                ListingsPath + "/" + listingId);
-            listRef.Call("update", "", new Godot.Collections.Dictionary
-            {
-                { "quantity", newQty },
-                { "sold",     newQty <= 0 }
-            });
-
-            // 3b. Write pending payout so seller gets coins next login
             var payoutId  = uid + "_" + (long)Time.GetUnixTimeFromSystem();
             var payoutRef = (Node)_database.Call("get_once_database_reference",
                 PayoutsPath + "/" + listing.SellerUid + "/" + payoutId);
             payoutRef.Call("update", "", new Godot.Collections.Dictionary
             {
-                { "amount",    listing.Price               },
-                { "itemId",    listing.ItemId              },
-                { "itemName",  listing.ItemName            },
-                { "buyerUid",  uid                         },
+                { "amount",    listing.Price                },
+                { "itemId",    listing.ItemId               },
+                { "itemName",  listing.ItemName             },
+                { "buyerUid",  uid                          },
                 { "timestamp", Time.GetUnixTimeFromSystem() }
             });
 
-            // 3c. Push price history
             PushHistoryToCloud(listing.ItemId);
         }
 
-        return true;
+        BuyCompleted?.Invoke(true, "Purchased!");
     }
 
-    // ─── Claim payouts (seller receives coins) ────────────────────────────────
+    private void RemoveStaleListingLocally(string listingId)
+    {
+        var stale = Listings.Find(l => l.Id == listingId);
+        if (stale == null) return;
+        Listings.Remove(stale);
+        SaveCache();
+        DataChanged?.Invoke();
+    }
 
     private void ClaimPendingPayouts()
     {
@@ -439,7 +504,6 @@ public partial class MarketplaceManager : Node
             if (payoutVar.VariantType != Variant.Type.Dictionary) continue;
             var payout = payoutVar.AsGodotDictionary();
 
-            // Skip already-claimed payouts
             bool alreadyClaimed = payout.ContainsKey("claimed") &&
                 ((Variant)payout["claimed"]).VariantType == Variant.Type.Bool &&
                 ((Variant)payout["claimed"]).AsBool();
@@ -450,19 +514,17 @@ public partial class MarketplaceManager : Node
 
             totalEarned += amount;
 
-            // Mark as claimed so it can never be claimed again
             var payoutRef = (Node)_database.Call("get_once_database_reference",
                 PayoutsPath + "/" + _myUid + "/" + key.ToString());
             payoutRef.Call("update", "", new Godot.Collections.Dictionary
             {
-                { "claimed",   true                       },
+                { "claimed",   true                        },
                 { "claimedAt", Time.GetUnixTimeFromSystem() }
             });
         }
 
         if (totalEarned <= 0) return;
 
-        // Add earned coins to seller
         if (CosmeticManager.Instance != null)
         {
             CosmeticManager.Instance.Coins += totalEarned;
@@ -470,7 +532,6 @@ public partial class MarketplaceManager : Node
 
             GD.Print($"MarketplaceManager: claimed {totalEarned} coins from sales.");
 
-            // Push updated coin total to Firebase
             EnsureFirebaseNodes();
             if (_database != null && IsLoggedIn())
             {
@@ -484,8 +545,6 @@ public partial class MarketplaceManager : Node
             }
         }
     }
-
-    // ─── Helpers ─────────────────────────────────────────────────────────────
 
     private void RecordTrade(string itemId, int price, string buyerUid = "", string sellerUid = "")
     {
@@ -527,8 +586,6 @@ public partial class MarketplaceManager : Node
     public List<TradeRecord> GetPriceHistory(string itemId)
         => PriceHistory.TryGetValue(itemId, out var list) ? list : new List<TradeRecord>();
 
-    // ─── Safe signal connect (ignore duplicate) ───────────────────────────────
-
     private void Connect(Node node, string signal, string method)
     {
         var c = new Callable(this, method);
@@ -536,7 +593,6 @@ public partial class MarketplaceManager : Node
             node.Connect(signal, c);
     }
 
-    // ─── Cache ───────────────────────────────────────────────────────────────
 
     private void SaveCache()
     {
@@ -632,7 +688,6 @@ public partial class MarketplaceManager : Node
         DataChanged?.Invoke();
     }
 
-    // ─── Parse helpers ────────────────────────────────────────────────────────
 
     private static Listing ParseListing(string id, Godot.Collections.Dictionary d)
     {

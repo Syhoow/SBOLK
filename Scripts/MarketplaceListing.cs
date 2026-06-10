@@ -73,8 +73,6 @@ public partial class MarketplaceListing : PanelContainer
                 _timerLabel.Text = $"{mins}m {secs:D2}s";
             else
                 _timerLabel.Text = $"{secs}s";
-
-            // Turn yellow when under 1 hour, red under 10 minutes
             if (secsLeft < 600)
                 _timerLabel.Modulate = new Color(1f, 0.3f, 0.3f);
             else if (secsLeft < 3600)
@@ -116,6 +114,12 @@ public partial class MarketplaceListing : PanelContainer
                 prices.Add(record.Price);
             _priceChart.SetPrices(prices);
         }
+    }
+
+    public void SetButtonsDisabled(bool disabled)
+    {
+        if (_buyButton    != null) _buyButton.Disabled    = disabled;
+        if (_cancelButton != null) _cancelButton.Disabled = disabled;
     }
 
     private void OnBuyButtonPressed()    => OnBuyPressed?.Invoke(_listingId);

@@ -50,7 +50,10 @@ public partial class Marketplace : Control
             _itemSelector.ItemSelected += OnPostItemSelected;
 
         if (MarketplaceManager.Instance != null)
-            MarketplaceManager.Instance.DataChanged += Refresh;
+        {
+            MarketplaceManager.Instance.DataChanged  += Refresh;
+            MarketplaceManager.Instance.BuyCompleted += OnBuyCompleted;
+        }
 
         Refresh();
     }
@@ -58,7 +61,10 @@ public partial class Marketplace : Control
     public override void _ExitTree()
     {
         if (MarketplaceManager.Instance != null)
-            MarketplaceManager.Instance.DataChanged -= Refresh;
+        {
+            MarketplaceManager.Instance.DataChanged  -= Refresh;
+            MarketplaceManager.Instance.BuyCompleted -= OnBuyCompleted;
+        }
     }
 
     public void Refresh()
@@ -89,6 +95,7 @@ public partial class Marketplace : Control
             var emptyLabel = new Label();
             emptyLabel.Text = "No listings yet. Be the first to post!";
             emptyLabel.HorizontalAlignment = HorizontalAlignment.Center;
+            emptyLabel.AddThemeFontOverride("font", GD.Load<FontFile>("res://Assets/Font/monogram-extended.ttf"));
             _listingsContainer.AddChild(emptyLabel);
             return;
         }
@@ -108,8 +115,22 @@ public partial class Marketplace : Control
     private void OnListingBuyPressed(string listingId)
     {
         if (MarketplaceManager.Instance == null) return;
-        bool success = MarketplaceManager.Instance.BuyListing(listingId);
-        ShowStatus(success ? "Purchased!" : "Cannot buy (check coins or listing).");
+
+        ShowStatus("Verifying listing…");
+        SetListingButtonsDisabled(true);
+
+        bool started = MarketplaceManager.Instance.BuyListing(listingId);
+        if (!started)
+        {
+            ShowStatus("Cannot buy — check your coins or the listing.");
+            SetListingButtonsDisabled(false);
+        }
+    }
+
+    private void OnBuyCompleted(bool success, string message)
+    {
+        ShowStatus(message);
+        SetListingButtonsDisabled(false);
         Refresh();
     }
 
@@ -121,13 +142,21 @@ public partial class Marketplace : Control
         Refresh();
     }
 
+    private void SetListingButtonsDisabled(bool disabled)
+    {
+        if (_listingsContainer == null) return;
+        foreach (Node child in _listingsContainer.GetChildren())
+        {
+            if (child is MarketplaceListing ml)
+                ml.SetButtonsDisabled(disabled);
+        }
+    }
+
     private void ShowStatus(string msg)
     {
         if (_statusLabel == null) return;
         _statusLabel.Text = msg;
     }
-
-    // ─── Post panel ──────────────────────────────────────────────────────────
 
     private void _on_PostButton_pressed()
     {
@@ -215,7 +244,6 @@ public partial class Marketplace : Control
         if (_postPanel != null) _postPanel.Visible = false;
     }
 
-    // ─── History panel ───────────────────────────────────────────────────────
 
     private void _on_HistoryButton_pressed()
     {
@@ -239,7 +267,7 @@ public partial class Marketplace : Control
         string myUid     = MarketplaceManager.Instance.MyUid;
         var    allHistory = MarketplaceManager.Instance.PriceHistory;
 
-        // Build flat list of only THIS player's trades, sorted newest-first
+
         var myTrades = new List<(string ItemId, string ItemName, int Price, double Timestamp, string Role)>();
         foreach (var kv in allHistory)
         {
@@ -267,13 +295,13 @@ public partial class Marketplace : Control
             var empty = new Label();
             empty.Text = "You have no trade history yet.";
             empty.HorizontalAlignment = HorizontalAlignment.Center;
+            empty.AddThemeFontOverride("font", GD.Load<FontFile>("res://Assets/Font/monogram-extended.ttf"));
             _historyContainer.AddChild(empty);
             return;
         }
 
         myTrades.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
 
-        // Header row
         var header = MakeHistoryRow("", "Item", "Price", "Date / Time", "Type", true);
         _historyContainer.AddChild(header);
 
@@ -304,6 +332,7 @@ public partial class Marketplace : Control
             var l = new Label();
             l.Text = text;
             l.SizeFlagsHorizontal = (SizeFlags)(grow > 0 ? (int)SizeFlags.Expand | (int)SizeFlags.Fill : (int)SizeFlags.Fill);
+            l.AddThemeFontOverride("font", GD.Load<FontFile>("res://Assets/Font/monogram-extended.ttf"));
             if (isHeader) l.AddThemeFontSizeOverride("font_size", 12);
             return l;
         }
@@ -322,7 +351,6 @@ public partial class Marketplace : Control
         return row;
     }
 
-    // ─── Toolbar buttons ─────────────────────────────────────────────────────
 
     private void _on_RefreshButton_pressed()
     {

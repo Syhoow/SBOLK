@@ -580,15 +580,97 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
-theme_override_constants/separation = 0
+theme_override_constants/separation = 4
 metadata/_tab_index = 2
 
-[node name="MktHealthScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health"]
+[node name="MktSplit" type="HSplitContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+dragger_visibility = 2
+
+[node name="MktLeft" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit"]
+custom_minimum_size = Vector2(270, 0)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 5
+
+[node name="MktSummaryPanel" type="PanelContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MktSummaryVBox" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktSummaryPanel"]
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="MktSummaryTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktSummaryPanel/MktSummaryVBox"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+text = "Marketplace Summary"
+
+[node name="MktSummaryGrid" type="GridContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktSummaryPanel/MktSummaryVBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 1
+columns = 2
+
+[node name="MktOpBar" type="HBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MktOpLabel" type="Label" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktOpBar"]
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "View:"
+
+[node name="MktOlapSelector" type="OptionButton" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktOpBar"]
+unique_name_in_owner = true
+texture_filter = 1
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 14
+
+[node name="MktApplyBtn" type="Button" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktLeft/MktOpBar"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_hover_color = Color(0.039, 0, 0.039, 1)
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 18
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_normal")
+text = "Apply"
+
+[node name="MktRight" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="MktTableTitle" type="Label" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktRight"]
+unique_name_in_owner = true
+texture_filter = 1
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 1, 0.65, 1)
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 16
+text = "Marketplace Data"
+
+[node name="MktTableScroll" type="ScrollContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktRight"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="MktHealthContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktHealthScroll"]
+[node name="MktHealthContainer" type="VBoxContainer" parent="MarginContainer/RootVBox/TabContainer/Marketplace Health/MktSplit/MktRight/MktTableScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -612,3 +694,4 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 4
+

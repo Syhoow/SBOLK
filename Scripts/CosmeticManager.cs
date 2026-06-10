@@ -79,7 +79,6 @@ public partial class CosmeticManager : Node
 
     public override void _Process(double delta)
     {
-        // Drive timer from computer clock so it counts down correctly even when offline
         double nowUtc = (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
         if (_offerExpiresAt > 0)
         {
@@ -97,7 +96,6 @@ public partial class CosmeticManager : Node
         for (int i = 0; i < AllCosmetics.Length; i++)
             indices.Add(i);
 
-        // Fisher-Yates shuffle
         for (int i = indices.Count - 1; i > 0; i--)
         {
             int j = (int)GD.RandRange(0, i);
@@ -411,13 +409,11 @@ public partial class CosmeticManager : Node
         ApplyOfferTimer();
         SaveCache();
         DataChanged?.Invoke();
-        // Flush any saves that were queued before cloud data arrived.
         TrySaveToCloud();
     }
 
     private void OnPlayerDataFailed()
     {
-        // Treat a failed load as "we tried" so saves are no longer blocked.
         _loadedFromCloud = true;
         TrySaveToCloud();
     }
@@ -429,14 +425,11 @@ public partial class CosmeticManager : Node
             return;
         }
 
-        // Only patch prices from the Firebase catalog — never replace names, types,
-        // or rarities, which are defined locally and would show raw IDs if overwritten.
         bool changed = false;
         for (int i = 0; i < AllCosmetics.Length; i++)
         {
             var local = AllCosmetics[i];
 
-            // Firebase keys may omit the underscore (e.g. "hat3" vs "hat_3"), so try both.
             Variant entryVar = default;
             bool found = false;
             if (snapshot.ContainsKey(local.Id))
@@ -514,8 +507,6 @@ public partial class CosmeticManager : Node
             return;
         }
 
-        // Never write to cloud until we have confirmed what the cloud holds,
-        // otherwise a reset/default state can overwrite real player data.
         if (!_loadedFromCloud)
         {
             return;
@@ -660,8 +651,6 @@ public partial class CosmeticManager : Node
         return CachePathPrefix + uid + ".json";
     }
 
-    // Returns the per-item icon if it exists in Assets/Icons/{itemId}.png,
-    // otherwise generates a unique colored placeholder so every item looks distinct.
     public static Texture2D LoadItemIcon(string itemId)
     {
         if (!string.IsNullOrEmpty(itemId))
@@ -679,7 +668,7 @@ public partial class CosmeticManager : Node
         float r = (hash * 13 % 200 + 55) / 255f;
         float g = (hash * 29 % 200 + 55) / 255f;
         float b = (hash * 47 % 200 + 55) / 255f;
-        var img = Image.Create(32, 32, false, Image.Format.Rgba8);
+        var img = Image.CreateEmpty(32, 32, false, Image.Format.Rgba8);
         img.Fill(new Color(r, g, b, 1f));
         return ImageTexture.CreateFromImage(img);
     }
