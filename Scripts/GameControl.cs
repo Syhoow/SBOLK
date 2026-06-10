@@ -12,9 +12,9 @@ public partial class GameControl : Node2D
     [Export] private float healingPotTimer = 0f;
     [Export] public int MaxHealingPots = 2;
     [Export] public float SpawnInterval = 0.5f;
-    [Export] public float MarkerWarningTime = 1.5f; // how long marker shows before enemy spawns
+    [Export] public float MarkerWarningTime = 1.5f;
     [Export] public int MaxEnemies = 5;
-    public int goal = 300;
+    public int goal = 100;
     public int currentGoal = 0;
     private CharacterBody2D player;
     private Arena arena;
@@ -82,8 +82,10 @@ public partial class GameControl : Node2D
         CoinsEarnedLabel.AnchorRight = 1f;
         CoinsEarnedLabel.AnchorTop = 0.5f;
         CoinsEarnedLabel.AnchorBottom = 0.5f;
-        CoinsEarnedLabel.OffsetTop = 40f;
-        CoinsEarnedLabel.OffsetBottom = 70f;
+        CoinsEarnedLabel.OffsetTop = 50f;
+        CoinsEarnedLabel.OffsetBottom = 100f;
+        var font = GD.Load<FontFile>("res://Assets/Font/monogram-extended.ttf");
+        CoinsEarnedLabel.AddThemeFontOverride("font", font);
         CoinsEarnedLabel.AddThemeFontSizeOverride("font_size", 22);
         GetNode<CanvasLayer>("CanvasLayer").AddChild(CoinsEarnedLabel);
 
@@ -117,12 +119,11 @@ public partial class GameControl : Node2D
         }
 
         GoalLabel.Text = $"Goal: {currentGoal} / {goal}";
-        HealthLabel.Text = $"Health: {Player.Instance?.GetHealth() ?? 0f} / {Player.Instance?.maxHealth ?? 0f}";
+        HealthLabel.Text = $"{Player.Instance?.GetHealth() ?? 0f} / {Player.Instance?.maxHealth ?? 0f}";
         if(currentGoal >= goal && !goalReached)
         {
-            GD.Print("Goal reached! You win!");
-            // Random position
-            Vector2 min = Arena.Instance.GlobalPosition + new Vector2(35f, 35f); // avoid spawning on walls
+            
+            Vector2 min = Arena.Instance.GlobalPosition + new Vector2(35f, 35f);
             Vector2 max = Arena.Instance.GlobalPosition + new Vector2(
                 Arena.Instance.ArenaWidth * 35f,
                 (Arena.Instance.ArenaHeight - 1) * 35f
@@ -154,7 +155,7 @@ public partial class GameControl : Node2D
 
     private async void SpawnWithWarning()
     {
-        // Reserve a slot atomically before anything async happens
+    
         if (_activeEnemies >= WaveEnemyCount) return;
         _activeEnemies++;
 
@@ -211,7 +212,7 @@ public partial class GameControl : Node2D
     private void SpawnHealingPot()
     {
         if (HealingPotScene == null || Arena.Instance == null) return;
-        if (GetTree().GetNodesInGroup("healing_pot").Count >= MaxHealingPots) return; // ← limit check
+        if (GetTree().GetNodesInGroup("healing_pot").Count >= MaxHealingPots) return;
         int side = (int)GD.RandRange(0, 4);
         Vector2 arenaPos = Arena.Instance.GlobalPosition;
         float w = Arena.Instance.ArenaWidth * 35f;
@@ -226,7 +227,7 @@ public partial class GameControl : Node2D
         };
         var pot = HealingPotScene.Instantiate<Node2D>();
         pot.GlobalPosition = spawnPos;
-        pot.AddToGroup("healing_pot"); // ← tag it
+        pot.AddToGroup("healing_pot");
         arenaLayer.AddChild(pot);
     }
 
@@ -249,7 +250,7 @@ public partial class GameControl : Node2D
         var portal = Portal.Instantiate<Node2D>();
         if (portal == null) return;
         portal.GlobalPosition = position;
-        portal.AddToGroup("portal");   // ← tag the ROOT node, not just the Area2D
+        portal.AddToGroup("portal");   
         arenaLayer.AddChild(portal);
         GD.Print("Portal spawned at: " + position);
         
@@ -258,7 +259,7 @@ public partial class GameControl : Node2D
     public void QueueFreePortal()
     {
         var portals = GetTree().GetNodesInGroup("portal");
-        GD.Print("Portals found: " + portals.Count);   // ← should print 1
+        GD.Print("Portals found: " + portals.Count); 
         if (portals.Count == 0) return;
         var portal = (Node2D)portals[0];
         portal.Visible = false;
@@ -603,8 +604,7 @@ public partial class GameControl : Node2D
         var reference = (Node)_pendingBestDatabase.Call("get_once_database_reference", "leaderboards/global");
         reference.Call("update", _pendingBestUid, payload);
 
-        // Also push this individual run to run history so the OLAP daily chart
-        // reflects every session, not just each player's best score.
+
         string runId = $"{_pendingBestUid}_{(long)Time.GetUnixTimeFromSystem()}";
         var runPayload = new Godot.Collections.Dictionary
         {

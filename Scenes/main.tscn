@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://co8v83uukrjxq"]
+[gd_scene load_steps=24 format=3 uid="uid://co8v83uukrjxq"]
 
 [ext_resource type="PackedScene" uid="uid://dci3tsp12eon2" path="res://Scenes/player.tscn" id="1_jjgbg"]
 [ext_resource type="Script" uid="uid://b07jumtx2yqpp" path="res://Scripts/GameControl.cs" id="1_jjvhh"]
@@ -12,6 +12,35 @@
 [ext_resource type="Shader" uid="uid://bno7pc7yvi1ru" path="res://Assets/Shader/screen.gdshader" id="10_hptm8"]
 [ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="11_6iyac"]
 [ext_resource type="FontFile" uid="uid://n0r1gauf6ktb" path="res://Assets/Font/monogram-extended.ttf" id="11_d1ilt"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k12tt"]
+bg_color = Color(0.0470588, 0.0470588, 0.0470588, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_h1bgf"]
+bg_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_b3802"]
+bg_color = Color(1, 1, 0, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0, 0, 0, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fevyy"]
+bg_color = Color(0, 0, 0, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d1ilt"]
 bg_color = Color(0, 0, 0, 1)
@@ -109,17 +138,23 @@ color = Color(0, 0, 0, 1)
 [node name="Button" type="Button" parent="CanvasLayer"]
 visible = false
 offset_left = 440.0
-offset_top = 344.0
+offset_top = 392.0
 offset_right = 519.0
-offset_bottom = 375.0
+offset_bottom = 423.0
+theme_override_fonts/font = ExtResource("11_d1ilt")
+theme_override_font_sizes/font_size = 20
+theme_override_styles/normal = SubResource("StyleBoxFlat_k12tt")
 text = "Continue"
+script = ExtResource("11_6iyac")
 
 [node name="Label" type="Label" parent="CanvasLayer"]
 visible = false
-offset_left = 600.0
-offset_top = 241.0
-offset_right = 652.0
-offset_bottom = 264.0
+offset_left = 436.0
+offset_top = 80.0
+offset_right = 515.0
+offset_bottom = 104.0
+theme_override_fonts/font = ExtResource("11_d1ilt")
+theme_override_font_sizes/font_size = 30
 text = "Score: "
 
 [node name="EnemyLayer" type="CanvasLayer" parent="."]
@@ -135,15 +170,23 @@ offset_left = 191.0
 offset_top = 28.0
 offset_right = 767.0
 offset_bottom = 55.0
+theme_override_styles/background = SubResource("StyleBoxFlat_h1bgf")
+theme_override_styles/fill = SubResource("StyleBoxFlat_b3802")
 max_value = 300.0
 show_percentage = false
 
 [node name="Label" type="Label" parent="HUD"]
-offset_left = 470.0
-offset_top = 28.0
-offset_right = 510.0
-offset_bottom = 51.0
+texture_filter = 1
+offset_left = 406.0
+offset_top = 30.0
+offset_right = 462.0
+offset_bottom = 54.0
+theme_override_fonts/font = ExtResource("11_d1ilt")
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_fevyy")
 text = "Goal "
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="Health" type="ProgressBar" parent="HUD"]
 offset_left = 24.0
@@ -156,11 +199,15 @@ fill_mode = 3
 show_percentage = false
 
 [node name="Label2" type="Label" parent="HUD"]
-offset_left = 43.0
-offset_top = 40.0
-offset_right = 95.0
-offset_bottom = 63.0
-text = "Health"
+offset_left = 40.0
+offset_top = 64.0
+offset_right = 92.0
+offset_bottom = 87.0
+theme_override_colors/font_color = Color(0.00351917, 0.00351917, 0.00351916, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("11_d1ilt")
+theme_override_font_sizes/font_size = 20
+text = "health"
 
 [node name="Control" parent="HUD" instance=ExtResource("9_ynf5e")]
 visible = false

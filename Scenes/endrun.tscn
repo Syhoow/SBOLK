@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://c8ooa4gc1pk7v"]
+[gd_scene load_steps=13 format=3 uid="uid://c8ooa4gc1pk7v"]
 
 [ext_resource type="Script" uid="uid://upmvqk2wescn" path="res://Scripts/Endrun.cs" id="1_ar4qx"]
 [ext_resource type="Script" uid="uid://cix0s5nambg4e" path="res://Scripts/AnimatedButton.cs" id="2_bj5ul"]
@@ -39,8 +39,22 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iua3w"]
+bg_color = Color(0, 1, 0.509804, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vs0au"]
 bg_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ga2wk"]
+bg_color = Color(1, 1, 0, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_od5at"]
 bg_color = Color(0, 0, 0, 1)
@@ -140,12 +154,17 @@ autowrap_mode = 2
 script = ExtResource("2_bj5ul")
 
 [node name="Button4" type="Button" parent="Control"]
+texture_filter = 1
 layout_mode = 0
 offset_left = 392.0
 offset_top = 496.0
 offset_right = 584.0
 offset_bottom = 544.0
 pivot_offset = Vector2(96, 64)
+theme_override_fonts/font = ExtResource("3_wssy8")
+theme_override_font_sizes/font_size = 40
+theme_override_styles/hover = SubResource("StyleBoxFlat_iua3w")
+theme_override_styles/normal = SubResource("StyleBoxFlat_at4ti")
 text = "NEXT ROUND"
 script = ExtResource("2_bj5ul")
 
@@ -168,11 +187,16 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="NewGun" type="Button" parent="Control"]
+texture_filter = 1
 layout_mode = 0
 offset_left = 397.0
 offset_top = 427.0
 offset_right = 494.0
 offset_bottom = 465.0
+theme_override_fonts/font = ExtResource("3_wssy8")
+theme_override_font_sizes/font_size = 25
+theme_override_styles/hover = SubResource("StyleBoxFlat_ga2wk")
+theme_override_styles/normal = SubResource("StyleBoxFlat_at4ti")
 text = "2nd Gun -"
 script = ExtResource("2_bj5ul")
 
@@ -294,6 +318,24 @@ theme_override_font_sizes/normal_font_size = 50
 theme_override_styles/normal = SubResource("StyleBoxFlat_od5at")
 bbcode_enabled = true
 text = "[wave]SHOP[/wave]
+"
+fit_content = true
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Label8" type="RichTextLabel" parent="."]
+texture_filter = 1
+layout_mode = 0
+offset_left = 354.0
+offset_top = 40.0
+offset_right = 608.0
+offset_bottom = 81.0
+theme_override_fonts/normal_font = ExtResource("3_wssy8")
+theme_override_font_sizes/normal_font_size = 50
+theme_override_styles/normal = SubResource("StyleBoxFlat_od5at")
+bbcode_enabled = true
+text = "[wave]PORTAL 1 [/wave]
 "
 fit_content = true
 scroll_active = false

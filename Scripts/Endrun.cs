@@ -13,6 +13,7 @@ public partial class Endrun : Control
         public string Label;
     }
 
+    public int portalnumber = 1;
     private float _displayedMoney = 0f;
     private float _targetMoney = 0f;
     private bool _moneyAnimating = false;
@@ -25,6 +26,7 @@ public partial class Endrun : Control
 
     // Labels
     private RichTextLabel moneyLabel;
+    private RichTextLabel portalnum;
     private Label enemyCountLabel;
     private Label playerHealthLabel;
     private Label playerDamageLabel;
@@ -68,8 +70,8 @@ public partial class Endrun : Control
     {
 
         pistolIcon = GD.Load<Texture2D>("res://Assets/Pistolpixel.png");
-        rifleIcon  = GD.Load<Texture2D>("res://Assets/shotgunpixel.png");
-        smgIcon    = GD.Load<Texture2D>("res://Assets/smgpixel.png");
+        rifleIcon = GD.Load<Texture2D>("res://Assets/shotgunpixel.png");
+        smgIcon = GD.Load<Texture2D>("res://Assets/smgpixel.png");
         // Shop buttons
         button1      = GetNode<Button>("Control/Button");
         button2      = GetNode<Button>("Control/Button2");
@@ -79,21 +81,22 @@ public partial class Endrun : Control
         newGunButton = GetNode<Button>("Control/NewGun");
 
         // Labels
-        moneyLabel       = GetNode<RichTextLabel>("Control/Money");
-        enemyCountLabel  = GetNode<Label>("EnemyCount");
+        moneyLabel = GetNode<RichTextLabel>("Control/Money");
+        portalnum = GetNode<RichTextLabel>("Label8");
+        enemyCountLabel = GetNode<Label>("EnemyCount");
         playerHealthLabel = GetNode<Label>("PlayerHealth");
         playerDamageLabel = GetNode<Label>("PlayerDamage");
-        potCountLabel    = GetNode<Label>("PotCount");
-        potHealLabel     = GetNode<Label>("HP");
-        enemyHPLabel     = GetNode<Label>("EnemyHP");
-        goalLabel        = GetNode<Label>("Goal");
-        arenaXLabel      = GetNode<Label>("ArenaX");
-        arenaYLabel      = GetNode<Label>("ArenaY");
+        potCountLabel = GetNode<Label>("PotCount");
+        potHealLabel = GetNode<Label>("HP");
+        enemyHPLabel = GetNode<Label>("EnemyHP");
+        goalLabel = GetNode<Label>("Goal");
+        arenaXLabel = GetNode<Label>("ArenaX");
+        arenaYLabel = GetNode<Label>("ArenaY");
 
         // Connect buttons
-        button1.Pressed      += () => ApplyUpgrade(0);
-        button2.Pressed      += () => ApplyUpgrade(1);
-        button3.Pressed      += () => ApplyUpgrade(2);
+        button1.Pressed += () => ApplyUpgrade(0);
+        button2.Pressed += () => ApplyUpgrade(1);
+        button3.Pressed += () => ApplyUpgrade(2);
         continueButton.Pressed += () => Continue();
         rerollButton.Pressed += Reroll;
         newGunButton.Pressed += BuyNewGun;
@@ -116,15 +119,15 @@ public partial class Endrun : Control
         {
             moneyLabel.Text = $"${GameControl.Instance.money}";
         }
-        enemyCountLabel.Text  = $"COUNT: {GameControl.Instance.WaveEnemyCount}";
-        enemyHPLabel.Text     = $"HP: {GameControl.Instance.WaveEnemyHP}";
-        goalLabel.Text        = $"{GameControl.Instance.WaveGoal}";
-        arenaXLabel.Text      = $"X: {Arena.Instance?.ArenaWidth}";
-        arenaYLabel.Text      = $"Y: {Arena.Instance?.ArenaHeight}";
+        enemyCountLabel.Text = $"COUNT: {GameControl.Instance.WaveEnemyCount}";
+        enemyHPLabel.Text = $"HP: {GameControl.Instance.WaveEnemyHP}";
+        goalLabel.Text = $"{GameControl.Instance.WaveGoal}";
+        arenaXLabel.Text = $"X: {Arena.Instance?.ArenaWidth}";
+        arenaYLabel.Text = $"Y: {Arena.Instance?.ArenaHeight}";
         playerHealthLabel.Text = $"Max HP: {Player.Instance?.maxHealth}";
         playerDamageLabel.Text = $"DMG: {Bullet.Damage}";
-        potCountLabel.Text    = $"Potions: {GameControl.Instance.MaxHealingPots}";
-        potHealLabel.Text     = $"HP: {Player.Instance?.health}"; // change 30 to your actual pot heal amount
+        potCountLabel.Text = $"Potions: {GameControl.Instance.MaxHealingPots}";
+        potHealLabel.Text = $"HP: {Player.Instance?.health}"; 
     }
 
     private ShopOffer GenerateOffer(UpgradeType type)
@@ -137,13 +140,13 @@ public partial class Endrun : Control
             case UpgradeType.MaxHealth:
             {
                 float[] amounts = { 10f, 25f, 50f };
-                int[] prices    = {  30,  60, 120 };
+                int[] prices = {  30,  60, 120 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
                 string key = $"{type}_{amounts[idx]}";
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"MAX HEALTH +{offer.Amount}  [${offer.Price}]";
+                offer.Price = (int)(prices[idx] * (1f + timesBought * 0.5f));
+                offer.Label = $"MAX HEALTH +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.Heal:
@@ -173,25 +176,25 @@ public partial class Endrun : Control
             case UpgradeType.ArenaX:
             {
                 float[] amounts = { 1f, 2f, 5f };
-                int[] prices    = { 20,  40,  75 };
+                int[] prices = { 20,  40,  75 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
                 string key = $"{type}_{amounts[idx]}";
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"ARENA SIZE X +{offer.Amount}  [${offer.Price}]";
+                offer.Price = (int)(prices[idx] * (1f + timesBought * 0.5f));
+                offer.Label = $"ARENA SIZE X +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.ArenaY:
             {
                 float[] amounts = { 1f, 2f, 5f };
-                int[] prices    = { 20,  40,  75 };
+                int[] prices = { 20,  40,  75 };
                 int idx = (int)GD.RandRange(0, amounts.Length - 1);
                 string key = $"{type}_{amounts[idx]}";
                 int timesBought = (counts != null && counts.ContainsKey(key)) ? counts[key] : 0;
                 offer.Amount = amounts[idx];
-                offer.Price  = (int)(prices[idx] * (1f + timesBought * 0.5f));
-                offer.Label  = $"ARENA SIZE Y +{offer.Amount}  [${offer.Price}]";
+                offer.Price = (int)(prices[idx] * (1f + timesBought * 0.5f));
+                offer.Label = $"ARENA SIZE Y +{offer.Amount}  [${offer.Price}]";
                 break;
             }
             case UpgradeType.FloatingItemCount:
@@ -299,7 +302,7 @@ public partial class Endrun : Control
     if (GameControl.Instance == null) return;
     if (gunsOwned >= GunProgression.Length - 1) return;
 
-    int[] prices = { 500, 5000 }; // Rifle = 500, Smg = 1000
+    int[] prices = { 500, 5000 };
     int price = prices[gunsOwned];
 
     if (GameControl.Instance.money < price) return;
@@ -329,11 +332,10 @@ public partial class Endrun : Control
         newGunButton.Text = $"UPGRADE: [${prices[gunsOwned]}]";
         newGunButton.Disabled = false;
 
-        // set icon based on next gun
         newGunButton.Icon = GunProgression[nextIndex] switch
         {
             WeaponType.Rifle => rifleIcon,
-            WeaponType.Smg   => smgIcon,
+            WeaponType.Smg => smgIcon,
             WeaponType.Pistol => pistolIcon,
             _ => null
         };
@@ -341,6 +343,8 @@ public partial class Endrun : Control
 
     private void Continue()
     {
+        portalnumber++;
+        portalnum.Text = $"[wave]PORTAL[/wave]: [shake]{portalnumber}[/shake]";
         GameControl.Instance.goal = GameControl.Instance.WaveGoal;
         GameControl.Instance.goalBar.MaxValue = GameControl.Instance.goal;
         GameControl.Instance.money = (int)(GameControl.Instance.money * 0.5f);
