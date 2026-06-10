@@ -17,7 +17,7 @@ public partial class Leaderboard : Node2D
         var backButton = GetNode<Button>("MarginContainer/RootVBox/BackButton");
         backButton.Pressed += OnBackPressed;
 
-        FetchTop(10);
+        FetchTop(5);
     }
 
     private void OnBackPressed()
@@ -139,9 +139,9 @@ public partial class Leaderboard : Node2D
         }
 
         entries.Sort((a, b) => b.Score.CompareTo(a.Score));
-        if (entries.Count > 10)
+        if (entries.Count > 5)
         {
-            entries.RemoveRange(10, entries.Count - 10);
+            entries.RemoveRange(5, entries.Count - 5);
         }
 
         var rank = 1;
@@ -186,7 +186,7 @@ public partial class Leaderboard : Node2D
         _waitingForAuth = false;
         if (resultCode == 1)
         {
-            FetchTop(10);
+            FetchTop(5);
         }
         else
         {

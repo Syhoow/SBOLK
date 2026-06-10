@@ -53,4 +53,3 @@ void fragment( )
 	COLOR = pixel_color;
 }
 
- 

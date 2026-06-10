@@ -171,7 +171,6 @@ public partial class Player : CharacterBody2D
                         Gun.Visible = false;
                         Shadow.Visible = false;
                         Spritedeath.Visible = true;
-                        damageOverlay.Visible = true;
                         GameControl.Instance.hudLayer.Visible = false;
                         var tween = CreateTween();
                         GameControl.Instance.gameover.Visible = true;
