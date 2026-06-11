@@ -51,9 +51,6 @@ public partial class AnalyticsDashboard : Control
     private string        _mktSellerSearchText = "";
     private VBoxContainer _mktTradeRowsBox;
 
-    // ETL / Schema Monitor tab 
-    private VBoxContainer _etlMonitorContainer;
-
     // State 
     private OlapManager _olap;
     private string      _selectedItem   = "all";
@@ -85,7 +82,6 @@ public partial class AnalyticsDashboard : Control
         "Dice (Item + Date)",
         "Price Anomalies",
         "Volatility Ranking",
-        "Item Circulation",
     };
 
     public override void _Ready()
@@ -137,9 +133,6 @@ public partial class AnalyticsDashboard : Control
         _mktTableTitle      = GetNode<Label>("%MktTableTitle");
         _mktHealthContainer = GetNode<VBoxContainer>("%MktHealthContainer");
 
-        // ETL Monitor tab container
-        _etlMonitorContainer = GetNode<VBoxContainer>("%EtlMonitorContainer");
-
         // Populate static dropdowns
         _dateSelector.Clear();
         foreach (var lbl in DateOptionLabels) _dateSelector.AddItem(lbl);
@@ -170,7 +163,6 @@ public partial class AnalyticsDashboard : Control
         RunCurrentOlapOp();
         RefreshScoreTab();
         RefreshMarketplaceHealthTab();
-        RefreshEtlMonitorTab();
 
         _olap.LoadFromOlapStore();
     }
@@ -185,7 +177,6 @@ public partial class AnalyticsDashboard : Control
         RefreshScoreTab();
         RefreshTradeSummary();
         RefreshMarketplaceHealthTab();
-        RefreshEtlMonitorTab();
     }
 
     private void OnSyncPressed()
@@ -495,8 +486,6 @@ public partial class AnalyticsDashboard : Control
         var  anomalies        = _olap.DetectPriceAnomalies(2.0f);
         int  totalFacts       = _olap.FactTrades.Count;
         var  schemaStats      = _olap.GetSchemaStats();
-        var  circulation      = _olap.GetItemCirculation();
-        int  totalCirculating = circulation.Sum(r => r.TotalCirculating);
 
         foreach (var (k, v) in new[]
         {
@@ -510,7 +499,6 @@ public partial class AnalyticsDashboard : Control
             ("Total Accounts:",    schemaStats.TotalAccounts > 0
                                        ? schemaStats.TotalAccounts.ToString()
                                        : $"{_olap.DimPlayers.Count} (est.)"),
-            ("Items Circulating:", totalCirculating.ToString()),
             ("Snapshot:",          DateTime.UtcNow.ToString("HH:mm") + " UTC"),
         })
         {
@@ -539,7 +527,6 @@ public partial class AnalyticsDashboard : Control
             case 4: RunMktDice();                   break;
             case 5: RunMktPriceAnomalies(anomalies);break;
             case 6: RunMktVolatility();             break;
-            case 7: RunMktItemCirculation();        break;
             default: RunMktRollUpByItem(mm);        break;
         }
 
@@ -787,52 +774,6 @@ public partial class AnalyticsDashboard : Control
         }
     }
 
-    private void RunMktItemCirculation()
-    {
-        _mktTableTitle.Text = "Item Circulation — Economy Supply per Item";
-        _mktHealthContainer.AddChild(TableRow(
-            new[] { "Item", "Rarity", "In Inventories", "In Market", "Total", "Holders", "Traded" },
-            isHeader: true));
-        _mktHealthContainer.AddChild(new HSeparator());
-
-        var circ = _olap.GetItemCirculation();
-        if (circ.Count == 0)
-        {
-            _mktHealthContainer.AddChild(EmptyRow("No circulation data — Sync ETL to load player inventories."));
-            return;
-        }
-
-        int ci = 0;
-        foreach (var r in circ)
-        {
-            var row = TableRow(
-                new[] { r.ItemName, r.Rarity,
-                        r.InInventories.ToString(), r.InMarketplace.ToString(),
-                        r.TotalCirculating.ToString(), r.UniqueHolders.ToString(),
-                        r.TotalTraded.ToString() },
-                isHeader: false, alternate: ci++ % 2 == 1);
-            if (r.Rarity == "Legendary")
-                foreach (Node child in row.GetChildren())
-                    if (child is Label lbl)
-                        lbl.AddThemeColorOverride("font_color", new Color(1f, 0.8f, 0.2f));
-            else if (r.Rarity == "Rare")
-                foreach (Node child2 in row.GetChildren())
-                    if (child2  is Label lbl2)
-                        lbl2.AddThemeColorOverride("font_color", new Color(0.55f, 0.75f, 1f));
-            _mktHealthContainer.AddChild(row);
-        }
-
-        _mktHealthContainer.AddChild(new HSeparator());
-        int totalInv = circ.Sum(r => r.InInventories);
-        int totalMkt = circ.Sum(r => r.InMarketplace);
-        _mktHealthContainer.AddChild(MakeKvGrid(new[]
-        {
-            ("Total in inventories:",  totalInv.ToString()),
-            ("Total in marketplace:",  totalMkt.ToString()),
-            ("Total circulating:",     (totalInv + totalMkt).ToString()),
-        }));
-    }
-
     private void RefreshTradeHistorySection()
     {
         double now     = Time.GetUnixTimeFromSystem();
@@ -939,131 +880,6 @@ public partial class AnalyticsDashboard : Control
             }
         }
     }
-
-    private void RefreshEtlMonitorTab()
-    {
-        ClearContainer(_etlMonitorContainer);
-
-        var stats = _olap.GetSchemaStats();
-
-        _etlMonitorContainer.AddChild(SectionTitle("OLAP Star Schema — Row Counts"));
-        _etlMonitorContainer.AddChild(new HSeparator());
-
-        _etlMonitorContainer.AddChild(SectionTitle("  Fact Tables (measurable events):"));
-        _etlMonitorContainer.AddChild(MakeKvGrid(new[]
-        {
-            ("fact_trades (trade events):", stats.FactTradeCount.ToString()),
-            ("fact_scores (player scores):", stats.FactScoreCount.ToString()),
-        }));
-
-        _etlMonitorContainer.AddChild(SectionTitle("  Dimension Tables (context/lookup):"));
-        _etlMonitorContainer.AddChild(MakeKvGrid(new[]
-        {
-            ("dim_items  (cosmetic items):", stats.DimItemCount.ToString()),
-            ("dim_time   (date hierarchy):", stats.DimTimeCount.ToString()),
-            ("dim_players (player profiles):", stats.DimPlayerCount.ToString()),
-        }));
-
-        _etlMonitorContainer.AddChild(SectionTitle("  Coverage:"));
-        _etlMonitorContainer.AddChild(MakeKvGrid(new[]
-        {
-            ("Unique items traded:", stats.UniqueItemsTraded.ToString()),
-            ("Unique calendar days:", stats.UniqueDaysTraded.ToString()),
-            ("Active OLTP listings:", stats.ActiveListings.ToString()),
-            ("Active OLTP sellers:", stats.UniqueSellers.ToString()),
-        }));
-
-        _etlMonitorContainer.AddChild(new HSeparator());
-        _etlMonitorContainer.AddChild(SectionTitle("Time Dimension Hierarchy — Year → Quarter → Month → Day"));
-        _etlMonitorContainer.AddChild(SectionTitle("  Roll-Up by Year (coarsest grain):"));
-        BuildHierarchyTable(_etlMonitorContainer, _olap.RollUpByYear(),
-            new[] { "Year", "Trades", "Volume", "Avg Price" });
-
-        _etlMonitorContainer.AddChild(SectionTitle("  Roll-Up by Quarter:"));
-        BuildHierarchyTable(_etlMonitorContainer, _olap.RollUpByQuarter(),
-            new[] { "Quarter", "Trades", "Volume", "Avg Price" });
-
-        _etlMonitorContainer.AddChild(SectionTitle("  Roll-Up by Month:"));
-        BuildHierarchyTable(_etlMonitorContainer, _olap.RollUpByMonth(),
-            new[] { "Month", "Trades", "Volume", "Avg Price" });
-
-        _etlMonitorContainer.AddChild(SectionTitle("  Roll-Up by Day (finest grain):"));
-        BuildHierarchyTable(_etlMonitorContainer, _olap.RollUpByDay(),
-            new[] { "Day", "Trades", "Volume", "Avg Price" }, maxRows: 14);
-
-        _etlMonitorContainer.AddChild(new HSeparator());
-        _etlMonitorContainer.AddChild(SectionTitle("dim_items — Item Dimension Table"));
-        _etlMonitorContainer.AddChild(TableRow(new[] { "item_key", "item_name", "category" }, isHeader: true));
-        _etlMonitorContainer.AddChild(new HSeparator());
-
-        if (_olap.DimItems.Count == 0)
-        {
-            _etlMonitorContainer.AddChild(EmptyRow("dim_items is empty — run Sync ETL or play with marketplace."));
-        }
-        else
-        {
-            int ii = 0;
-            foreach (var kv in _olap.DimItems.Values)
-            {
-                _etlMonitorContainer.AddChild(TableRow(
-                    new[] { kv.ItemKey, kv.ItemName, kv.Category },
-                    isHeader: false, alternate: ii++ % 2 == 1));
-            }
-        }
-
-        _etlMonitorContainer.AddChild(new HSeparator());
-        _etlMonitorContainer.AddChild(SectionTitle("dim_players — Player Dimension Table"));
-        _etlMonitorContainer.AddChild(TableRow(new[] { "player_key (truncated)", "display_name" }, isHeader: true));
-        _etlMonitorContainer.AddChild(new HSeparator());
-
-        if (_olap.DimPlayers.Count == 0)
-        {
-            _etlMonitorContainer.AddChild(EmptyRow("dim_players is empty — run Sync ETL."));
-        }
-        else
-        {
-            int pi = 0;
-            foreach (var kv in _olap.DimPlayers.Values)
-            {
-                _etlMonitorContainer.AddChild(TableRow(
-                    new[] { TruncateName(kv.PlayerKey, 16), kv.DisplayName },
-                    isHeader: false, alternate: pi++ % 2 == 1));
-            }
-        }
-
-        _etlMonitorContainer.AddChild(new HSeparator());
-        _etlMonitorContainer.AddChild(SectionTitle("ETL Run Metadata"));
-        _etlMonitorContainer.AddChild(MakeKvGrid(new[]
-        {
-            ("In-memory fact_trades:", _olap.FactTrades.Count.ToString()),
-            ("In-memory fact_scores:", _olap.FactScores.Count.ToString()),
-            ("In-memory dim_items:",   _olap.DimItems.Count.ToString()),
-            ("In-memory dim_time:",    _olap.DimTimes.Count.ToString()),
-            ("In-memory dim_players:", _olap.DimPlayers.Count.ToString()),
-            ("Current time (UTC):",    DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")),
-        }));
-    }
-
-    private void BuildHierarchyTable(VBoxContainer container, List<OlapManager.TradeAggregate> aggs,
-                                      string[] headers, int maxRows = 20)
-    {
-        container.AddChild(TableRow(headers, isHeader: true));
-        if (aggs.Count == 0)
-        {
-            container.AddChild(EmptyRow("  No data."));
-            return;
-        }
-        int ri = 0;
-        foreach (var a in aggs.Take(maxRows))
-        {
-            container.AddChild(TableRow(
-                new[] { a.Label, a.TotalTrades.ToString(), $"{a.TotalVolume}c", $"{a.AvgPrice:F1}c" },
-                isHeader: false, alternate: ri++ % 2 == 1));
-        }
-        if (aggs.Count > maxRows)
-            container.AddChild(EmptyRow($"  ... and {aggs.Count - maxRows} more rows."));
-    }
-
 
     private void ShowTradeDetailTable(List<OlapManager.FactTrade> trades)
     {

@@ -173,19 +173,6 @@ public partial class OlapManager : Node
         public float  AvgPrice;
     }
 
-    public class ItemCirculationRecord
-    {
-        public string ItemKey;
-        public string ItemName;
-        public string Rarity;
-        public int    InInventories;    
-        public int    InMarketplace;    
-        public int    TotalCirculating; 
-        public int    UniqueHolders;    
-        public int    TotalTraded;      
-    }
-
-
     public List<FactTrade>               FactTrades       { get; private set; } = new();
     public List<FactScore>               FactScores       { get; private set; } = new();
     public Dictionary<string, DimItem>   DimItems         { get; private set; } = new();
@@ -1306,75 +1293,6 @@ public partial class OlapManager : Node
     }
 
 
-    public List<ItemCirculationRecord> GetItemCirculation()
-    {
-        var result = new Dictionary<string, ItemCirculationRecord>();
-
-        if (CosmeticManager.Instance != null)
-        {
-            foreach (var c in CosmeticManager.Instance.AllCosmetics)
-            {
-                result[c.Id] = new ItemCirculationRecord
-                {
-                    ItemKey  = c.Id,
-                    ItemName = c.Name,
-                    Rarity   = c.Rarity.ToString(),
-                };
-            }
-        }
-
-        foreach (var kv in DimItems)
-        {
-            if (!result.ContainsKey(kv.Key))
-                result[kv.Key] = new ItemCirculationRecord
-                {
-                    ItemKey  = kv.Key,
-                    ItemName = kv.Value.ItemName,
-                    Rarity   = "cosmetic",
-                };
-        }
-
-        foreach (var kv in PlayerInventories)
-        {
-            foreach (var item in kv.Value)
-            {
-                if (!result.ContainsKey(item.Key))
-                    result[item.Key] = new ItemCirculationRecord { ItemKey = item.Key, ItemName = item.Key, Rarity = "cosmetic" };
-                result[item.Key].InInventories += item.Value;
-                if (item.Value > 0) result[item.Key].UniqueHolders++;
-            }
-        }
-
-        if (MarketplaceManager.Instance != null)
-        {
-            foreach (var l in MarketplaceManager.Instance.Listings)
-            {
-                if (!result.ContainsKey(l.ItemId))
-                    result[l.ItemId] = new ItemCirculationRecord
-                    {
-                        ItemKey  = l.ItemId,
-                        ItemName = l.ItemName ?? l.ItemId,
-                        Rarity   = "cosmetic",
-                    };
-                result[l.ItemId].InMarketplace += l.Quantity;
-            }
-        }
-
-        foreach (var ft in FactTrades)
-        {
-            if (result.ContainsKey(ft.ItemKey))
-                result[ft.ItemKey].TotalTraded++;
-        }
-
-        var list = new List<ItemCirculationRecord>(result.Values);
-        foreach (var r in list)
-            r.TotalCirculating = r.InInventories + r.InMarketplace;
-
-        list.Sort((a, b) => b.TotalCirculating.CompareTo(a.TotalCirculating));
-        return list;
-    }
-
- 
     public string ExportTradesToCsv(List<FactTrade> trades = null)
     {
         var rows = trades ?? FactTrades;
