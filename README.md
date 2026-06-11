@@ -1,50 +1,246 @@
-# SBOLK
-SBOLK
-A top-down 2D arena shooter built in Godot 4.4 with C#. Players fight escalating waves of enemies, collect drops, upgrade through a between-wave shop, and compete on a Firebase-backed global leaderboard.
+# SBOLK – Top-Down Arena Shooter Game
 
-## Weapon System
-- Weapon scripts are organized in `Scripts/Weapons`.
-- Supported weapon types: Pistol, Smg, Rifle, Sniper, Shotgun.
-- Shared weapon stats and behavior are defined in code for fast balancing.
-- Adjust weapon size on the gun root node itself, not on the `Sprite2D` child.
+## 1. Application Overview
 
-## Weapon Visual Tuning
-- Open `Scenes/pistol.tscn`.
-- Select the root `gun` node to change overall weapon size and orientation.
-- Use the per-weapon child nodes for hold position, barrel placement, and sprite-specific offsets.
+**SBOLK** is a 2D top-down arena shooter game developed using **Godot 4.4**. Players fight increasingly difficult waves of enemies, earn coins, purchase upgrades, unlock cosmetic items, and compete on a global leaderboard powered by Firebase.
 
-## Controls
-- Move: WASD or Arrow Keys
-- Shoot: Left Mouse Button
-- Reload: `R`
-- Switch weapons: `1` (Pistol), `2` (Smg), `3` (Rifle), `4` (Sniper), `5` (Shotgun)
+### Purpose
 
-**Enemy types (5)**
-Basic Direct charge toward player at constant speed.
-Dash Windup pause → explosive dash at 6000 px/s → brief post-dash stall.
-Teleport Pauses then teleports behind the player every ~4 s.
-Gun Maintains preferred distance (200 px), strafes sideways, shoots every 5 s.
-Bomb Rushes player at 1.2× speed, explodes on contact (3000 knockback), self-destructs.
+The project aims to provide an engaging action-survival gaming experience while demonstrating game development concepts such as:
 
-**Wave / game loop**
-Title screen → Auth / login → Arena wave → Goal reached → Portal spawns → Shop (endrun) → Next wave ×1.5
-Each wave has a WaveGoal (kills/drops). When reached, a portal spawns at a random arena position. Entering the portal scales enemy HP by ×1.25 and damage by ×1.5, increments the DifficultyMultiplier by ×1.5, and opens the between-wave shop. 
-Healing pots spawn outside the arena on a 15-second timer (max 2 at a time).
+- Enemy AI behavior
+- Wave-based progression
+- Weapon systems
+- Online authentication
+- Cloud database integration
+- Leaderboards and player data storage
 
-**Shop & cosmetics**
-In-run shop Between waves the player can spend gold earned from kills to buy upgrades. Items are managed by Endrun.cs and rendered into a grid of ShopItem nodes.
+### Objectives
 
-**Cosmetic shop**
-12 hat cosmetics (Crown, Cap, Wizard, hat_1–hat_9) at prices 50–150 coins. Offers rotate every hour. Data syncs to Firebase per user. Managed by the CosmeticManager autoload.
+- Develop a functional arena shooter game.
+- Implement multiple weapon types.
+- Create a scalable wave progression system.
+- Integrate cloud-based user authentication.
+- Store player scores and cosmetic data online.
 
-**Firebase integration**
-Auth + Realtime Database
-Uses the godot-firebase addon. Players log in via email or fall back to anonymous auth. Scores are submitted only when the new score beats the player's existing best (checked before writing). Leaderboard fetches the top 10 from leaderboards/global. Cosmetic data (owned counts, equipped hat, coins) is persisted per UID with a local cache fallback.
+### Target Users
 
-**Visual effects & shaders**
-SBOLKBackground scrolling arena bg
-glitch screen glitch effect
-screen full-screen post-process
-swirl portal/vortex distortion
+- Casual gamers
+- Students interested in game development
+- Players who enjoy wave-survival and shooter games
 
-Impact frames use an impactframe.tres shader material. A monogram pixel font family (regular, extended, extended italic) carries all in-game UI text. HDR 2D and transparent viewport are enabled for compositing flexibility.
+---
+
+## 2. System Screenshots
+
+### Authentication Screen
+
+The Authentication Screen serves as the user login and registration interface for SBOLK. It allows players to securely access their accounts using Firebase Authentication before entering the game.
+
+- **Email Field** – Allows users to enter their registered email address.
+- **Password Field** – Allows users to enter their account password securely.
+- **Log In Button** – Authenticates existing users and grants access to the game's main menu.
+- **Sign In Button** – Creates a new user account for first-time players.
+- **Error Message Display** – Provides feedback when authentication fails, helping users identify and correct login issues.
+
+---
+
+### Main Menu Screen
+
+The Main Menu Screen serves as the central navigation hub of the SBOLK game. It is the first interface displayed after a player successfully logs in. The screen features a vibrant and colorful retro-inspired design with animated visual effects that match the game's arcade aesthetic.
+
+Players can access the following functions:
+
+- **Play** – Starts a new game session and enters the arena.
+- **Tutorial** – Displays gameplay instructions, controls, and basic mechanics to help new players learn the game.
+- **Sign Out** – Logs the current user out of their account and returns them to the authentication screen.
+- **Shop** – Allows players to purchase upgrades, items, and other in-game enhancements using earned currency.
+- **Trade** – Provides access to item trading features between players.
+- **Inventory** – Displays the player's collected items, cosmetics, and equipped equipment.
+- **Leaderboard** – Shows the highest scores achieved by players globally through Firebase integration.
+
+---
+
+### Leaderboard Screen
+
+The Leaderboard Screen displays the highest scores achieved by players in SBOLK, allowing users to compare their performance with others worldwide. The leaderboard is connected to Firebase, ensuring that player rankings are updated and stored in real time.
+
+- **Player Rankings** – Displays players in descending order based on their highest scores.
+- **Player Identification** – Shows the registered account associated with each score.
+- **Score Records** – Displays the highest score achieved by each player.
+
+---
+
+### Inventory Screen
+
+The Inventory Screen allows players to view, manage, and customize the cosmetic items they have collected throughout the game. It serves as the player's personal collection menu, where owned cosmetics can be equipped or unequipped to customize the character's appearance.
+
+- **Owned Cosmetic Items** – Displays all hats and cosmetic accessories unlocked or purchased by the player.
+- **Item Information** – Shows the name and quantity of each owned cosmetic item.
+- **Equip Button** – Allows players to select and equip a cosmetic item to their character.
+- **Unequip Button** – Removes the currently equipped cosmetic item.
+- **Equipped Item Indicator** – Displays the cosmetic item that is currently equipped by the player.
+- **Close Button** – Exits the inventory screen and returns the player to the previous menu.
+
+---
+
+### Trade Screen (Marketplace)
+
+The Trade Screen enables players to buy, sell, and trade cosmetic items with other players through an online player-driven economy. This feature allows users to exchange collectible hats and other cosmetic items using in-game currency.
+
+- **Item Listings** – Displays cosmetic items currently available for purchase from other players.
+- **Seller Information** – Shows the player who posted the item for sale.
+- **Price Display** – Indicates the selling price and quantity of each listed item.
+- **Buy Button** – Allows players to purchase listed items using in-game currency.
+- **Post Item Feature** – Enables players to list their own items on the marketplace for sale.
+- **History Tab** – Displays previous transactions, purchases, and sales made by the player.
+- **Refresh Button** – Updates the marketplace listings with the latest available items.
+- **Listing Duration** – Shows the remaining time before an item listing expires.
+- **Close Button** – Returns the player to the previous menu.
+
+---
+
+### Cosmetic Shop Screen
+
+The Cosmetic Shop Screen allows players to purchase collectible cosmetic items using in-game currency earned through gameplay. The shop provides a rotating selection of hats and accessories that players can acquire to customize their character's appearance.
+
+- **Item Catalog** – Displays cosmetic items currently available for purchase.
+- **Item Information** – Shows the item's name, rarity, price, and ownership status.
+- **Buy Button** – Allows players to purchase an item if they have sufficient in-game currency.
+- **Currency Display** – Shows the player's current amount of available coins.
+- **Ownership Counter** – Indicates how many copies of a specific cosmetic item the player owns.
+- **Shop Refresh Timer** – Displays the remaining time before the shop inventory automatically refreshes with new items.
+
+---
+
+### SBOLK Analytics – OLAP Dashboard
+
+The Trade Summary Panel provides a quick and convenient overview of the most important marketplace metrics, displaying key KPIs such as Total Trades, Total Volume, Average Price, and Top Item, all of which automatically update and recalculate in real time whenever the user adjusts the active filters, ensuring the data shown is always relevant to the current selection.
+
+A real-time marketplace analytics dashboard built with a retro terminal aesthetic (green-on-black), designed to monitor and analyze virtual economy trade data through an OLAP (Online Analytical Processing) pipeline.
+
+### Key Features
+
+- Five enemy types
+- Wave progression system
+- Between-wave upgrade shop
+- Cosmetic hat system
+- Global leaderboard
+- Firebase authentication
+- Save and load player data
+- Visual shader effects
+
+---
+
+## 3. Technologies and Tools Used
+
+### Programming Languages
+
+- C#
+- GDScript
+
+### Game Engine
+
+- Godot 4.4
+
+### Frameworks and Libraries
+
+- Godot Firebase Addon
+- Trail2D Plugin
+- BBCode Editor Plugin
+
+### Database and APIs
+
+- Firebase Authentication
+- Firebase Realtime Database
+
+### Software Tools
+
+- Godot Engine
+- Git
+- GitHub
+
+---
+
+## 4. Algorithms and Methods
+
+### Enemy AI
+
+Different enemy behaviors include:
+
+1. **Basic Enemy** – Directly chases the player.
+2. **Dash Enemy** – Charges and rapidly dashes toward the player.
+3. **Teleport Enemy** – Teleports behind the player periodically.
+4. **Gun Enemy** – Maintains distance and shoots projectiles.
+5. **Bomb Enemy** – Rushes toward the player and explodes.
+
+### Wave Progression
+
+- Enemy difficulty increases after each completed wave.
+- Enemy health and damage scale dynamically.
+
+### Leaderboard System
+
+- Compares player scores.
+- Updates Firebase only if the new score exceeds the previous best score.
+
+---
+
+## 5. UI/UX Design Documentation
+
+### Design Software Used
+
+- Godot Editor
+- Aseprite (for pixel-art assets)
+
+### User Interface Components
+
+**Title Screen** – Provides access to:
+1. Start Game
+2. Login
+3. Leaderboard
+
+**Gameplay HUD** – Displays:
+- Health
+- Current Weapon
+- Gold
+- Money
+
+**Shop Interface** – Allows players to:
+- Spend gold
+- Purchase upgrades
+- Improve performance
+
+**Cosmetic Shop** – Features:
+- 12 unlockable hats
+- Rotating hourly offers
+- Equipment management
+
+### Visual Design
+
+- Pixel-art style graphics
+- Retro-inspired font (Monogram)
+- Shader effects: Swirl, Glitch, Background animation
+
+### Additional Features
+
+- Firebase Authentication
+- Global Leaderboard
+- Cosmetic Inventory System
+- Coin Economy
+- Portal-Based Progression
+- Healing Pot System
+- Weapon Switching
+- Dynamic Difficulty Scaling
+- Shader-Based Visual Effects
+
+---
+
+## 6. Collaboration and Contribution Report
+
+| Name | Role |
+|---|---|
+| Sigmon Earl | Project Leader / Lead Programmer |
+| Enzo Rebancos | Assistant Project Leader |
+| Magdaraog Mabey | UI/UX Designer & Asset Designer |
+| Iverson Klerk T. Perno | Game Tester & Documentation |
